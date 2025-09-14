@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InventoryX.Domain\InventoryX.Domain.csproj" />
-    <ProjectReference Include="..\InventoryX.Infrastructure\InventoryX.Infrastructure.csproj" />
+    <ProjectReference Include="..\InventoryX.Domain\InventoryX.Domain.csproj" /> 
   </ItemGroup> 
 
 </Project>

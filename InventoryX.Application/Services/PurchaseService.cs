@@ -1,12 +1,12 @@
 ﻿using InventoryX.Application.Services.IServices;
 using InventoryX.Application.Services.IServices;
-using InventoryX.Domain.Models;
-using InventoryX.Infrastructure.Persistence;
+using InventoryX.Domain.Models; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using InventoryX.Application.Repository;
 
 namespace InventoryX.Application.Services
 {

@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 using System.Text;
+using InventoryX.Application.Repository;
 
 namespace InventoryX.Presentation.Configuration
 {
