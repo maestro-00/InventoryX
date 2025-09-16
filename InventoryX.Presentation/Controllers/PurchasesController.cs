@@ -18,14 +18,14 @@ namespace InventoryX.Presentation.Controllers
         public async Task<ActionResult> Get(int id)
         {
             var response = await _mediator.Send(new GetPurchaseRequest { Id = id });
-            return response.Success ? Ok(response) : BadRequest(response);
+            return StatusCode(response.StatusCode,response);
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
             var response = await _mediator.Send(new GetAllPurchaseRequest());
-            return response.Success ? Ok(response) : BadRequest(response);
+            return StatusCode(response.StatusCode,response);
         }
 
         [HttpPost]
@@ -34,7 +34,7 @@ namespace InventoryX.Presentation.Controllers
             if (ModelState.IsValid)
             {
                 var response = await _mediator.Send(new CreatePurchaseCommand { NewPurchaseDto = Purchase });
-                return response.Success ? Ok(response) : BadRequest(response);
+                return StatusCode(response.StatusCode,response);
             }
             return BadRequest(ModelState);
         }
@@ -45,7 +45,7 @@ namespace InventoryX.Presentation.Controllers
             if (ModelState.IsValid)
             {
                 var response = await _mediator.Send(new UpdatePurchaseCommand { Id = id, PurchaseDto = Purchase });
-                return response.Success ? Ok(response) : BadRequest(response);
+                return StatusCode(response.StatusCode,response);
             }
             return BadRequest(ModelState);
         }
@@ -54,7 +54,7 @@ namespace InventoryX.Presentation.Controllers
         public async Task<ActionResult> Delete(int id)
         {
             var response = await _mediator.Send(new DeletePurchaseCommand { Id = id });
-            return response.Success ? Ok(response) : BadRequest(response);
+            return StatusCode(response.StatusCode,response);
         }
 
     }
