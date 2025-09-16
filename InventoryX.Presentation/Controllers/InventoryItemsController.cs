@@ -18,14 +18,14 @@ namespace InventoryX.Presentation.Controllers
         public async Task<ActionResult> Get(int id)
         {
             var response = await _mediator.Send(new GetInventoryItemRequest { Id = id });
-            return response.Success ? Ok(response) : BadRequest(response);
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpGet] 
         public async Task<ActionResult> GetAll()
         {
             var response = await _mediator.Send(new GetAllInventoryItemRequest());
-            return response.Success ? Ok(response) : BadRequest(response);
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpPost]
@@ -34,10 +34,11 @@ namespace InventoryX.Presentation.Controllers
             if (ModelState.IsValid)
             {
                 var response = await _mediator.Send(new CreateInventoryItemCommand { NewInventoryItemDto = inventoryItem, RetailQuantity = retailQuantity });
-                return response.Success ? Ok(response) : BadRequest(response);
+                return StatusCode(response.StatusCode, response);
             }
             return BadRequest(ModelState);
         }
+        
         [HttpPut]
         [Route("{id}")]
         public async Task<ActionResult> Update(int id, InventoryItemCommandDto inventoryItem, bool recordLoss = false)
@@ -45,16 +46,17 @@ namespace InventoryX.Presentation.Controllers
             if(ModelState.IsValid)
             {
                 var response = await _mediator.Send(new UpdateInventoryItemCommand { Id = id, InventoryItemDto = inventoryItem, RecordLoss = recordLoss });
-                return response.Success ? Ok(response) : BadRequest(response);
+                return StatusCode(response.StatusCode,response);
             }
             return BadRequest(ModelState);
         }
+        
         [HttpDelete]
         [Route("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var response = await _mediator.Send(new DeleteInventoryItemCommand { Id = id });
-            return response.Success ? Ok(response) : BadRequest(response);
+            var response = await _mediator.Send(new DeleteInventoryItemCommand { Id = id }); 
+            return StatusCode(response.StatusCode,response);
         }
 
     }
