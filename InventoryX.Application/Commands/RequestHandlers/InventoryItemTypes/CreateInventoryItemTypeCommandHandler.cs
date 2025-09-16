@@ -2,20 +2,15 @@
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR; 
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
 {
-    public class CreateInventoryItemTypeCommandHandler(IInventoryItemTypeService service, IMapper mapper) : IRequestHandler<CreateInventoryTypeCommand, ApiResponse>
+    public class CreateInventoryItemTypeCommandHandler(IInventoryItemTypeService service, IMapper mapper) : IRequestHandler<CreateInventoryItemTypeCommand, ApiResponse>
     {
         private readonly IInventoryItemTypeService _service = service;
         private readonly IMapper _mapper = mapper;
-        public async Task<ApiResponse> Handle(CreateInventoryTypeCommand request, CancellationToken cancellationToken)
+        public async Task<ApiResponse> Handle(CreateInventoryItemTypeCommand request, CancellationToken cancellationToken)
         {
             try
             {
