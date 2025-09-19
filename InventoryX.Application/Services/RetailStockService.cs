@@ -27,12 +27,12 @@ namespace InventoryX.Application.Services
             return _repository.GetAllAsync();
         }
 
-        public Task<RetailStock> GetRetailStock(int id)
+        public Task<RetailStock?> GetRetailStock(int id)
         {
             return _repository.Get(id);
         }
 
-        public Task<RetailStock> GetRetailStock(string columnName, object columnValue)
+        public Task<RetailStock?> GetRetailStock(string columnName, object columnValue)
         {
             return _repository.Get(columnName, columnValue); 
         }

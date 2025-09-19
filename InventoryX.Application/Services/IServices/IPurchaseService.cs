@@ -11,7 +11,7 @@ namespace InventoryX.Application.Services.IServices
     {
         Task<int> AddPurchase(Purchase entity);
         Task<IEnumerable<Purchase>> GetAllPurchases();
-        Task<Purchase> GetPurchase(int id);
+        Task<Purchase?> GetPurchase(int id);
         Task<int> UpdatePurchase(Purchase entity);
         Task<int> DeletePurchase(int id);
     }

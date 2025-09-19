@@ -11,7 +11,7 @@ namespace InventoryX.Application.Services.IServices
     {
         Task<int> AddInventoryItemType(InventoryItemType entity);
         Task<IEnumerable<InventoryItemType>> GetAllInventoryItemTypes();
-        Task<InventoryItemType> GetInventoryItemType(int id);
+        Task<InventoryItemType?> GetInventoryItemType(int id);
         Task<int> UpdateInventoryItemType(InventoryItemType entity);
         Task<int> DeleteInventoryItemType(int id);
     }

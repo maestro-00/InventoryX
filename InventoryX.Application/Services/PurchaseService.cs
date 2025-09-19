@@ -34,7 +34,7 @@ namespace InventoryX.Application.Services
                 );
         }
 
-        public Task<Purchase> GetPurchase(int id)
+        public Task<Purchase?> GetPurchase(int id)
         {
             return _repository.Get(
                 id,

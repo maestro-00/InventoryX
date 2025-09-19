@@ -12,8 +12,8 @@ namespace InventoryX.Application.Services.IServices
     {
         Task<int> AddRetailStock(RetailStock entity);
         Task<IEnumerable<RetailStock>> GetAllRetailStock();
-        Task<RetailStock> GetRetailStock(int id);
-        Task<RetailStock> GetRetailStock(string columnName, object columnValue);
+        Task<RetailStock?> GetRetailStock(int id);
+        Task<RetailStock?> GetRetailStock(string columnName, object columnValue);
         Task<int> UpdateRetailStock(RetailStock entity);
         Task<int> DeleteRetailStock(int id);
     }
