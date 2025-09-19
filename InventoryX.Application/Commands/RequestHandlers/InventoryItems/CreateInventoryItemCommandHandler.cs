@@ -1,56 +1,54 @@
-﻿using AutoMapper;
-using InventoryX.Application.Commands.Requests.InventoryItems; 
-using InventoryX.Application.Services.IServices;
-using InventoryX.Domain.Models;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
+﻿    using AutoMapper;
+    using InventoryX.Application.Commands.Requests.InventoryItems; 
+    using InventoryX.Application.Services.IServices;
+    using InventoryX.Domain.Models;
+    using MediatR;
+    using System.Transactions;
+    using Microsoft.AspNetCore.Http;
 
-namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
-{
-    public class CreateInventoryItemCommandHandler(IInventoryItemService service, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<CreateInventoryItemCommand, ApiResponse>
+    namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
     {
-        private readonly IInventoryItemService _service = service;
-        private readonly IRetailStockService _retailStockService = retailStockService;
-        private readonly IMapper _mapper = mapper;
-        public async Task<ApiResponse> Handle(CreateInventoryItemCommand request, CancellationToken cancellationToken)
+        public class CreateInventoryItemCommandHandler(IInventoryItemService service, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<CreateInventoryItemCommand, ApiResponse>
         {
-            using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
-            try
+            private readonly IInventoryItemService _service = service;
+            private readonly IRetailStockService _retailStockService = retailStockService;
+            private readonly IMapper _mapper = mapper;
+            public async Task<ApiResponse> Handle(CreateInventoryItemCommand request, CancellationToken cancellationToken)
             {
-                var InventoryItemEntity = _mapper.Map<InventoryItem>(request.NewInventoryItemDto);
-                InventoryItemEntity.Created_At = DateTime.UtcNow;
-                var response = await _service.AddInventoryItem(InventoryItemEntity);
-                if (response > 0)
+                using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+                try
                 {
-                    RetailStock retailStock = new() { InventoryItemId = response, Quantity = request.RetailQuantity, Created_At = DateTime.UtcNow };
-                    var result = await _retailStockService.AddRetailStock(retailStock);
-                    if (result > 0)
+                    var InventoryItemEntity = _mapper.Map<InventoryItem>(request.NewInventoryItemDto);
+                    InventoryItemEntity.Created_At = DateTime.UtcNow;
+                    var response = await _service.AddInventoryItem(InventoryItemEntity);
+                    if (response > 0)
                     {
-                        transactionScope.Complete();
-                        return new()
+                        RetailStock retailStock = new() { InventoryItemId = response, Quantity = request.RetailQuantity, Created_At = DateTime.UtcNow };
+                        var result = await _retailStockService.AddRetailStock(retailStock);
+                        if (result > 0)
                         {
-                            Id = response,
-                            Success = true,
-                            Message = "Inventory Item has been created successfully"
-                        };
-                    } 
+                            transactionScope.Complete();
+                            return new()
+                            {
+                                Id = response,
+                                Success = true,
+                                Message = "Inventory Item has been created successfully",
+                                StatusCode = StatusCodes.Status201Created
+                            };
+                        } 
+                    }
+                    throw new Exception("Failed to create Inventory Item");
                 }
-                throw new Exception("Failed to create Inventory Item");
-            }
-            catch (Exception ex)
-            {
-                transactionScope.Dispose();
-                return new()
+                catch (Exception ex)
                 {
-                    Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
-                };
+                    transactionScope.Dispose();
+                    return new()
+                    {
+                        Success = false,
+                        Message = ex.Message ?? "Something went wrong. Try again later.",
+                        StatusCode = StatusCodes.Status500InternalServerError
+                    };
+                }
             }
         }
     }
-}
