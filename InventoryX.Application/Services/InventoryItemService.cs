@@ -29,7 +29,7 @@ namespace InventoryX.Application.Services
                 );
         }
 
-        public Task<InventoryItem> GetInventoryItem(int id)
+        public Task<InventoryItem?> GetInventoryItem(int id)
         {
             return _repository.Get(
                 id,

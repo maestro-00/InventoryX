@@ -1,1 +1,8 @@
 global using Xunit;
+global using AutoFixture; 
+global using Moq;
+global using FluentAssertions; 
+global using AutoMapper;
+global using InventoryX.Application.DTOs.InventoryItems;
+global using InventoryX.Application.Services.IServices;
+global using InventoryX.Domain.Models;

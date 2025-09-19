@@ -66,7 +66,7 @@ namespace InventoryX.Infrastructure.Persistence
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<TEntity> Get(int id, params Expression<Func<TEntity, object>>[] includes)
+        public async Task<TEntity?> Get(int id, params Expression<Func<TEntity, object>>[] includes)
         {
             IQueryable<TEntity> query = _context.Set<TEntity>().AsNoTracking();
              
@@ -78,7 +78,7 @@ namespace InventoryX.Infrastructure.Persistence
             return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
         }
 
-        public async Task<TEntity> Get(string columnName, object columnValue, params Expression<Func<TEntity, object>>[] includes)
+        public async Task<TEntity?> Get(string columnName, object columnValue, params Expression<Func<TEntity, object>>[] includes)
         {
             IQueryable<TEntity> query = _context.Set<TEntity>().AsNoTracking();
 

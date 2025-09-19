@@ -27,7 +27,7 @@ namespace InventoryX.Application.Services
             return _repository.GetAllAsync();
         }
 
-        public Task<InventoryItemType> GetInventoryItemType(int id)
+        public Task<InventoryItemType?> GetInventoryItemType(int id)
         {
             return _repository.Get(id);
         }
