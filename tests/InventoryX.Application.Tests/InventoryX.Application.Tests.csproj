@@ -22,4 +22,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\InventoryX.Application\InventoryX.Application.csproj" />
+    <ProjectReference Include="..\InventoryX.Common.Tests\InventoryX.Common.Tests.csproj" />
+  </ItemGroup>
+
 </Project>
