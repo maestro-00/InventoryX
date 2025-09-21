@@ -1,15 +1,9 @@
-﻿using AutoMapper;
-using InventoryX.Application.Commands.Requests.InventoryItems;
-using InventoryX.Application.Commands.Requests.Purchases;
+﻿using InventoryX.Application.Commands.Requests.InventoryItems; 
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
 {
@@ -25,17 +19,18 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                 var response = await _service.DeleteInventoryItem(request.Id);
                 if (response > 0)
                 {
-                    RetailStock result = await _retailStockService.GetRetailStock("InventoryItemId", request.Id);
+                    RetailStock? result = await _retailStockService.GetRetailStock("InventoryItemId", request.Id);
                     if (result is not null)
                     {
                         int deleteResponse = await _retailStockService.DeleteRetailStock(result.Id);
-                        if (deleteResponse <= 0) throw new Exception("Inventory update failed. Failed to delete retail stock.");
+                        if (deleteResponse <= 0) throw new Exception("Failed to delete retail stock.");
                     }
                     transactionScope.Complete();
                     return new()
                     {
                         Success = true,
-                        Message = "Inventory Item has been deleted successfully"
+                        Message = "Inventory Item has been deleted successfully",
+                        StatusCode = StatusCodes.Status200OK
                     };
                 }
                 throw new Exception("Failed to delete Inventory Item");
@@ -46,7 +41,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                 return new()
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }
