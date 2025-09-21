@@ -382,6 +382,22 @@ public class UpdateInventoryItemCommandHandlerTests
         
         var result = await _sut.Handle(command, _token);
 
+        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r => 
+            r.Quantity == _inventoryItem.TotalAmount &&
+            r.Updated_At.HasValue &&
+            r.Updated_At.Value.Date == DateTime.UtcNow.Date
+        )), Times.Once);
+        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r => 
+            r.InventoryItemId == command.Id &&
+            r.Price == 0 &&
+            r.Quantity == oldInventoryItem.TotalAmount - _inventoryItem.TotalAmount &&
+            r.Created_At.HasValue &&
+            r.Created_At.Value.Date == DateTime.UtcNow.Date
+        )), Times.Once);
+        _serviceMock.Verify(x => x.UpdateInventoryItem(It.Is<InventoryItem>(r =>
+            r.Id == command.Id &&
+            r.Updated_At.HasValue
+        )), Times.Once);
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status202Accepted);
         result.Success.Should().BeTrue();
