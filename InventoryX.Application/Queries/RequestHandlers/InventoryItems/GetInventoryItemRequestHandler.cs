@@ -1,18 +1,13 @@
 ﻿using AutoMapper;
 using InventoryX.Application.DTOs.InventoryItems;
-using InventoryX.Application.Queries.Requests.InventoryItems;
-using InventoryX.Application.Queries.Requests.Purchases;
+using InventoryX.Application.Queries.Requests.InventoryItems; 
 using InventoryX.Application.Services.IServices;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR; 
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
 {
-    public class GetPurchaseRequestHandler(IInventoryItemService service, IMapper mapper) : IRequestHandler<GetInventoryItemRequest, ApiResponse>
+    public class GetInventoryItemRequestHandler(IInventoryItemService service, IMapper mapper) : IRequestHandler<GetInventoryItemRequest, ApiResponse>
     {
         private readonly IInventoryItemService _service = service;
         private readonly IMapper _mapper = mapper;
@@ -20,13 +15,32 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
         {
             try
             {
-                var response = await _service.GetInventoryItem(request.Id) ?? throw new Exception("Inventory Item does not exist");
-                var InventoryItemDto = _mapper.Map<GetInventoryItemDto>(response);
+                if (request.Id == 0)
+                {
+                    return new ApiResponse
+                    {
+                        Message = "Invalid Item Id passed.",
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Success = false
+                    };
+                }
+                var response = await _service.GetInventoryItem(request.Id);
+                if (response == null)
+                {
+                    return new ApiResponse
+                    {
+                        Message = "Item not found",
+                        StatusCode = StatusCodes.Status404NotFound,
+                        Success = false
+                    };
+                }
+                var inventoryItemDto = _mapper.Map<GetInventoryItemDto>(response);
                 return new ApiResponse
                 {
                     Success = true,
                     Message = "Retrieved inventory items successfully",
-                    Body = InventoryItemDto
+                    Body = inventoryItemDto,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -34,7 +48,8 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
                 return new ApiResponse
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
 
             }

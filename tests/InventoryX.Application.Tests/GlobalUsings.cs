@@ -6,3 +6,4 @@ global using AutoMapper;
 global using InventoryX.Application.DTOs.InventoryItems;
 global using InventoryX.Application.Services.IServices;
 global using InventoryX.Domain.Models;
+global using Microsoft.AspNetCore.Http;
