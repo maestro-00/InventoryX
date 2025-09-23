@@ -2,7 +2,8 @@
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
-using MediatR; 
+using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
 {
@@ -14,16 +15,17 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
         {
             try
             {
-                var InventoryItemTypeEntity = _mapper.Map<InventoryItemType>(request.NewInventoryItemTypeDto);
-                InventoryItemTypeEntity.Created_At = DateTime.UtcNow;
-                var response = await _service.AddInventoryItemType(InventoryItemTypeEntity);
+                var inventoryItemTypeEntity = _mapper.Map<InventoryItemType>(request.NewInventoryItemTypeDto);
+                inventoryItemTypeEntity.Created_At = DateTime.UtcNow;
+                var response = await _service.AddInventoryItemType(inventoryItemTypeEntity);
                 if (response > 0)
                 {
                     return new()
                     {
                         Id = response,
                         Success = true,
-                        Message = "Inventory Item Type has been created successfully"
+                        Message = "Inventory Item Type has been created successfully",
+                        StatusCode = StatusCodes.Status201Created
                     };
                 }
                 throw new Exception("Failed to create Inventory Item Type");
@@ -33,7 +35,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
                 return new()
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }
