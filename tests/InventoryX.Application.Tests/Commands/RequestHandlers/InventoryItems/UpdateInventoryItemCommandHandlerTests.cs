@@ -15,7 +15,7 @@ public class UpdateInventoryItemCommandHandlerTests
     private readonly UpdateInventoryItemCommand _updateCommand;
     private readonly int _successResponse;
     private readonly RetailStock? _retailStock;
-    private InventoryItem? _inventoryItem;
+    private readonly InventoryItem? _inventoryItem;
     private readonly CancellationToken _token;
     private readonly int _failedResponse;
 
@@ -48,6 +48,8 @@ public class UpdateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenCalled_ShouldUpdateInventoryItem()
     {
+        _updateCommand.RecordLoss = false;
+        
         await _sut.Handle(_updateCommand, _token);
 
         _serviceMock.Verify(x => x.UpdateInventoryItem(It.Is<InventoryItem>(r =>
@@ -83,7 +85,7 @@ public class UpdateInventoryItemCommandHandlerTests
     }
     
     [Fact]
-    public async Task Handle_WhenInventoryItemUpdatedAndRecordLossTrue_ShouldGetOldInventoryItem()
+    public async Task Handle_WhenRecordLossTrue_ShouldGetOldInventoryItem()
     {
         var command = _fixture.Build<UpdateInventoryItemCommand>()
             .With(r => r.RecordLoss, true).Create();
@@ -93,6 +95,21 @@ public class UpdateInventoryItemCommandHandlerTests
         await _sut.Handle(command, _token);
         
         _serviceMock.Verify(r => r.GetInventoryItem(command.Id));
+    }
+    [Fact]
+    public async Task Handle_WhenGetInventoryItemReturnsNull_ShouldReturnFailedApiResponse()
+    {
+        _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
+            .ReturnsAsync(_successResponse);
+        _serviceMock.Setup(x => x.GetInventoryItem(_updateCommand.Id))
+            .ReturnsAsync(() => null); 
+    
+        var result = await _sut.Handle(_updateCommand, _token);
+        
+        _salesMock.Verify(v => v.AddSale(It.IsAny<Sale>()), Times.Never);
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        result.Success.Should().BeFalse();
     }
     [Fact]
     public async Task Handle_WhenGetInventoryItemThrowsException_ShouldReturnFailedApiResponse()
@@ -130,6 +147,8 @@ public class UpdateInventoryItemCommandHandlerTests
         await _sut.Handle(command, _token);
         
         _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r => 
+            r.InventoryItemId == command.Id &&
+            r.Price == 0 &&
             r.Quantity == oldInventoryItem.TotalAmount - _inventoryItem.TotalAmount &&
             r.Created_At.HasValue &&
             r.Created_At.Value.Date == DateTime.UtcNow.Date
@@ -235,6 +254,20 @@ public class UpdateInventoryItemCommandHandlerTests
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
+    }
+    
+    [Fact]
+    public async Task Handle_WhenGetRetailStockReturnsNull_ShouldReturnFailedApiResponse()
+    {
+        _updateCommand.RecordLoss = false;
+        _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
+            .ReturnsAsync(_successResponse);
+        _retailStockMock.Setup(x => x.GetRetailStock(It.IsAny<string>(), _updateCommand.Id))
+            .ReturnsAsync(() => null);
+        
+        await _sut.Handle(_updateCommand, _token);
+
+        _retailStockMock.Verify(r => r.UpdateRetailStock(It.IsAny<RetailStock>()), Times.Never);
     }
     
     [Fact]
@@ -349,6 +382,22 @@ public class UpdateInventoryItemCommandHandlerTests
         
         var result = await _sut.Handle(command, _token);
 
+        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r => 
+            r.Quantity == _inventoryItem.TotalAmount &&
+            r.Updated_At.HasValue &&
+            r.Updated_At.Value.Date == DateTime.UtcNow.Date
+        )), Times.Once);
+        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r => 
+            r.InventoryItemId == command.Id &&
+            r.Price == 0 &&
+            r.Quantity == oldInventoryItem.TotalAmount - _inventoryItem.TotalAmount &&
+            r.Created_At.HasValue &&
+            r.Created_At.Value.Date == DateTime.UtcNow.Date
+        )), Times.Once);
+        _serviceMock.Verify(x => x.UpdateInventoryItem(It.Is<InventoryItem>(r =>
+            r.Id == command.Id &&
+            r.Updated_At.HasValue
+        )), Times.Once);
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status202Accepted);
         result.Success.Should().BeTrue();

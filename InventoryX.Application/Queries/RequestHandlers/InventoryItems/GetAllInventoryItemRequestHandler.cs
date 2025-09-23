@@ -1,14 +1,9 @@
 ﻿using AutoMapper;
 using InventoryX.Application.DTOs.InventoryItems;
-using InventoryX.Application.Queries.Requests.InventoryItems;
-using InventoryX.Application.Queries.Requests.Purchases;
+using InventoryX.Application.Queries.Requests.InventoryItems; 
 using InventoryX.Application.Services.IServices;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR; 
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
 {
@@ -21,12 +16,13 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
             try
             {
                 var response = await _service.GetAllInventoryItems() ?? throw new Exception("Failed to retrieve all inventory items");
-                var InventoryItemDtos = _mapper.Map<IEnumerable<GetInventoryItemDto>>(response);
+                var inventoryItemDtos = _mapper.Map<IEnumerable<GetInventoryItemDto>>(response);
                 return new()
                 {
                     Success = true,
                     Message = "Retrieved all inventory items successfully",
-                    Body = InventoryItemDtos
+                    Body = inventoryItemDtos,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -35,6 +31,7 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
                 {
                     Success = false,
                     Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

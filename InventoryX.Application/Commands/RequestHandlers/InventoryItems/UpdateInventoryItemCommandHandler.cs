@@ -20,21 +20,25 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
             using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             { 
-                var InventoryItemEntity = _mapper.Map<InventoryItem>(request.InventoryItemDto);
-                InventoryItemEntity.Id = request.Id;
-                InventoryItemEntity.Updated_At = DateTime.UtcNow;
-                InventoryItem? OldInventoryItem;
-                int response = await _service.UpdateInventoryItem(InventoryItemEntity);
+                var inventoryItemEntity = _mapper.Map<InventoryItem>(request.InventoryItemDto);
+                inventoryItemEntity.Id = request.Id;
+                inventoryItemEntity.Updated_At = DateTime.UtcNow;
+                InventoryItem? oldInventoryItem = null;
+                if (request.RecordLoss)
+                {
+                    oldInventoryItem = await _service.GetInventoryItem(request.Id);
+                    if (oldInventoryItem == null) throw new InvalidDataException("Failed to get old inventory item");
+                }
+                int response = await _service.UpdateInventoryItem(inventoryItemEntity);
                 if (response <= 0) throw new Exception("Failed to update Inventory Item");
                 
                 //Create sale record only if loss should be recorded
-                if (request.RecordLoss)
+                if (request.RecordLoss && oldInventoryItem != null)
                 {
-                    OldInventoryItem = await _service.GetInventoryItem(request.Id);
-                    var quantityDiff = OldInventoryItem.TotalAmount - InventoryItemEntity.TotalAmount;
+                    var quantityDiff = oldInventoryItem.TotalAmount - inventoryItemEntity.TotalAmount;
                     if(quantityDiff > 0)
                     {
-                        var saleResponse = await _saleService.AddSale(new() { InventoryItem = null, Seller = null, UserId = null, InventoryItemId = InventoryItemEntity.Id, Price = 0, Quantity = quantityDiff, Created_At = DateTime.UtcNow });
+                        var saleResponse = await _saleService.AddSale(new() { InventoryItem = null, Seller = null, UserId = null, InventoryItemId = inventoryItemEntity.Id, Price = 0, Quantity = quantityDiff, Created_At = DateTime.UtcNow });
                         if (saleResponse <= 0) throw new Exception("Failed to update Inventory Item amount as loss");
                     }
                 }                     
@@ -42,9 +46,9 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
 
                 if (retailStock is not null)
                 {
-                    if(retailStock.Quantity > InventoryItemEntity.TotalAmount)
+                    if(retailStock.Quantity > inventoryItemEntity.TotalAmount)
                     {
-                        retailStock.Quantity = InventoryItemEntity.TotalAmount;
+                        retailStock.Quantity = inventoryItemEntity.TotalAmount;
                         retailStock.Updated_At = DateTime.UtcNow;
                         int result = await _retailStockService.UpdateRetailStock(retailStock);
 
@@ -54,12 +58,11 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                 transactionScope.Complete();
                 return new()
                 {
-                    Id = InventoryItemEntity.Id,
+                    Id = inventoryItemEntity.Id,
                     Success = true,
                     Message = "Inventory Item has been updated successfully",
                     StatusCode = StatusCodes.Status202Accepted
                 };
-                throw new Exception("Failed to update Inventory Item");
             }
             catch (Exception ex)
             {

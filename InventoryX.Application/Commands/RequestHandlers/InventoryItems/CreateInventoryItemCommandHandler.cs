@@ -18,9 +18,9 @@
                 using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
                 try
                 {
-                    var InventoryItemEntity = _mapper.Map<InventoryItem>(request.NewInventoryItemDto);
-                    InventoryItemEntity.Created_At = DateTime.UtcNow;
-                    var response = await _service.AddInventoryItem(InventoryItemEntity);
+                    var inventoryItemEntity = _mapper.Map<InventoryItem>(request.NewInventoryItemDto);
+                    inventoryItemEntity.Created_At = DateTime.UtcNow;
+                    var response = await _service.AddInventoryItem(inventoryItemEntity);
                     if (response > 0)
                     {
                         RetailStock retailStock = new() { InventoryItemId = response, Quantity = request.RetailQuantity, Created_At = DateTime.UtcNow };
