@@ -7,3 +7,5 @@ global using InventoryX.Application.DTOs.InventoryItems;
 global using InventoryX.Application.Services.IServices;
 global using InventoryX.Domain.Models;
 global using Microsoft.AspNetCore.Http;
+global using AutoFixture.Xunit2;
+global using InventoryX.Common.Tests.AutoFixtureExtensions;
