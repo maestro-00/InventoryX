@@ -3,11 +3,7 @@ using InventoryX.Application.Commands.Requests.Purchases;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Purchases
 {
@@ -19,16 +15,17 @@ namespace InventoryX.Application.Commands.RequestHandlers.Purchases
         {
             try
             {
-                var PurchaseEntity = _mapper.Map<Purchase>(request.NewPurchaseDto);
-                PurchaseEntity.Created_At = DateTime.UtcNow;
-                var response = await _service.AddPurchase(PurchaseEntity);
+                var purchaseEntity = _mapper.Map<Purchase>(request.NewPurchaseDto);
+                purchaseEntity.Created_At = DateTime.UtcNow;
+                var response = await _service.AddPurchase(purchaseEntity);
                 if (response > 0)
                 {
                     return new()
                     {
                         Id = response,
                         Success = true,
-                        Message = "Purchase has been created successfully"
+                        Message = "Purchase has been created successfully",
+                        StatusCode = StatusCodes.Status201Created
                     };
                 }
                 throw new Exception("Failed to create purchase");
@@ -38,7 +35,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Purchases
                 return new()
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }
