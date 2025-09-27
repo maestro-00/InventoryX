@@ -1,6 +1,6 @@
 using InventoryX.Application.Commands.RequestHandlers.InventoryItems;
 using InventoryX.Application.Commands.Requests.InventoryItems;
-using Microsoft.AspNetCore.Http;
+using InventoryX.Application.DTOs.InventoryItems;
 
 namespace InventoryX.Application.Tests.Commands.RequestHandlers.InventoryItems;
 

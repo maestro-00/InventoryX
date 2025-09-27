@@ -1,5 +1,6 @@
 using InventoryX.Application.Queries.RequestHandlers.InventoryItems;
 using InventoryX.Application.Queries.Requests.InventoryItems;
+using InventoryX.Application.DTOs.InventoryItems;
 
 namespace InventoryX.Application.Tests.Queries.RequestHandlers.InventoryItems;
 
