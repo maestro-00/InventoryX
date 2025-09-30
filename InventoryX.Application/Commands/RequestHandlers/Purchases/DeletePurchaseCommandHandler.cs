@@ -6,10 +6,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Purchases
 {
-    public class DeletePurchaseCommandHandler(IPurchaseService service, IMapper mapper) : IRequestHandler<DeletePurchaseCommand, ApiResponse>
+    public class DeletePurchaseCommandHandler(IPurchaseService service) : IRequestHandler<DeletePurchaseCommand, ApiResponse>
     {
-        private readonly IPurchaseService _service = service;
-        private readonly IMapper _mapper = mapper;
+        private readonly IPurchaseService _service = service; 
         public async Task<ApiResponse> Handle(DeletePurchaseCommand request, CancellationToken cancellationToken)
         {
             try
