@@ -2,15 +2,11 @@
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
 {
-    public class DeleteInventoryItemTypeCommandHandler(IInventoryItemTypeService service, IMapper mapper) : IRequestHandler<DeleteInventoryItemTypeCommand, ApiResponse>
+    public class DeleteInventoryItemTypeCommandHandler(IInventoryItemTypeService service) : IRequestHandler<DeleteInventoryItemTypeCommand, ApiResponse>
     {
         private readonly IInventoryItemTypeService _service = service;
 
@@ -18,13 +14,24 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
         {
             try
             {
+                if (request.Id < 1)
+                {
+                    return new ApiResponse
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Success = false,
+                        Message = "Invalid inventory item type id passed"
+                    };
+                }
+                
                 var response = await _service.DeleteInventoryItemType(request.Id);
                 if (response > 0)
                 {
                     return new()
                     {
                         Success = true,
-                        Message = "Inventory Item Type has been deleted successfully"
+                        Message = "Inventory Item Type has been deleted successfully",
+                        StatusCode = StatusCodes.Status202Accepted
                     };
                 }
                 throw new Exception("Failed to delete Inventory Item Type");
@@ -34,7 +41,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
                 return new()
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

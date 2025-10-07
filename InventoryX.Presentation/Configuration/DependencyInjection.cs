@@ -1,4 +1,4 @@
-﻿using InventoryX.Application.Services; 
+using InventoryX.Application.Services; 
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
@@ -38,14 +38,15 @@ namespace InventoryX.Presentation.Configuration
             services.AddHttpContextAccessor();
             return services;
         }
-        public static IServiceCollection AddPresentation(this IServiceCollection services)
+        public static IServiceCollection AddPresentation(this IServiceCollection services,IConfiguration configuration)
         {
             services.AddCors(options =>
             { 
                     options.AddPolicy("AllowSpecificOrigin",
                 builder =>
                 {
-                    builder.WithOrigins("http://localhost:5173") // Ensure the correct port number
+                    var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                    builder.WithOrigins(allowedOrigins) // Ensure the correct port number
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials(); // Include credentials if needed
@@ -77,6 +78,21 @@ namespace InventoryX.Presentation.Configuration
             services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddApiEndpoints().AddDefaultTokenProviders();
 
             //services.AddIdentityApiEndpoints<User>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+            //Configuring cookie auth handler for SPAs
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
+            });
+
             return services;
         }
 

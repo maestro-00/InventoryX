@@ -10,6 +10,6 @@ namespace InventoryX.Application.Commands.Requests.RetailStock
 {
     public class UpdateRetailStockCommand : IRequest<ApiResponse>
     {
-        public RetailStockCommandDto RetailStock { get; set; }
+        public required RetailStockCommandDto RetailStock { get; set; }
     }
 }

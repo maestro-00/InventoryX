@@ -3,11 +3,7 @@ using InventoryX.Application.DTOs.Purchases;
 using InventoryX.Application.Queries.Requests.Purchases;
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.Purchases
 {
@@ -19,13 +15,33 @@ namespace InventoryX.Application.Queries.RequestHandlers.Purchases
         {
             try
             {
-                var response = await _service.GetPurchase(request.Id) ?? throw new Exception("Purchase does not exist");
-                var PurchaseDto = _mapper.Map<GetPurchaseDto>(response);
+                if (request.Id < 1)
+                {
+                    return new ApiResponse
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Success = false,
+                        Message = "Invalid Purchase Id passed"
+                    };
+                }
+
+                var response = await _service.GetPurchase(request.Id);
+                if (response == null)
+                {
+                    return new ApiResponse
+                    {
+                        StatusCode = StatusCodes.Status404NotFound,
+                        Message = "Purchase not found",
+                        Success = false,
+                    };
+                }
+                var purchaseDto = _mapper.Map<GetPurchaseDto>(response);
                 return new ApiResponse
                 {
                     Success = true,
                     Message = "Retrieved Purchase successfully",
-                    Body = PurchaseDto
+                    Body = purchaseDto,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -33,7 +49,8 @@ namespace InventoryX.Application.Queries.RequestHandlers.Purchases
                 return new ApiResponse
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
 
             }

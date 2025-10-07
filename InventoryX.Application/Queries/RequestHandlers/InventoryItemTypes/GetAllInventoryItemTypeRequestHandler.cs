@@ -3,11 +3,7 @@ using InventoryX.Application.DTOs.InventoryItemTypes;
 using InventoryX.Application.Queries.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItemTypes
 {
@@ -20,12 +16,13 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItemTypes
             try
             {
                 var response = await _service.GetAllInventoryItemTypes() ?? throw new Exception("Failed to retrieve all inventory item types");
-                var InventoryItemTypeDtos = _mapper.Map<IEnumerable<GetInventoryItemTypeDto>>(response);
+                var inventoryItemTypeDtos = _mapper.Map<IEnumerable<GetInventoryItemTypeDto>>(response);
                 return new()
                 {
                     Success = true,
                     Message = "Retrieved all inventory item types successfully",
-                    Body = InventoryItemTypeDtos
+                    Body = inventoryItemTypeDtos,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -34,6 +31,7 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItemTypes
                 {
                     Success = false,
                     Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

@@ -3,11 +3,7 @@ using InventoryX.Application.DTOs.Purchases;
 using InventoryX.Application.Queries.Requests.Purchases; 
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http; 
 
 namespace InventoryX.Application.Queries.RequestHandlers.Purchases
 {
@@ -20,12 +16,13 @@ namespace InventoryX.Application.Queries.RequestHandlers.Purchases
             try
             {
                 var response = await _service.GetAllPurchases() ?? throw new Exception("Failed to retrieve all purchases");
-                var PurchaseDtos = _mapper.Map<IEnumerable<GetPurchaseDto>>(response);
+                var purchaseDtos = _mapper.Map<IEnumerable<GetPurchaseDto>>(response);
                 return new()
                 {
                     Success = true,
                     Message = "Retrieved all purchases successfully",
-                    Body = PurchaseDtos
+                    Body = purchaseDtos,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -34,6 +31,7 @@ namespace InventoryX.Application.Queries.RequestHandlers.Purchases
                 {
                     Success = false,
                     Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

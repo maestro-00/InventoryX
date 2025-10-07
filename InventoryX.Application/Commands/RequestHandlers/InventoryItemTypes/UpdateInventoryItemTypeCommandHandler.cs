@@ -2,12 +2,8 @@
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR; 
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
 {
@@ -20,17 +16,18 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
         {
             try
             {
-                var InventoryItemTypeEntity = _mapper.Map<InventoryItemType>(request.InventoryItemTypeDto);
-                InventoryItemTypeEntity.Id = request.Id;
-                InventoryItemTypeEntity.Updated_At = DateTime.UtcNow;
-                var response = await _service.UpdateInventoryItemType(InventoryItemTypeEntity);
+                var inventoryItemTypeEntity = _mapper.Map<InventoryItemType>(request.InventoryItemTypeDto);
+                inventoryItemTypeEntity.Id = request.Id;
+                inventoryItemTypeEntity.Updated_At = DateTime.UtcNow;
+                var response = await _service.UpdateInventoryItemType(inventoryItemTypeEntity);
                 if (response > 0)
                 {
                     return new()
                     {
-                        Id = InventoryItemTypeEntity.Id,
+                        Id = inventoryItemTypeEntity.Id,
                         Success = true,
-                        Message = "Inventory Item Type has been updated successfully"
+                        Message = "Inventory Item Type has been updated successfully",
+                        StatusCode = StatusCodes.Status202Accepted
                     };
                 }
                 throw new Exception("Failed to update Inventory Item Type");
@@ -40,7 +37,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
                 return new()
                 {
                     Success = false,
-                    Message = ex.Message ?? "Something went wrong. Try again later."
+                    Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }
