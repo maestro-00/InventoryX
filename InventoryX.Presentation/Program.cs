@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
+using static InventoryX.Application.Extensions.IdentityApiEndpointRouteBuilderExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration);
@@ -18,7 +19,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 var group = app.MapGroup("/api/auth")
-    .MapCustomIdentityApi<User>();< User>();
+    .MapCustomIdentityApi<User>();
 
 app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
 {
