@@ -1,13 +1,13 @@
-﻿using AutoMapper;
-using InventoryX.Application.Commands.Requests.Sales;
-using InventoryX.Application.Services.IServices;
-using InventoryX.Domain.Models;
-using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
+using InventoryX.Application.Commands.Requests.Sales;
+using InventoryX.Application.Services.IServices;
+using InventoryX.Domain.Models;
+using MediatR;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Sales
 {

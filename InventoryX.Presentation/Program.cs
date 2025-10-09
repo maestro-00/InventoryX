@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 using static InventoryX.Application.Extensions.IdentityApiEndpointRouteBuilderExtensions;
 
+
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration);
 

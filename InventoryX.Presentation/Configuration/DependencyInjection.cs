@@ -1,4 +1,6 @@
-using InventoryX.Application.Services; 
+using System.Text;
+using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
@@ -9,8 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
-using System.Text;
-using InventoryX.Application.Repository;
 
 namespace InventoryX.Presentation.Configuration
 {
@@ -18,7 +18,8 @@ namespace InventoryX.Presentation.Configuration
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<AppDbContext>(options => {
+            services.AddDbContext<AppDbContext>(options =>
+            {
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
             });
             services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
@@ -38,19 +39,19 @@ namespace InventoryX.Presentation.Configuration
             services.AddHttpContextAccessor();
             return services;
         }
-        public static IServiceCollection AddPresentation(this IServiceCollection services,IConfiguration configuration)
+        public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddCors(options =>
-            { 
-                    options.AddPolicy("AllowSpecificOrigin",
-                builder =>
-                {
-                    var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-                    builder.WithOrigins(allowedOrigins) // Ensure the correct port number
-                           .AllowAnyHeader()
-                           .AllowAnyMethod()
-                           .AllowCredentials(); // Include credentials if needed
-                });
+            {
+                options.AddPolicy("AllowSpecificOrigin",
+            builder =>
+            {
+                var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                builder.WithOrigins(allowedOrigins) // Ensure the correct port number
+                       .AllowAnyHeader()
+                       .AllowAnyMethod()
+                       .AllowCredentials(); // Include credentials if needed
+            });
             });
             services.AddControllers();
             //Add if only there is a cyclical reference
@@ -59,7 +60,8 @@ namespace InventoryX.Presentation.Configuration
             //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
             //});  
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(opt => {
+            services.AddSwaggerGen(opt =>
+            {
                 opt.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,

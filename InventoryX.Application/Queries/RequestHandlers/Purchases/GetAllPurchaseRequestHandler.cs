@@ -1,9 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.DTOs.Purchases;
-using InventoryX.Application.Queries.Requests.Purchases; 
+using InventoryX.Application.Queries.Requests.Purchases;
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using Microsoft.AspNetCore.Http; 
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.Purchases
 {

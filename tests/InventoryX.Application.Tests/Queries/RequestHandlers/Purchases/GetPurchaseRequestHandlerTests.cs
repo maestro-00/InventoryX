@@ -15,15 +15,15 @@ public class GetPurchaseRequestHandlerTests
         CancellationToken ct)
     {
         request.Id = 0;
-        
+
         var result = await sut.Handle(request, ct);
-        
+
         purchaseMock.Verify(p => p.GetPurchase(It.IsAny<int>()), Times.Never);
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
         result.Body.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenPurchaseNotFound_ShouldReturnNotFoundResponse(
@@ -34,15 +34,15 @@ public class GetPurchaseRequestHandlerTests
     {
         purchaseMock.Setup(p => p.GetPurchase(It.IsAny<int>()).Result)
             .Returns((Purchase?)null);
-        
+
         var result = await sut.Handle(request, ct);
-        
+
         purchaseMock.Verify(p => p.GetPurchase(request.Id), Times.Once);
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status404NotFound);
         result.Body.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenGetPurchaseThrowsException_ShouldReturnFailedResponse(
@@ -53,9 +53,9 @@ public class GetPurchaseRequestHandlerTests
     {
         purchaseMock.Setup(p => p.GetPurchase(It.IsAny<int>()).Result)
             .Throws(new Exception("Exception thrown"));
-        
+
         var result = await sut.Handle(request, ct);
-        
+
         purchaseMock.Verify(p => p.GetPurchase(request.Id), Times.Once);
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
@@ -77,35 +77,34 @@ public class GetPurchaseRequestHandlerTests
             .Returns(purchase);
         mapperMock.Setup(m => m.Map<GetPurchaseDto>(It.IsAny<Purchase>()))
             .Returns(purchaseDto);
-        
+
         var result = await sut.Handle(request, ct);
-        
+
         purchaseMock.Verify(p => p.GetPurchase(request.Id), Times.Once);
         mapperMock.Verify(m => m.Map<GetPurchaseDto>(purchase), Times.Once);
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
         result.Body.Should().BeEquivalentTo(purchaseDto);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenMapperThrowsException_ShouldReturnFailedResponse(
-        [Frozen] Mock<IPurchaseService> purchaseMock,
         [Frozen] Mock<IMapper> mapperMock,
         GetPurchaseRequest request,
         GetPurchaseRequestHandler sut,
         CancellationToken ct)
-    { 
+    {
         mapperMock.Setup(m => m.Map<GetPurchaseDto>(It.IsAny<Purchase>()))
             .Throws(new Exception("Exception thrown"));
-        
+
         var result = await sut.Handle(request, ct);
-        
-        mapperMock.Verify(m => m.Map<GetPurchaseDto>(It.IsAny<Purchase>()), Times.Once); 
+
+        mapperMock.Verify(m => m.Map<GetPurchaseDto>(It.IsAny<Purchase>()), Times.Once);
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Body.Should().BeNull();
         result.Message.Should().Contain("Exception");
     }
-    
+
 }

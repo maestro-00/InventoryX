@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;

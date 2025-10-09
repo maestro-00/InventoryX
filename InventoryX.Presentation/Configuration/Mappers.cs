@@ -1,11 +1,11 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.DTOs.InventoryItems;
 using InventoryX.Application.DTOs.InventoryItemTypes;
 using InventoryX.Application.DTOs.Purchases;
 using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.DTOs.Sales;
 using InventoryX.Application.DTOs.Users;
-using InventoryX.Domain.Models; 
+using InventoryX.Domain.Models;
 
 namespace InventoryX.Presentation.Configuration
 {
@@ -15,8 +15,8 @@ namespace InventoryX.Presentation.Configuration
         {
             CreateMap<InventoryItemCommandDto, InventoryItem>().ReverseMap();
             CreateMap<InventoryItemTypeCommandDto, InventoryItemType>().ReverseMap();
-            CreateMap<PurchaseCommandDto,Purchase>().ReverseMap();
-            CreateMap<SaleCommandDto,Sale>().ReverseMap();
+            CreateMap<PurchaseCommandDto, Purchase>().ReverseMap();
+            CreateMap<SaleCommandDto, Sale>().ReverseMap();
             CreateMap<GetInventoryItemTypeDto, InventoryItemType>().ReverseMap();
             CreateMap<GetInventoryItemDto, InventoryItem>()
                 .ForPath(a => a.Type, o => o.MapFrom(dto => dto.Type))
