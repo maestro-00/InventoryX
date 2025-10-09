@@ -1,6 +1,6 @@
 using AutoMapper;
 using InventoryX.Application.Commands.Requests.RetailStock;
-using InventoryX.Application.CustomExtensions;
+using InventoryX.Application.Exceptions;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
