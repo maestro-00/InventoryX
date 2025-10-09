@@ -1,8 +1,8 @@
-﻿using InventoryX.Application.Commands.Requests.InventoryItems; 
+using System.Transactions;
+using InventoryX.Application.Commands.Requests.InventoryItems;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
-using System.Transactions;
 using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
@@ -10,7 +10,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
     public class DeleteInventoryItemCommandHandler(IInventoryItemService service, IRetailStockService retailStockService) : IRequestHandler<DeleteInventoryItemCommand, ApiResponse>
     {
         private readonly IInventoryItemService _service = service;
-        private readonly IRetailStockService _retailStockService = retailStockService; 
+        private readonly IRetailStockService _retailStockService = retailStockService;
         public async Task<ApiResponse> Handle(DeleteInventoryItemCommand request, CancellationToken cancellationToken)
         {
             using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);

@@ -19,16 +19,16 @@ public class CreatePurchaseCommandHandlerTests
             .Throws(new Exception("Exception thrown"));
 
         var result = await sut.Handle(command, token);
-        
-            
-        mapperMock.Verify(s => s.Map<Purchase>(command.NewPurchaseDto),Times.Once);
+
+
+        mapperMock.Verify(s => s.Map<Purchase>(command.NewPurchaseDto), Times.Once);
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Id.Should().BeNull();
         result.Message.Should().Contain("Exception");
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenCreatePurchaseFails_ShouldReturnFailedResponse(
@@ -43,14 +43,14 @@ public class CreatePurchaseCommandHandlerTests
             .Returns(failedResponse);
 
         var result = await sut.Handle(command, token);
-        
-        purchaseMock.Verify(s => s.AddPurchase(It.IsAny<Purchase>()),Times.Once);
+
+        purchaseMock.Verify(s => s.AddPurchase(It.IsAny<Purchase>()), Times.Once);
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-        result.Id.Should().BeNull(); 
+        result.Id.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenCreatePurchaseThrowsException_ShouldReturnFailedResponse(
@@ -64,19 +64,19 @@ public class CreatePurchaseCommandHandlerTests
             .Throws(new Exception("Exception thrown"));
 
         var result = await sut.Handle(command, token);
-        
-        purchaseMock.Verify(s => s.AddPurchase(It.IsAny<Purchase>()),Times.Once);
+
+        purchaseMock.Verify(s => s.AddPurchase(It.IsAny<Purchase>()), Times.Once);
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Id.Should().BeNull();
         result.Message.Should().Contain("Exception");
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenCreatePurchaseSucceeds_ShouldReturnSuccessResponse(
-            Purchase purchase, 
+            Purchase purchase,
             [Frozen] Mock<IPurchaseService> purchaseMock,
             [Frozen] Mock<IMapper> mapperMock,
             CreatePurchaseCommand command,
@@ -91,8 +91,8 @@ public class CreatePurchaseCommandHandlerTests
             .Returns(purchase);
 
         var result = await sut.Handle(command, token);
-            
-        mapperMock.Verify(s => s.Map<Purchase>(command.NewPurchaseDto),Times.Once);
+
+        mapperMock.Verify(s => s.Map<Purchase>(command.NewPurchaseDto), Times.Once);
         purchaseMock.Verify(p => p.AddPurchase(It.Is<Purchase>(
                 pItem => pItem == purchase &&
                          pItem.Created_At != null &&
@@ -101,7 +101,7 @@ public class CreatePurchaseCommandHandlerTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(StatusCodes.Status201Created);
-        result.Id.Should().Be(newlyCreatedId); 
+        result.Id.Should().Be(newlyCreatedId);
     }
-    
+
 }

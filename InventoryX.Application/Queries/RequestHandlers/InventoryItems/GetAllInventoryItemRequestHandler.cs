@@ -1,8 +1,8 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.DTOs.InventoryItems;
-using InventoryX.Application.Queries.Requests.InventoryItems; 
+using InventoryX.Application.Queries.Requests.InventoryItems;
 using InventoryX.Application.Services.IServices;
-using MediatR; 
+using MediatR;
 using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems

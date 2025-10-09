@@ -14,17 +14,17 @@ public class GetInventoryItemTypeRequestHandlerTests
             GetInventoryItemTypeRequest request,
             CancellationToken token)
     {
-            request.Id = 0;
+        request.Id = 0;
 
-            var result = await sut.Handle(request, token);
-            
-            serviceMock.Verify(s => s.GetInventoryItemType(It.IsAny<int>()),Times.Never);
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-            result.Body.Should().BeNull();
+        var result = await sut.Handle(request, token);
+
+        serviceMock.Verify(s => s.GetInventoryItemType(It.IsAny<int>()), Times.Never);
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+        result.Body.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenGetInventoryItemIsNull_ReturnNotFoundResponse(
@@ -33,18 +33,18 @@ public class GetInventoryItemTypeRequestHandlerTests
             GetInventoryItemTypeRequest request,
             CancellationToken token)
     {
-            serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
-                    .Returns((InventoryItemType?)null);
-            
-            var result = await sut.Handle(request, token);
-            
-            serviceMock.Verify(s => s.GetInventoryItemType(request.Id),Times.Once);
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.StatusCode.Should().Be(StatusCodes.Status404NotFound);
-            result.Body.Should().BeNull();
+        serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
+                .Returns((InventoryItemType?)null);
+
+        var result = await sut.Handle(request, token);
+
+        serviceMock.Verify(s => s.GetInventoryItemType(request.Id), Times.Once);
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status404NotFound);
+        result.Body.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenGetInventoryItemThrowsException_ReturnFailedResponse(
@@ -53,46 +53,46 @@ public class GetInventoryItemTypeRequestHandlerTests
             GetInventoryItemTypeRequest request,
             CancellationToken token)
     {
-            serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
-                    .Throws(new Exception("Exception thrown"));
-            
-            var result = await sut.Handle(request, token);
-            
-            serviceMock.Verify(s => s.GetInventoryItemType(request.Id),Times.Once);
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-            result.Body.Should().BeNull();
-            result.Message.Should().Contain("Exception");
+        serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
+                .Throws(new Exception("Exception thrown"));
+
+        var result = await sut.Handle(request, token);
+
+        serviceMock.Verify(s => s.GetInventoryItemType(request.Id), Times.Once);
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        result.Body.Should().BeNull();
+        result.Message.Should().Contain("Exception");
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenGetInventoryItemSucceeds_ReturnSuccessResponse(
-            InventoryItemType itemTypeMock, 
-            GetInventoryItemTypeDto dtoMock, 
+            InventoryItemType itemTypeMock,
+            GetInventoryItemTypeDto dtoMock,
             [Frozen] Mock<IMapper> mapperMock,
             [Frozen] Mock<IInventoryItemTypeService> serviceMock,
             GetInventoryItemTypeRequestHandler sut,
             GetInventoryItemTypeRequest request,
             CancellationToken token)
     {
-            serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
-                    .Returns(itemTypeMock);
-            mapperMock.Setup(m => m.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()))
-                    .Returns(dtoMock);
-        
-            var result = await sut.Handle(request, token);
-            
-            serviceMock.Verify(s => s.GetInventoryItemType(request.Id),Times.Once);
-            mapperMock.Verify(m => m.Map<GetInventoryItemTypeDto>(itemTypeMock), Times.Once);
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-            result.StatusCode.Should().Be(StatusCodes.Status200OK);
-            result.Body.Should().NotBeNull();
-            result.Body.Should().BeEquivalentTo(dtoMock);
+        serviceMock.Setup(s => s.GetInventoryItemType(It.IsAny<int>()).Result)
+                .Returns(itemTypeMock);
+        mapperMock.Setup(m => m.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()))
+                .Returns(dtoMock);
+
+        var result = await sut.Handle(request, token);
+
+        serviceMock.Verify(s => s.GetInventoryItemType(request.Id), Times.Once);
+        mapperMock.Verify(m => m.Map<GetInventoryItemTypeDto>(itemTypeMock), Times.Once);
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Body.Should().NotBeNull();
+        result.Body.Should().BeEquivalentTo(dtoMock);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenMapperThrowsException_ReturnFailedResponse(
@@ -101,17 +101,17 @@ public class GetInventoryItemTypeRequestHandlerTests
             GetInventoryItemTypeRequest request,
             CancellationToken token)
     {
-            mapperMock.Setup(s => s.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()))
-                    .Throws(new Exception("Exception thrown"));
-            
-            var result = await sut.Handle(request, token);
-            
-            mapperMock.Verify(s => s.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()),Times.Once);
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-            result.Body.Should().BeNull();
-            result.Message.Should().Contain("Exception");
+        mapperMock.Setup(s => s.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()))
+                .Throws(new Exception("Exception thrown"));
+
+        var result = await sut.Handle(request, token);
+
+        mapperMock.Verify(s => s.Map<GetInventoryItemTypeDto>(It.IsAny<InventoryItemType>()), Times.Once);
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        result.Body.Should().BeNull();
+        result.Message.Should().Contain("Exception");
     }
-    
+
 }

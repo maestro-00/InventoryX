@@ -1,13 +1,9 @@
-﻿using AutoMapper;
-using InventoryX.Application.DTOs.RetailStock; 
+using AutoMapper;
+using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.Queries.Requests.RetailStock;
 using InventoryX.Application.Services.IServices;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
 {
@@ -20,12 +16,13 @@ namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
             try
             {
                 var response = await _service.GetAllRetailStock() ?? throw new Exception("Failed to retrieve all retail stock");
-                var RetailStockDtos = _mapper.Map<IEnumerable<RetailStockDto>>(response);
+                var retailStockDtos = _mapper.Map<IEnumerable<RetailStockDto>>(response);
                 return new()
                 {
                     Success = true,
                     Message = "Retrieved all retail stock successfully",
-                    Body = RetailStockDtos
+                    Body = retailStockDtos,
+                    StatusCode = StatusCodes.Status200OK
                 };
             }
             catch (Exception ex)
@@ -34,6 +31,7 @@ namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
                 {
                     Success = false,
                     Message = ex.Message ?? "Something went wrong. Try again later.",
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

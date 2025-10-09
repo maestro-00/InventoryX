@@ -1,5 +1,5 @@
-﻿using InventoryX.Application.DTOs.InventoryItemTypes;
-using MediatR; 
+using InventoryX.Application.DTOs.InventoryItemTypes;
+using MediatR;
 
 namespace InventoryX.Application.Commands.Requests.InventoryItemTypes
 {

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.Commands.Requests.InventoryItemTypes;
 using InventoryX.Application.Services.IServices;
 using MediatR;
@@ -23,7 +23,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItemTypes
                         Message = "Invalid inventory item type id passed"
                     };
                 }
-                
+
                 var response = await _service.DeleteInventoryItemType(request.Id);
                 if (response > 0)
                 {

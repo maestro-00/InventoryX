@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.Commands.Requests.Purchases;
 using InventoryX.Application.Services.IServices;
 using MediatR;
@@ -8,7 +8,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Purchases
 {
     public class DeletePurchaseCommandHandler(IPurchaseService service) : IRequestHandler<DeletePurchaseCommand, ApiResponse>
     {
-        private readonly IPurchaseService _service = service; 
+        private readonly IPurchaseService _service = service;
         public async Task<ApiResponse> Handle(DeletePurchaseCommand request, CancellationToken cancellationToken)
         {
             try
@@ -41,7 +41,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Purchases
                 {
                     Success = false,
                     Message = ex.Message ?? "Something went wrong. Try again later.",
-                        StatusCode = StatusCodes.Status500InternalServerError
+                    StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
         }

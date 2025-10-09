@@ -24,7 +24,7 @@ public class UpdateInventoryItemCommandHandlerTests
         _fixture = new Fixture();
         //Mocks
         _serviceMock = _fixture.Freeze<Mock<IInventoryItemService>>();
-        _mapperMock = _fixture.Freeze<Mock<IMapper>>(); 
+        _mapperMock = _fixture.Freeze<Mock<IMapper>>();
         _retailStockMock = new Mock<IRetailStockService>();
         _salesMock = new Mock<ISaleService>();
         _inventoryItem = _fixture.Create<InventoryItem>();
@@ -33,23 +33,23 @@ public class UpdateInventoryItemCommandHandlerTests
         _retailStock = _fixture.Create<RetailStock>();
         _token = _fixture.Create<CancellationToken>();
         _failedResponse = -1;
-        
-        _sut = new UpdateInventoryItemCommandHandler(_serviceMock.Object,_retailStockMock.Object, _mapperMock.Object,_salesMock.Object);
+
+        _sut = new UpdateInventoryItemCommandHandler(_serviceMock.Object, _retailStockMock.Object, _mapperMock.Object, _salesMock.Object);
     }
 
     [Fact]
     public async Task Handle_WhenCalled_ShouldMapCorrectInventoryItemDto()
     {
         await _sut.Handle(_updateCommand, _token);
-        
+
         _mapperMock.Verify(r => r.Map<InventoryItem>(It.Is<InventoryItemCommandDto>(x => x == _updateCommand.InventoryItemDto)));
     }
-    
+
     [Fact]
     public async Task Handle_WhenCalled_ShouldUpdateInventoryItem()
     {
         _updateCommand.RecordLoss = false;
-        
+
         await _sut.Handle(_updateCommand, _token);
 
         _serviceMock.Verify(x => x.UpdateInventoryItem(It.Is<InventoryItem>(r =>
@@ -57,7 +57,7 @@ public class UpdateInventoryItemCommandHandlerTests
             r.Updated_At.HasValue
             )), Times.Once);
     }
-    
+
     [Fact]
     public async Task Handle_WhenInventoryItemUpdateFails_ShouldReturnFailedApiResponse()
     {
@@ -70,7 +70,7 @@ public class UpdateInventoryItemCommandHandlerTests
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenInventoryItemUpdateThrowsException_ShouldReturnFailedApiResponse()
     {
@@ -83,7 +83,7 @@ public class UpdateInventoryItemCommandHandlerTests
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenRecordLossTrue_ShouldGetOldInventoryItem()
     {
@@ -91,9 +91,9 @@ public class UpdateInventoryItemCommandHandlerTests
             .With(r => r.RecordLoss, true).Create();
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_successResponse);
-    
+
         await _sut.Handle(command, _token);
-        
+
         _serviceMock.Verify(r => r.GetInventoryItem(command.Id));
     }
     [Fact]
@@ -102,10 +102,10 @@ public class UpdateInventoryItemCommandHandlerTests
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_successResponse);
         _serviceMock.Setup(x => x.GetInventoryItem(_updateCommand.Id))
-            .ReturnsAsync(() => null); 
-    
+            .ReturnsAsync(() => null);
+
         var result = await _sut.Handle(_updateCommand, _token);
-        
+
         _salesMock.Verify(v => v.AddSale(It.IsAny<Sale>()), Times.Never);
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
@@ -117,15 +117,15 @@ public class UpdateInventoryItemCommandHandlerTests
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_successResponse);
         _serviceMock.Setup(x => x.GetInventoryItem(_updateCommand.Id))
-            .Throws(new Exception("Exception thrown")); 
-    
+            .Throws(new Exception("Exception thrown"));
+
         var result = await _sut.Handle(_updateCommand, _token);
-        
+
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenOldInventoryItemAmountExceedsCurrentInventoryItemAmount_ShouldAddSale()
     {
@@ -143,10 +143,10 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _mapperMock.Setup(m => m.Map<InventoryItem>(It.Is<InventoryItemCommandDto>(x => x == commandDto)))
             .Returns(_inventoryItem);
-        
+
         await _sut.Handle(command, _token);
-        
-        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r => 
+
+        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r =>
             r.InventoryItemId == command.Id &&
             r.Price == 0 &&
             r.Quantity == oldInventoryItem.TotalAmount - _inventoryItem.TotalAmount &&
@@ -171,12 +171,12 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _mapperMock.Setup(m => m.Map<InventoryItem>(It.Is<InventoryItemCommandDto>(x => x == commandDto)))
             .Returns(_inventoryItem);
-        
+
         await _sut.Handle(command, _token);
-        
+
         _salesMock.Verify(x => x.AddSale(It.IsAny<Sale>()), Times.Never);
     }
-    
+
     [Fact]
     public async Task Handle_WhenAddSaleMethodFails_ShouldReturnFailedApiResponse()
     {
@@ -203,7 +203,7 @@ public class UpdateInventoryItemCommandHandlerTests
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenAddSaleMethodThrowsException_ShouldReturnFailedApiResponse()
     {
@@ -217,29 +217,29 @@ public class UpdateInventoryItemCommandHandlerTests
         _salesMock.Setup(x => x.AddSale(It.Is<Sale>(s => s.Quantity == 1)))
             .Throws(new Exception("Exception thrown"));
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
-            .ReturnsAsync(_successResponse); 
+            .ReturnsAsync(_successResponse);
         _mapperMock.Setup(m => m.Map<InventoryItem>(It.Is<InventoryItemCommandDto>(x => x == _updateCommand.InventoryItemDto)))
             .Returns(_inventoryItem);
-        
+
         var result = await _sut.Handle(_updateCommand, _token);
 
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenInventoryItemUpdateSuccessful_ShouldGetExistingRetailStock()
     {
         _updateCommand.RecordLoss = false;
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_successResponse);
-        
+
         await _sut.Handle(_updateCommand, _token);
-        
+
         _retailStockMock.Verify(r => r.GetRetailStock(It.IsAny<string>(), _updateCommand.Id));
     }
-    
+
     [Fact]
     public async Task Handle_WhenGetRetailStockThrowsException_ShouldReturnFailedApiResponse()
     {
@@ -248,14 +248,14 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _retailStockMock.Setup(x => x.GetRetailStock(It.IsAny<string>(), _updateCommand.Id))
             .Throws(new Exception("Exception Thrown"));
-        
+
         var result = await _sut.Handle(_updateCommand, _token);
 
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenGetRetailStockReturnsNull_ShouldReturnFailedApiResponse()
     {
@@ -264,12 +264,12 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _retailStockMock.Setup(x => x.GetRetailStock(It.IsAny<string>(), _updateCommand.Id))
             .ReturnsAsync(() => null);
-        
+
         await _sut.Handle(_updateCommand, _token);
 
         _retailStockMock.Verify(r => r.UpdateRetailStock(It.IsAny<RetailStock>()), Times.Never);
     }
-    
+
     [Fact]
     public async Task Handle_WhenRetailStockQuantityGreaterThanInventoryItemAmount_ShouldUpdateRetailStock()
     {
@@ -282,10 +282,10 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _retailStockMock.Setup(x => x.GetRetailStock(It.IsAny<string>(), _updateCommand.Id))
             .ReturnsAsync(_retailStock);
-        
-       await _sut.Handle(_updateCommand, _token);
 
-        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r => 
+        await _sut.Handle(_updateCommand, _token);
+
+        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r =>
             r.Quantity == _inventoryItem.TotalAmount &&
             r.Updated_At.HasValue &&
             r.Updated_At.Value.Date == DateTime.UtcNow.Date
@@ -303,12 +303,12 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_successResponse);
         _retailStockMock.Setup(x => x.GetRetailStock(It.IsAny<string>(), _updateCommand.Id))
             .ReturnsAsync(_retailStock);
-        
-       await _sut.Handle(_updateCommand, _token);
+
+        await _sut.Handle(_updateCommand, _token);
 
         _retailStockMock.Verify(x => x.UpdateRetailStock(It.IsAny<RetailStock>()), Times.Never);
     }
-    
+
     [Fact]
     public async Task Handle_WhenUpdatingRetailStockFails_ShouldReturnFailedApiResponse()
     {
@@ -323,14 +323,14 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_retailStock);
         _retailStockMock.Setup(x => x.UpdateRetailStock(_retailStock))
             .ReturnsAsync(_failedResponse);
-        
+
         var result = await _sut.Handle(_updateCommand, _token);
 
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenUpdatingRetailStockThrowsException_ShouldReturnFailedApiResponse()
     {
@@ -345,20 +345,20 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_retailStock);
         _retailStockMock.Setup(x => x.UpdateRetailStock(_retailStock))
             .ThrowsAsync(new Exception("Exception Thrown"));
-        
-        
+
+
         var result = await _sut.Handle(_updateCommand, _token);
 
         result.Should().NotBeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
         result.Success.Should().BeFalse();
     }
-    
+
     [Fact]
     public async Task Handle_WhenAllRequiredOperationsSuccessful_ShouldReturnSuccessApiResponse()
     {
         _inventoryItem.TotalAmount = 1;
-        _retailStock.Quantity = 2; 
+        _retailStock.Quantity = 2;
         var oldInventoryItem = _fixture.Build<InventoryItem>()
             .With(r => r.TotalAmount, 2).Create();
         var commandDto = _fixture.Build<InventoryItemCommandDto>()
@@ -366,7 +366,7 @@ public class UpdateInventoryItemCommandHandlerTests
         var command = _fixture.Build<UpdateInventoryItemCommand>()
             .With(r => r.RecordLoss, true)
             .With(r => r.InventoryItemDto, commandDto).Create();
-        
+
         _mapperMock.Setup(x => x.Map<InventoryItem>(It.IsAny<InventoryItemCommandDto>()))
             .Returns(_inventoryItem);
         _salesMock.Setup(x => x.AddSale(It.Is<Sale>(s => s.Quantity == 1)))
@@ -379,15 +379,15 @@ public class UpdateInventoryItemCommandHandlerTests
             .ReturnsAsync(_retailStock);
         _retailStockMock.Setup(x => x.UpdateRetailStock(_retailStock))
             .ReturnsAsync(_successResponse);
-        
+
         var result = await _sut.Handle(command, _token);
 
-        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r => 
+        _retailStockMock.Verify(x => x.UpdateRetailStock(It.Is<RetailStock>(r =>
             r.Quantity == _inventoryItem.TotalAmount &&
             r.Updated_At.HasValue &&
             r.Updated_At.Value.Date == DateTime.UtcNow.Date
         )), Times.Once);
-        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r => 
+        _salesMock.Verify(x => x.AddSale(It.Is<Sale>(r =>
             r.InventoryItemId == command.Id &&
             r.Price == 0 &&
             r.Quantity == oldInventoryItem.TotalAmount - _inventoryItem.TotalAmount &&
@@ -403,5 +403,5 @@ public class UpdateInventoryItemCommandHandlerTests
         result.Success.Should().BeTrue();
         result.Id.Should().Be(command.Id);
     }
-    
+
 }

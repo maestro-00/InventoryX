@@ -16,16 +16,16 @@ public class UpdatePurchaseCommandHandlerTests
         )
     {
         command.Id = 0;
-        
+
         var result = await sut.Handle(command, cancellationToken);
-        
+
         purchaseMock.Verify(p => p.UpdatePurchase(It.IsAny<Purchase>()), Times.Never);
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
-        result.Id.Should().BeNull(); 
+        result.Id.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenMapperThrowsException_ShouldReturnFailedResponse(
@@ -37,9 +37,9 @@ public class UpdatePurchaseCommandHandlerTests
     {
         mapperMock.Setup(m => m.Map<Purchase>(It.IsAny<PurchaseCommandDto>()))
             .Throws(new Exception("Exception"));
-        
+
         var result = await sut.Handle(command, cancellationToken);
-        
+
         mapperMock.Verify(m => m.Map<Purchase>(command.PurchaseDto), Times.Once);
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
@@ -47,7 +47,7 @@ public class UpdatePurchaseCommandHandlerTests
         result.Id.Should().BeNull();
         result.Message.Should().Contain("Exception");
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenUpdatePurchaseFails_ShouldReturnFailedResponse(
@@ -61,14 +61,14 @@ public class UpdatePurchaseCommandHandlerTests
         purchaseMock.Setup(p => p.UpdatePurchase(It.IsAny<Purchase>()).Result)
             .Returns(failedResponse);
         var result = await sut.Handle(command, cancellationToken);
-        
+
         purchaseMock.Verify(p => p.UpdatePurchase(It.IsAny<Purchase>()));
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
-        result.Id.Should().BeNull(); 
+        result.Id.Should().BeNull();
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenUpdatePurchaseThrowsException_ShouldReturnFailedResponse(
@@ -77,12 +77,12 @@ public class UpdatePurchaseCommandHandlerTests
             UpdatePurchaseCommandHandler sut,
             CancellationToken cancellationToken
         )
-    { 
+    {
         purchaseMock.Setup(p => p.UpdatePurchase(It.IsAny<Purchase>()).Result)
             .Throws(new Exception("Exception thrown"));
-        
+
         var result = await sut.Handle(command, cancellationToken);
-        
+
         purchaseMock.Verify(p => p.UpdatePurchase(It.IsAny<Purchase>()));
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
@@ -90,7 +90,7 @@ public class UpdatePurchaseCommandHandlerTests
         result.Id.Should().BeNull();
         result.Message.Should().Contain("Exception");
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenUpdatePurchaseSucceeds_ShouldReturnBadRequest(
@@ -107,9 +107,9 @@ public class UpdatePurchaseCommandHandlerTests
             .Returns(purchase);
         purchaseMock.Setup(p => p.UpdatePurchase(It.IsAny<Purchase>()).Result)
             .Returns(successResponse);
-        
+
         var result = await sut.Handle(command, cancellationToken);
-        
+
         mapperMock.Verify(m => m.Map<Purchase>(command.PurchaseDto));
         purchaseMock.Verify(p => p.UpdatePurchase(It.Is<Purchase>(
                 pItem => pItem == purchase &&
@@ -120,7 +120,7 @@ public class UpdatePurchaseCommandHandlerTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(StatusCodes.Status202Accepted);
-        result.Id.Should().Be(command.Id); 
+        result.Id.Should().Be(command.Id);
     }
-    
+
 }

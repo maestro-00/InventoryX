@@ -1,6 +1,4 @@
-using System;
-
-namespace InventoryX.Application.CustomExtensions;
+namespace InventoryX.Application.Exceptions;
 
 public class CustomException : Exception
 {

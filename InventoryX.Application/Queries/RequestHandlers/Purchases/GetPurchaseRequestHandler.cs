@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.DTOs.Purchases;
 using InventoryX.Application.Queries.Requests.Purchases;
 using InventoryX.Application.Services.IServices;

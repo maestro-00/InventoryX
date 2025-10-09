@@ -8,5 +8,5 @@ public class AutoDomainDataAttribute() : AutoDataAttribute(() => new Fixture().C
 
 public class InlineAutoDomainDataAttribute(params object[] values) : InlineAutoDataAttribute(values)
 {
-    
+
 }
