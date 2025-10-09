@@ -1,6 +1,6 @@
 using InventoryX.Application.DTOs.Purchases;
 using InventoryX.Application.Queries.RequestHandlers.Purchases;
-using InventoryX.Application.Queries.Requests.Purchases; 
+using InventoryX.Application.Queries.Requests.Purchases;
 
 namespace InventoryX.Application.Tests.Queries.RequestHandlers.Purchases;
 
@@ -42,7 +42,7 @@ public class GetAllPurchaseRequestHandlerTests
         var result = await sut.Handle(request, ct);
 
         purchaseServiceMock.Verify(s => s.GetAllPurchases(), Times.Once);
-        result.Success.Should().BeTrue(); 
+        result.Success.Should().BeTrue();
         result.Body.Should().BeEquivalentTo(new List<GetPurchaseDto>());
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
@@ -85,7 +85,7 @@ public class GetAllPurchaseRequestHandlerTests
         mapperMock.Verify(m => m.Map<IEnumerable<GetPurchaseDto>>(purchases), Times.Once);
         result.Success.Should().BeFalse();
         result.Message.Should().Contain("Mapper exception");
-        result.Body.Should().BeNull(); 
+        result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
 }

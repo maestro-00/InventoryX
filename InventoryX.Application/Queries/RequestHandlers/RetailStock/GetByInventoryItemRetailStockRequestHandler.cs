@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Queries.Requests.RetailStock;
@@ -16,8 +16,8 @@ namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
         {
             try
             {
-                if(request.Id < 1) throw new CustomException("Invalid inventory item id passed.", StatusCodes.Status400BadRequest);
-                var response = await _service.GetRetailStock("InventoryItemId",request.Id) ?? throw new Exception("Retail Stock does not exist");
+                if (request.Id < 1) throw new CustomException("Invalid inventory item id passed.", StatusCodes.Status400BadRequest);
+                var response = await _service.GetRetailStock("InventoryItemId", request.Id) ?? throw new Exception("Retail Stock does not exist");
                 var retailStockDto = _mapper.Map<RetailStockDto>(response);
                 return new ApiResponse
                 {

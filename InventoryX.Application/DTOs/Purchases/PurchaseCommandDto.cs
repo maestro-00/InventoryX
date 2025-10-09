@@ -1,10 +1,10 @@
-﻿using InventoryX.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using InventoryX.Domain.Models;
 
 namespace InventoryX.Application.DTOs.Purchases
 {
@@ -15,6 +15,6 @@ namespace InventoryX.Application.DTOs.Purchases
         [Required]
         public decimal Quantity { get; set; }
         [Required]
-        public decimal Price { get; set; } 
+        public decimal Price { get; set; }
     }
 }

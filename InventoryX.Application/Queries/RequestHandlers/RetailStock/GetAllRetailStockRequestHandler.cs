@@ -1,5 +1,5 @@
-﻿using AutoMapper;
-using InventoryX.Application.DTOs.RetailStock; 
+using AutoMapper;
+using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.Queries.Requests.RetailStock;
 using InventoryX.Application.Services.IServices;
 using MediatR;

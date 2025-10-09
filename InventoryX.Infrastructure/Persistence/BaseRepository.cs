@@ -1,4 +1,3 @@
-﻿using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,6 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using InventoryX.Application.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Infrastructure.Persistence
 {
@@ -59,17 +59,17 @@ namespace InventoryX.Infrastructure.Persistence
         }
 
         public async Task<int> Delete(int id)
-        { 
+        {
             var entityToDelete = await _context.Set<TEntity>().FindAsync(id) ?? throw new InvalidOperationException("Record does not exist");
             _context.Set<TEntity>().Remove(entityToDelete);
-             
+
             return await _context.SaveChangesAsync();
         }
 
         public async Task<TEntity?> Get(int id, params Expression<Func<TEntity, object>>[] includes)
         {
             IQueryable<TEntity> query = _context.Set<TEntity>().AsNoTracking();
-             
+
             foreach (var include in includes)
             {
                 query = query.Include(include);
@@ -118,7 +118,7 @@ namespace InventoryX.Infrastructure.Persistence
                 // Get the value of the current property in the provided entity
                 var newValue = property.GetValue(entity);
                 if (Attribute.IsDefined(property, typeof(ForeignKeyAttribute)))
-                { 
+                {
                     if (newValue != null)
                     {
                         //Removing id part of string to get correct entity type
@@ -142,6 +142,6 @@ namespace InventoryX.Infrastructure.Persistence
             }
 
             return await _context.SaveChangesAsync();
-        }         
+        }
     }
 }

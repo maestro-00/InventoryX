@@ -1,4 +1,4 @@
-﻿namespace InventoryX.Application
+namespace InventoryX.Application
 {
     public class ApiResponse
     {
