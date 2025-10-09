@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
 using InventoryX.Application.DTOs.RetailStock;
+using InventoryX.Application.Exceptions;
 using InventoryX.Application.Queries.Requests.RetailStock;
 using InventoryX.Application.Services.IServices;
-using MediatR; 
-using InventoryX.Application.CustomExtensions;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
