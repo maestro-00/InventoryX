@@ -1,13 +1,13 @@
-﻿using AutoMapper; 
-using InventoryX.Application.Queries.Requests.RetailStock;
-using InventoryX.Application.Services.IServices;
-using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using InventoryX.Application.DTOs.RetailStock; 
+using AutoMapper;
+using InventoryX.Application.DTOs.RetailStock;
+using InventoryX.Application.Queries.Requests.RetailStock;
+using InventoryX.Application.Services.IServices;
+using MediatR;
 
 namespace InventoryX.Application.Queries.RequestHandlers.RetailStock
 {

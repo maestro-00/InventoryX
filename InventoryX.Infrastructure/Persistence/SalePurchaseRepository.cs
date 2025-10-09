@@ -1,5 +1,3 @@
-﻿using InventoryX.Domain.Models;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -8,10 +6,12 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using InventoryX.Application.Repository;
+using InventoryX.Domain.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Infrastructure.Persistence
 {
-    public class SalePurchaseRepository<T>(AppDbContext appDbContext) :  BaseRepository<T>(appDbContext), ISalePurchaseRepository<T> where T : class
+    public class SalePurchaseRepository<T>(AppDbContext appDbContext) : BaseRepository<T>(appDbContext), ISalePurchaseRepository<T> where T : class
     {
         private readonly AppDbContext _appDbContext = appDbContext;
 
@@ -35,7 +35,7 @@ namespace InventoryX.Infrastructure.Persistence
                         if (foreignEntity == null)
                         {
                             throw new InvalidOperationException($"{property.Name} with value {foreignKeyValue} does not exist.");
-                        }                    
+                        }
                     }
                 }
             }
@@ -46,6 +46,6 @@ namespace InventoryX.Infrastructure.Persistence
             var idValue = (int)idProperty.GetValue(entity);
 
             return idValue;
-        } 
+        }
     }
 }

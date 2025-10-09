@@ -1,11 +1,11 @@
-﻿using InventoryX.Application.Services.IServices;
-using InventoryX.Domain.Models; 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services.IServices;
+using InventoryX.Domain.Models;
 
 namespace InventoryX.Application.Services
 {
@@ -14,7 +14,7 @@ namespace InventoryX.Application.Services
         private readonly IBaseRepository<InventoryItemType> _repository = baseRepository;
         public Task<int> AddInventoryItemType(InventoryItemType entity)
         {
-            return _repository.Add(entity); 
+            return _repository.Add(entity);
         }
 
         public Task<int> DeleteInventoryItemType(int id)

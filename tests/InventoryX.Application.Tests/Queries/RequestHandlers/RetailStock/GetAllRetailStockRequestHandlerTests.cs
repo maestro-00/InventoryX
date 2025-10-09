@@ -1,12 +1,12 @@
+using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.Queries.RequestHandlers.RetailStock;
 using InventoryX.Application.Queries.Requests.RetailStock;
-using InventoryX.Application.DTOs.RetailStock;
 
 namespace InventoryX.Application.Tests.Queries.RequestHandlers.RetailStock;
 
 public class GetAllRetailStockRequestHandlerTests
 {
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenServiceThrowsException_ShouldReturnFailedApiResponse(
@@ -39,12 +39,12 @@ public class GetAllRetailStockRequestHandlerTests
 
         var result = await sut.Handle(request, ct);
 
-        serviceMock.Verify(s => s.GetAllRetailStock(), Times.Once); 
+        serviceMock.Verify(s => s.GetAllRetailStock(), Times.Once);
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue();  
+        result.Success.Should().BeTrue();
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenMapperThrowsException_ShouldReturnFailedApiResponse(
@@ -64,7 +64,7 @@ public class GetAllRetailStockRequestHandlerTests
         result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenSuccessful_ShouldReturnSuccessApiResponse(
@@ -78,13 +78,13 @@ public class GetAllRetailStockRequestHandlerTests
     {
         serviceMock.Setup(s => s.GetAllRetailStock()).ReturnsAsync(retailStocks);
         mapperMock.Setup(s => s.Map<IEnumerable<RetailStockDto>>(retailStocks)).Returns(retailStockDtos);
-        
+
         var result = await sut.Handle(request, ct);
 
         serviceMock.Verify(s => s.GetAllRetailStock(), Times.Once);
         mapperMock.Verify(s => s.Map<IEnumerable<RetailStockDto>>(retailStocks), Times.Once);
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue(); 
+        result.Success.Should().BeTrue();
         result.Body.Should().BeEquivalentTo(retailStockDtos);
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
     }

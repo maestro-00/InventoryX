@@ -1,6 +1,6 @@
+using InventoryX.Application.DTOs.RetailStock;
 using InventoryX.Application.Queries.RequestHandlers.RetailStock;
 using InventoryX.Application.Queries.Requests.RetailStock;
-using InventoryX.Application.DTOs.RetailStock;
 
 namespace InventoryX.Application.Tests.Queries.RequestHandlers.RetailStock;
 
@@ -9,17 +9,17 @@ public class GetByInventoryItemRetailStockRequestHandlerTests
 
     [Theory]
     [AutoDomainData]
-    public async Task Handle_WhenInventoryItemIdIsInvalid_ShouldReturnFailedApiResponse( 
+    public async Task Handle_WhenInventoryItemIdIsInvalid_ShouldReturnFailedApiResponse(
         GetByInventoryItemRetailStockRequest request,
         GetByInventoryItemRetailStockRequestHandler sut,
         CancellationToken ct)
     {
-        request.Id = 0; 
+        request.Id = 0;
 
         var result = await sut.Handle(request, ct);
-        
+
         result.Should().NotBeNull();
-        result.Success.Should().BeFalse(); 
+        result.Success.Should().BeFalse();
         result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
     }
@@ -38,11 +38,11 @@ public class GetByInventoryItemRetailStockRequestHandlerTests
 
         serviceMock.Verify(s => s.GetRetailStock("InventoryItemId", request.Id), Times.Once);
         result.Should().NotBeNull();
-        result.Success.Should().BeFalse(); 
+        result.Success.Should().BeFalse();
         result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenServiceThrowsException_ShouldReturnFailedApiResponse(
@@ -83,7 +83,7 @@ public class GetByInventoryItemRetailStockRequestHandlerTests
         result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
-    
+
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenSuccessful_ShouldReturnSuccessApiResponse(
@@ -104,7 +104,7 @@ public class GetByInventoryItemRetailStockRequestHandlerTests
         serviceMock.Verify(s => s.GetRetailStock("InventoryItemId", request.Id), Times.Once);
         mapperMock.Verify(s => s.Map<RetailStockDto>(retailStock), Times.Once);
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue(); 
+        result.Success.Should().BeTrue();
         result.Body.Should().BeEquivalentTo(retailStockDto);
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
     }

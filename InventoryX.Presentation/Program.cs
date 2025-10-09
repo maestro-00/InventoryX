@@ -1,13 +1,13 @@
+using System.Security.Claims;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
 using InventoryX.Presentation.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System.Security.Claims;
 
-var builder = WebApplication.CreateBuilder(args); 
-builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration); 
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration);
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -24,8 +24,8 @@ app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
 });
 app.MapGet("/api/auth/pingauth", (ClaimsPrincipal user) =>
 {
-    var email = user.FindFirstValue(ClaimTypes.Email); 
-    return Results.Json(new {Email = email});
+    var email = user.FindFirstValue(ClaimTypes.Email);
+    return Results.Json(new { Email = email });
 }).RequireAuthorization();
 app.UseHttpsRedirection();
 
