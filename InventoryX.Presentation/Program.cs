@@ -11,39 +11,14 @@ using System.Security.Claims;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration);
 
-builder.Services.AddSwaggerGen(c =>
-{
-    c.ResolveConflictingActions(apiDescriptions => apiDescriptions.Last());
-});
-
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-var group = app.MapGroup("/api/auth");
-group.MapIdentityApi<User>();
-group.MapPost("/register", async (
-    UserManager<User> userManager,
-    RegisterUserDto request) =>
-{
-    var user = new User
-    {
-        UserName = request.Email,
-        Email = request.Email,
-        Name = request.Name
-    };
-
-    var result = await userManager.CreateAsync(user, request.Password);
-
-    if (!result.Succeeded)
-    {
-        return Results.BadRequest(result.Errors);
-    }
-
-    return Results.Ok("User registered successfully");
-});
+var group = app.MapGroup("/api/auth")
+    .MapCustomIdentityApi<User>();< User>();
 
 app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
 {
