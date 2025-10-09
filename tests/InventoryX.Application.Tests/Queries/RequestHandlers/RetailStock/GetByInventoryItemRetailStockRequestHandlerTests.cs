@@ -63,7 +63,27 @@ public class GetByInventoryItemRetailStockRequestHandlerTests
         result.Body.Should().BeNull();
         result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
     }
+    [Theory]
+    [AutoDomainData]
+    public async Task Handle_WhenMapperThrowsException_ShouldReturnFailedApiResponse(
+        [Frozen] Mock<IMapper> mapperMock,
+        GetByInventoryItemRetailStockRequest request,
+        GetByInventoryItemRetailStockRequestHandler sut,
+        CancellationToken ct)
+    {
+        mapperMock.Setup(s => s.Map<RetailStockDto>(It.IsAny<Domain.Models.RetailStock>()))
+            .Throws(new Exception("Database error"));
 
+        var result = await sut.Handle(request, ct);
+
+        mapperMock.Verify(s => s.Map<RetailStockDto>(It.IsAny<Domain.Models.RetailStock>()), Times.Once);
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("Database error");
+        result.Body.Should().BeNull();
+        result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+    }
+    
     [Theory]
     [AutoDomainData]
     public async Task Handle_WhenSuccessful_ShouldReturnSuccessApiResponse(
