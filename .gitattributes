@@ -107,7 +107,7 @@
 **/[Pp]ackages/* linguist-generated=true
 
 # except build/, which is used as an MSBuild target
-!**/[Pp]ackages/build/ linguist-generated=false
+\!**/[Pp]ackages/build/ linguist-generated=false
 
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config linguist-generated=false
