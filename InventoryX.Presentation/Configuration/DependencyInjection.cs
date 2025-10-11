@@ -28,7 +28,7 @@ namespace InventoryX.Presentation.Configuration
         }
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddAutoMapper(typeof(Program).Assembly);
+            services.AddAutoMapper(cfg => {} , typeof(Program).Assembly);
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
             services.AddScoped<IInventoryItemService, InventoryItemService>();
             services.AddScoped<IInventoryItemTypeService, InventoryItemTypeService>();
@@ -58,7 +58,7 @@ namespace InventoryX.Presentation.Configuration
             //    .AddJsonOptions(options =>
             //{
             //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-            //});  
+            //});
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
             {
