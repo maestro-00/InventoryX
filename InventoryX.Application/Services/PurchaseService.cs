@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
-using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 
 namespace InventoryX.Application.Services
