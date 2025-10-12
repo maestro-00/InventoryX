@@ -2,6 +2,7 @@ using InventoryX.Application.DTOs.Users;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
 using InventoryX.Presentation.Configuration;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +12,25 @@ using static InventoryX.Application.Extensions.IdentityApiEndpointRouteBuilderEx
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure forwarded headers for Azure App Service
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAuth().AddPresentation(builder.Configuration);
 
 var app = builder.Build();
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+// Enable Swagger in all environments for Azure testing
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Configure for Azure App Service
+app.UseForwardedHeaders();
 var group = app.MapGroup("/api/auth")
     .MapCustomIdentityApi<User>();
 
