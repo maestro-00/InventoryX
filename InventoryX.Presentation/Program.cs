@@ -25,6 +25,22 @@ builder.Services.AddInfrastructure(builder.Configuration).AddApplication().AddAu
 
 var app = builder.Build();
 
+// Run database migrations on startup (Azure deployment)
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    try
+    {
+        dbContext.Database.Migrate();
+        app.Logger.LogInformation("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "An error occurred while migrating the database");
+        // Don't throw - let app start so we can see detailed errors in Azure logs
+    }
+}
+
 // Enable Swagger in all environments for Azure testing
 app.UseSwagger();
 app.UseSwaggerUI();
