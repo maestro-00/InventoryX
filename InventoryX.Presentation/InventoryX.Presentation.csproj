@@ -20,4 +20,8 @@
     <ProjectReference Include="..\InventoryX.Infrastructure\InventoryX.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Options\" />
+  </ItemGroup>
+
 </Project>

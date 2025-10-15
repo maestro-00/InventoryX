@@ -1,14 +1,10 @@
-using System.Text;
-using InventoryX.Application.Repository;
-using InventoryX.Application.Services;
-using InventoryX.Application.Services.IServices;
+using System.Security.Claims;
+using InventoryX.Application.Extensions;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
-using InventoryX.Infrastructure.Persistence;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -16,31 +12,17 @@ namespace InventoryX.Presentation.Configuration
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddDbContext<AppDbContext>(options =>
-            {
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-            });
-            services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
-            services.AddScoped(typeof(ISalePurchaseRepository<>), typeof(SalePurchaseRepository<>));
-            return services;
-        }
-        public static IServiceCollection AddApplication(this IServiceCollection services)
-        {
-            services.AddAutoMapper(cfg => {} , typeof(Program).Assembly);
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
-            services.AddScoped<IInventoryItemService, InventoryItemService>();
-            services.AddScoped<IInventoryItemTypeService, InventoryItemTypeService>();
-            services.AddScoped<IPurchaseService, PurchaseService>();
-            services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<ISaleService, SaleService>();
-            services.AddScoped<IRetailStockService, RetailStockService>();
-            services.AddHttpContextAccessor();
-            return services;
-        }
         public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
         {
+
+            // Configure forwarded headers for Azure App Service
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",
@@ -72,14 +54,9 @@ namespace InventoryX.Presentation.Configuration
             }
             );
 
-            return services;
-        }
-        public static IServiceCollection AddAuth(this IServiceCollection services)
-        {
             services.AddAuthentication();
             services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddApiEndpoints().AddDefaultTokenProviders();
 
-            //services.AddIdentityApiEndpoints<User>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
             //Configuring cookie auth handler for SPAs
             services.ConfigureApplicationCookie(options =>
             {
@@ -93,10 +70,58 @@ namespace InventoryX.Presentation.Configuration
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return Task.CompletedTask;
                 };
+                options.Cookie.SameSite = SameSiteMode.None;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             });
 
             return services;
         }
 
+        public static WebApplication UsePresentation(this WebApplication app)
+        {
+            // Run database migrations on startup (Azure deployment)
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                try
+                {
+                    dbContext.Database.Migrate();
+                    app.Logger.LogInformation("Database migrations applied successfully");
+                }
+                catch (Exception ex)
+                {
+                    app.Logger.LogError(ex, "An error occurred while migrating the database");
+                    // Don't throw - let app start so we can see detailed errors in Azure logs
+                }
+            }
+
+            // Enable Swagger in all environments for Azure testing
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
+            // Configure for Azure App Service
+            app.UseForwardedHeaders();
+            app.MapControllers();
+
+            app.MapGroup("/api/auth")
+                .MapCustomIdentityApi<User>();
+
+            app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
+            {
+                await signInManager.SignOutAsync();
+                return Results.Ok();
+            });
+            app.MapGet("/api/auth/pingauth", (ClaimsPrincipal user) =>
+            {
+                var email = user.FindFirstValue(ClaimTypes.Email);
+                return Results.Json(new { Email = email });
+            }).RequireAuthorization();
+            app.UseHttpsRedirection();
+
+            app.UseCors("AllowSpecificOrigin");
+            app.UseAuthorization();
+
+            return app;
+        }
     }
 }
