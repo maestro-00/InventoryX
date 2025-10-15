@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using InventoryX.Application.DTOs.Users;
+using InventoryX.Application.Options;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -42,6 +43,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         var bearerTokenOptions = endpoints.ServiceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
         var emailSender = endpoints.ServiceProvider.GetRequiredService<IEmailSender<TUser>>();
         var linkGenerator = endpoints.ServiceProvider.GetRequiredService<LinkGenerator>();
+        var authOptions = endpoints.ServiceProvider.GetRequiredService<IOptions<AuthOptions>>();
 
         // We'll figure out a unique endpoint name based on the final route pattern during endpoint generation.
         string? confirmEmailEndpointName = null;
@@ -415,9 +417,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 routeValues.Add("changedEmail", email);
             }
 
-            var confirmEmailUrl = linkGenerator.GetUriByName(context, confirmEmailEndpointName, routeValues)
-                ?? throw new NotSupportedException($"Could not find endpoint named '{confirmEmailEndpointName}'.");
+            // var confirmEmailUrl = linkGenerator.GetUriByName(context, confirmEmailEndpointName, routeValues)
+            //     ?? throw new NotSupportedException($"Could not find endpoint named '{confirmEmailEndpointName}'.");
 
+            //Using Url Specified in Application Settings
+            var verificationUrl = authOptions.Value.EmailVerificationUrl
+                                  ?? throw new NotSupportedException($"Could not find email verification url. Make sure it has been specified in the application settings.");
+            var confirmEmailUrl = verificationUrl + $"?code={code}&userId={userId}";
             await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
         }
 
