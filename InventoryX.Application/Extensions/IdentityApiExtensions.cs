@@ -218,8 +218,9 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             {
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                await emailSender.SendPasswordResetCodeAsync(user, resetRequest.Email, HtmlEncoder.Default.Encode(code));
+                string resetPasswordUrl = authOptions.Value.ResetPasswordUrl ?? throw new NotSupportedException("Could not find reset password url. Make sure it has been specified in the application settings.");
+                string resetPasswordLink = resetPasswordUrl + $"?email={resetRequest.Email}&code={HtmlEncoder.Default.Encode(code)}";
+                await emailSender.SendPasswordResetLinkAsync(user, resetRequest.Email, resetPasswordLink);
             }
 
             // Don't reveal that the user does not exist or is not confirmed, so don't return a 200 if we would have
