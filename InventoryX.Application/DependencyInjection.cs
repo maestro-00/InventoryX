@@ -22,7 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IRetailStockService, RetailStockService>();
         services.AddTransient<IEmailSender, EmailSender>();
         services.Configure<AuthMessageSenderOptions>(configuration);
-        services.Configure<AuthOptions>(configuration);
+        services.Configure<AuthOptions>(configuration.GetSection("Frontend"));
         services.AddHttpContextAccessor();
         return services;
     }
