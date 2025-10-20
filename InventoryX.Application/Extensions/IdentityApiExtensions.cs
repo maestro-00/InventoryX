@@ -124,6 +124,38 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Empty;
         });
 
+        // Support both GET and POST for external login to allow direct browser navigation
+        routeGroup.MapGet("/external-login", async Task<Results<ChallengeHttpResult, ProblemHttpResult>>
+            ([FromQuery] string provider, [FromQuery] string returnUrl, [FromServices] IServiceProvider sp) =>
+        {
+            var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
+
+            // Configure the redirect URI to point to our backend callback endpoint
+            var properties = signInManager.ConfigureExternalAuthenticationProperties(provider, "/api/auth/google-callback");
+
+            // Store the final return URL (frontend) in the properties so we can redirect there after authentication
+            properties.Items["returnUrl"] = returnUrl;
+
+            // Return a challenge result that will redirect to the external provider
+            return TypedResults.Challenge(properties, new[] { provider });
+        });
+
+        routeGroup.MapPost("/external-login", async Task<Results<ChallengeHttpResult, ProblemHttpResult>>
+            ([FromBody] ExternalLoginRequest request, [FromServices] IServiceProvider sp) =>
+        {
+            var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
+
+            // Configure the redirect URI to point to our backend callback endpoint
+            // Use the callback path (not full URL) - the middleware will construct the full URL
+            var properties = signInManager.ConfigureExternalAuthenticationProperties(request.Provider, "/api/auth/google-callback");
+
+            // Store the final return URL (frontend) in the properties so we can redirect there after authentication
+            properties.Items["returnUrl"] = request.ReturnUrl;
+
+            // Return a challenge result that will redirect to the external provider
+            return TypedResults.Challenge(properties, new[] { request.Provider });
+        });
+
         routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
             ([FromBody] RefreshRequest refreshRequest, [FromServices] IServiceProvider sp) =>
         {
