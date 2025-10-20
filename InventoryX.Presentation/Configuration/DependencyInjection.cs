@@ -2,6 +2,7 @@ using System.Security.Claims;
 using InventoryX.Application.Extensions;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
+using InventoryX.Presentation.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +55,19 @@ namespace InventoryX.Presentation.Configuration
             }
             );
 
-            services.AddAuthentication();
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+            }).AddGoogle(googleOptions =>
+            {
+                googleOptions.ClientId = configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured");
+                googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured");
+                googleOptions.CallbackPath = "/api/auth/google-callback";
+                googleOptions.SaveTokens = true;
+
+                googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
+            });
             services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddApiEndpoints().AddDefaultTokenProviders();
 
             //Configuring cookie auth handler for SPAs
@@ -101,6 +114,14 @@ namespace InventoryX.Presentation.Configuration
 
             // Configure for Azure App Service
             app.UseForwardedHeaders();
+
+            app.UseCors("AllowSpecificOrigin");
+
+            app.UseHttpsRedirection();
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
             app.MapControllers();
 
             app.MapGroup("/api/auth")
@@ -116,10 +137,6 @@ namespace InventoryX.Presentation.Configuration
                 var email = user.FindFirstValue(ClaimTypes.Email);
                 return Results.Json(new { Email = email });
             }).RequireAuthorization();
-            app.UseHttpsRedirection();
-
-            app.UseCors("AllowSpecificOrigin");
-            app.UseAuthorization();
 
             return app;
         }
