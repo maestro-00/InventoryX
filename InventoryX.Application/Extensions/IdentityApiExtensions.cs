@@ -293,6 +293,18 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.Ok();
         });
 
+        routeGroup.MapGet("/pingauth", (ClaimsPrincipal user) =>
+        {
+            var email = user.FindFirstValue(ClaimTypes.Email);
+            return Results.Json(new { Email = email });
+        }).RequireAuthorization();
+
+        routeGroup.MapPost("/logout", async (SignInManager<TUser> signInManager) =>
+        {
+            await signInManager.SignOutAsync();
+            return Results.Ok();
+        });
+
         var accountGroup = routeGroup.MapGroup("/manage").RequireAuthorization();
 
         accountGroup.MapPost("/2fa", async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound>>

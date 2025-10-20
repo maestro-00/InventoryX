@@ -127,17 +127,6 @@ namespace InventoryX.Presentation.Configuration
             app.MapGroup("/api/auth")
                 .MapCustomIdentityApi<User>();
 
-            app.MapPost("/api/auth/logout", async (SignInManager<User> signInManager) =>
-            {
-                await signInManager.SignOutAsync();
-                return Results.Ok();
-            });
-            app.MapGet("/api/auth/pingauth", (ClaimsPrincipal user) =>
-            {
-                var email = user.FindFirstValue(ClaimTypes.Email);
-                return Results.Json(new { Email = email });
-            }).RequireAuthorization();
-
             return app;
         }
     }
