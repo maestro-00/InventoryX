@@ -85,6 +85,8 @@ namespace InventoryX.Presentation.Configuration
                 };
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.Path = "/";
+                options.Cookie.HttpOnly = true;
             });
 
             return services;
