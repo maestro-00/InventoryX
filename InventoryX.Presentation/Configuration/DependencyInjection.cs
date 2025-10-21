@@ -55,20 +55,24 @@ namespace InventoryX.Presentation.Configuration
             }
             );
 
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
-                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
-            }).AddGoogle(googleOptions =>
-            {
-                googleOptions.ClientId = configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured");
-                googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured");
-                googleOptions.CallbackPath = "/api/auth/google-callback";
-                googleOptions.SaveTokens = true;
+           // This ensures Identity properly configures the authentication schemes
+            services.AddIdentity<User, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddApiEndpoints()
+                .AddDefaultTokenProviders();
 
-                googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
-            });
-            services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddApiEndpoints().AddDefaultTokenProviders();
+            // Now configure authentication with Google OAuth
+            services.AddAuthentication()
+                .AddGoogle(googleOptions =>
+                {
+                    googleOptions.ClientId = configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured");
+                    googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured");
+                    googleOptions.CallbackPath = "/api/auth/google-callback";
+                    googleOptions.SaveTokens = true;
+                    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+
+                    googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
+                });
 
             //Configuring cookie auth handler for SPAs
             services.ConfigureApplicationCookie(options =>

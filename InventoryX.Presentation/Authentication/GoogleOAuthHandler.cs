@@ -11,6 +11,8 @@ public static class GoogleOAuthHandler
     {
         var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
         var signInManager = context.HttpContext.RequestServices.GetRequiredService<SignInManager<User>>();
+        var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+        var logger = loggerFactory.CreateLogger("InventoryX.Presentation.Authentication.GoogleOAuthHandler");
 
         // Get the return URL from authentication properties
         var returnUrl = "/";
@@ -23,6 +25,8 @@ public static class GoogleOAuthHandler
         var email = context.Principal?.FindFirstValue(ClaimTypes.Email);
         var nameIdentifier = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
 
+        logger.LogInformation("OAuth callback received for email: {Email}", email);
+
         if (!string.IsNullOrEmpty(email) && !string.IsNullOrEmpty(nameIdentifier))
         {
             // Check if user exists
@@ -30,6 +34,8 @@ public static class GoogleOAuthHandler
 
             if (user == null)
             {
+                logger.LogInformation("Creating new user for email: {Email}", email);
+
                 // Create new user
                 user = new User();
                 await userManager.SetUserNameAsync(user, email);
@@ -52,10 +58,18 @@ public static class GoogleOAuthHandler
                     // Add external login
                     var loginInfo = new UserLoginInfo(context.Scheme.Name, nameIdentifier, context.Scheme.DisplayName);
                     await userManager.AddLoginAsync(user, loginInfo);
+
+                    logger.LogInformation("User created successfully: {Email}", email);
+                }
+                else
+                {
+                    logger.LogError("Failed to create user: {Errors}", string.Join(", ", createResult.Errors.Select(e => e.Description)));
                 }
             }
             else
             {
+                logger.LogInformation("User already exists: {Email}", email);
+
                 // User exists - check if external login is already linked
                 var existingLogins = await userManager.GetLoginsAsync(user);
                 if (!existingLogins.Any(l => l.LoginProvider == context.Scheme.Name && l.ProviderKey == nameIdentifier))
@@ -63,11 +77,17 @@ public static class GoogleOAuthHandler
                     // Link the external login to existing user
                     var loginInfo = new UserLoginInfo(context.Scheme.Name, nameIdentifier, context.Scheme.DisplayName);
                     await userManager.AddLoginAsync(user, loginInfo);
+                    logger.LogInformation("External login linked to existing user: {Email}", email);
                 }
             }
 
             // Sign in the user with cookie authentication
-            await signInManager.SignInAsync(user, isPersistent: false);
+            await signInManager.SignInAsync(user, isPersistent: true, authenticationMethod: IdentityConstants.ApplicationScheme);
+            logger.LogInformation("User signed in successfully: {Email}", email);
+        }
+        else
+        {
+            logger.LogWarning("OAuth callback missing email or nameIdentifier");
         }
 
         // Redirect to frontend
