@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using InventoryX.Application.Extensions;
 using InventoryX.Domain.Models;
 using InventoryX.Infrastructure;
@@ -27,14 +26,14 @@ namespace InventoryX.Presentation.Configuration
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowSpecificOrigin",
-            builder =>
-            {
-                var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
-                builder.WithOrigins(allowedOrigins) // Ensure the correct port number
-                       .AllowAnyHeader()
-                       .AllowAnyMethod()
-                       .AllowCredentials(); // Include credentials if needed
-            });
+                    builder =>
+                    {
+                        var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                        builder.WithOrigins(allowedOrigins)
+                               .AllowAnyHeader()
+                               .AllowAnyMethod()
+                               .AllowCredentials();
+                    });
             });
             services.AddControllers();
             //Add if only there is a cyclical reference
@@ -61,36 +60,45 @@ namespace InventoryX.Presentation.Configuration
                 .AddApiEndpoints()
                 .AddDefaultTokenProviders();
 
-            // Now configure authentication with Google OAuth
-            services.AddAuthentication()
-                .AddGoogle(googleOptions =>
-                {
-                    googleOptions.ClientId = configuration["Authentication:Google:ClientId"] ?? throw new InvalidOperationException("Google ClientId not configured");
-                    googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"] ?? throw new InvalidOperationException("Google ClientSecret not configured");
-                    googleOptions.CallbackPath = "/api/auth/google-callback";
-                    googleOptions.SaveTokens = true;
-                    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
-
-                    googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
-                });
-
-            //Configuring cookie auth handler for SPAs
+            // Configure Identity's existing cookie instead of adding a new one
             services.ConfigureApplicationCookie(options =>
             {
-                options.Events.OnRedirectToLogin = context =>
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-                options.Events.OnRedirectToAccessDenied = context =>
-                {
-                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                    return Task.CompletedTask;
-                };
+                // Cookie configuration for cross-site auth
                 options.Cookie.SameSite = SameSiteMode.None;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.Path = "/";
                 options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+                options.Cookie.Path = "/";
+                // Don't set Domain for cross-origin scenarios - let browser handle it
+                // options.Cookie.Domain = null; // Explicitly null for cross-origin
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                options.SlidingExpiration = true;
+
+                // Prevent redirects in API responses
+                options.Events.OnRedirectToLogin = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = ctx =>
+                {
+                    ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return Task.CompletedTask;
+                };
+            });
+
+            // Add Google OAuth
+            services.AddAuthentication()
+            .AddGoogle(googleOptions =>
+            {
+                googleOptions.ClientId = configuration["Authentication:Google:ClientId"]
+                                         ?? throw new InvalidOperationException("Google ClientId not configured");
+                googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"]
+                                             ?? throw new InvalidOperationException("Google ClientSecret not configured");
+                googleOptions.CallbackPath = "/api/auth/google-callback";
+                googleOptions.SaveTokens = true;
+                googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+                googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
             });
 
             return services;
@@ -98,6 +106,12 @@ namespace InventoryX.Presentation.Configuration
 
         public static WebApplication UsePresentation(this WebApplication app)
         {
+            // Configure CORS - must come before other middleware
+            app.UseCors("AllowSpecificOrigin");
+
+            // Forward headers for proxies (important for Azure)
+            app.UseForwardedHeaders();
+
             // Run database migrations on startup (Azure deployment)
             using (var scope = app.Services.CreateScope())
             {
@@ -117,11 +131,6 @@ namespace InventoryX.Presentation.Configuration
             // Enable Swagger in all environments for Azure testing
             app.UseSwagger();
             app.UseSwaggerUI();
-
-            // Configure for Azure App Service
-            app.UseForwardedHeaders();
-
-            app.UseCors("AllowSpecificOrigin");
 
             app.UseHttpsRedirection();
 
