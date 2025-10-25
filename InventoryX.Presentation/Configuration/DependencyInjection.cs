@@ -68,9 +68,6 @@ namespace InventoryX.Presentation.Configuration
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.IsEssential = true;
-                options.Cookie.Path = "/";
-                // Don't set Domain for cross-origin scenarios - let browser handle it
-                // options.Cookie.Domain = null; // Explicitly null for cross-origin
                 options.ExpireTimeSpan = TimeSpan.FromDays(7);
                 options.SlidingExpiration = true;
 
