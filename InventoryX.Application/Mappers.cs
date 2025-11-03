@@ -7,7 +7,7 @@ using InventoryX.Application.DTOs.Sales;
 using InventoryX.Application.DTOs.Users;
 using InventoryX.Domain.Models;
 
-namespace InventoryX.Presentation.Configuration
+namespace InventoryX.Application
 {
     public class Mappers : Profile
     {
