@@ -164,4 +164,21 @@ public class CreateInventoryItemCommandHandlerTests
         result.Message.Should().Contain("Exception");
     }
 
+    [Theory, AutoDomainData]
+    public async Task Handle_WhenRetailQuantityGreaterThanTotalAmount_ShouldReturnFailedApiResponse(
+        CreateInventoryItemCommand command,
+        CancellationToken token,
+        CreateInventoryItemCommandHandler sut)
+    {
+        command.NewInventoryItemDto.TotalAmount = 1;
+        command.RetailQuantity = 2;
+
+
+        var result = await sut.Handle(command, token);
+
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+
 }
