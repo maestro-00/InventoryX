@@ -29,6 +29,9 @@ public class CreateInventoryItemCommandHandlerTests
         _newlyCreatedIdResponse = 1;
         _failedResponse = -1;
         _createCommand = _fixture.Create<CreateInventoryItemCommand>();
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         _cancellationToken = _fixture.Create<CancellationToken>();
     }
 
@@ -185,6 +188,9 @@ public class CreateInventoryItemCommandHandlerTests
         CancellationToken token,
         CreateInventoryItemCommandHandler sut)
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 2;
         command.NewInventoryItemDto.TotalAmount = 1;
         command.RetailQuantity = 2;
 
