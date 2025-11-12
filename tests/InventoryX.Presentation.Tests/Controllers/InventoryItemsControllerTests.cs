@@ -36,7 +36,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             //Act
             var result = await _sut.Get(mockId);
 
-            //Assert 
+            //Assert
             _mediatorMock.Verify(x => x.Send(It.IsAny<GetInventoryItemRequest>(), It.IsAny<CancellationToken>()), Times.Once);
             var objResult = result as ObjectResult;
             objResult.Should().NotBeNull();
@@ -59,7 +59,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             //Act
             var result = await _sut.GetAll();
 
-            //Assert 
+            //Assert
             _mediatorMock.Verify(x => x.Send(It.IsAny<GetAllInventoryItemRequest>(), It.IsAny<CancellationToken>()), Times.Once);
             var objectResult = result as ObjectResult;
             objectResult.Should().NotBeNull();
@@ -85,7 +85,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             //Act
             var result = await _sut.Add(itemCommandDtoMock, retailQtyMock);
 
-            //Assert 
+            //Assert
             var objectResult = result as ObjectResult;
             objectResult.Should().NotBeNull();
             objectResult?.StatusCode.Should().Be(statusCode);
@@ -95,7 +95,7 @@ namespace InventoryX.Presentation.Tests.Controllers
         [Fact]
         public async Task Add_WhenCalledWithInvalidModelState_ShouldReturnBadRequest()
         {
-            //Arrange 
+            //Arrange
             var itemCommandDtoMock = _fixture.Create<InventoryItemCommandDto>();
             var retailQtyMock = _fixture.Create<decimal>();
             _sut.ModelState.AddModelError("Name", "Required");
@@ -108,7 +108,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             //Act
             var result = await _sut.Add(itemCommandDtoMock, retailQtyMock);
 
-            //Assert 
+            //Assert
             var badRequestResult = result as BadRequestObjectResult;
             badRequestResult.Should().NotBeNull();
             badRequestResult?.StatusCode.Should().Be(400);
@@ -124,6 +124,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             _mockApiResponse.StatusCode = statusCode;
             var itemCommandDtoMock = _fixture.Create<InventoryItemCommandDto>();
             var id = _fixture.Create<int>();
+            var retailQuantity = _fixture.Create<int>();
             _mediatorMock
         .Setup(x => x.Send(
             It.IsAny<UpdateInventoryItemCommand>()
@@ -131,9 +132,9 @@ namespace InventoryX.Presentation.Tests.Controllers
         .ReturnsAsync(_mockApiResponse);
 
             //Act
-            var result = await _sut.Update(id, itemCommandDtoMock);
+            var result = await _sut.Update(id, itemCommandDtoMock,retailQuantity);
 
-            //Assert 
+            //Assert
             _mediatorMock.Verify(x => x.Send(It.IsAny<UpdateInventoryItemCommand>(), It.IsAny<CancellationToken>()), Times.Once);
             var objectResult = result as ObjectResult;
             objectResult.Should().NotBeNull();
@@ -142,9 +143,10 @@ namespace InventoryX.Presentation.Tests.Controllers
         [Fact]
         public async Task Update_WhenCalledWithInvalidModelState_ShouldReturnBadRequest()
         {
-            //Arrange 
+            //Arrange
             var itemCommandDtoMock = _fixture.Create<InventoryItemCommandDto>();
             var id = _fixture.Create<int>();
+            var retailQuantity = _fixture.Create<int>();
             _sut.ModelState.AddModelError("Name", "Required");
             _mediatorMock
                 .Setup(x => x.Send(
@@ -153,9 +155,9 @@ namespace InventoryX.Presentation.Tests.Controllers
                 .ReturnsAsync(_mockApiResponse);
 
             //Act
-            var result = await _sut.Update(id, itemCommandDtoMock);
+            var result = await _sut.Update(id, itemCommandDtoMock,retailQuantity);
 
-            //Assert 
+            //Assert
             var badRequestResult = result as BadRequestObjectResult;
             badRequestResult.Should().NotBeNull();
             badRequestResult?.StatusCode.Should().Be(400);
@@ -179,7 +181,7 @@ namespace InventoryX.Presentation.Tests.Controllers
             //Act
             var result = await _sut.Delete(id);
 
-            //Assert 
+            //Assert
             _mediatorMock.Verify(x => x.Send(It.IsAny<DeleteInventoryItemCommand>(), It.IsAny<CancellationToken>()), Times.Once);
             var objectResult = result as ObjectResult;
             objectResult.Should().NotBeNull();

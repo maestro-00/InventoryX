@@ -29,6 +29,9 @@ public class UpdateInventoryItemCommandHandlerTests
         _salesMock = new Mock<ISaleService>();
         _inventoryItem = _fixture.Create<InventoryItem>();
         _updateCommand = _fixture.Create<UpdateInventoryItemCommand>();
+        //Ensuring Total Amount is lesser than retail quantity
+        _updateCommand.InventoryItemDto.TotalAmount = 1;
+        _updateCommand.RetailQuantity = 1;
         _successResponse = 1;
         _retailStock = _fixture.Create<RetailStock>();
         _token = _fixture.Create<CancellationToken>();
@@ -88,6 +91,7 @@ public class UpdateInventoryItemCommandHandlerTests
     public async Task Handle_WhenRecordLossTrue_ShouldGetOldInventoryItem()
     {
         var command = _fixture.Build<UpdateInventoryItemCommand>()
+            .With(r => r.RetailQuantity, (decimal?) null)
             .With(r => r.RecordLoss, true).Create();
         _serviceMock.Setup(x => x.UpdateInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_successResponse);
@@ -136,6 +140,7 @@ public class UpdateInventoryItemCommandHandlerTests
             .With(r => r.TotalAmount, 1).Create();
         var command = _fixture.Build<UpdateInventoryItemCommand>()
             .With(r => r.RecordLoss, true)
+            .With(r => r.RetailQuantity, (decimal?) null)
             .With(r => r.InventoryItemDto, commandDto).Create();
         _serviceMock.Setup(x => x.GetInventoryItem(command.Id))
             .ReturnsAsync(oldInventoryItem);
@@ -187,6 +192,7 @@ public class UpdateInventoryItemCommandHandlerTests
             .With(r => r.TotalAmount, 1).Create();
         var command = _fixture.Build<UpdateInventoryItemCommand>()
             .With(r => r.RecordLoss, true)
+            .With(r => r.RetailQuantity, 1)
             .With(r => r.InventoryItemDto, commandDto).Create();
         _serviceMock.Setup(x => x.GetInventoryItem(command.Id))
             .ReturnsAsync(oldInventoryItem);
@@ -275,6 +281,7 @@ public class UpdateInventoryItemCommandHandlerTests
     {
         _inventoryItem.TotalAmount = 1;
         _retailStock.Quantity = 2;
+        _updateCommand.RetailQuantity = null;
         _updateCommand.RecordLoss = false;
         _mapperMock.Setup(x => x.Map<InventoryItem>(It.IsAny<InventoryItemCommandDto>()))
             .Returns(_inventoryItem);
@@ -296,6 +303,7 @@ public class UpdateInventoryItemCommandHandlerTests
     {
         _inventoryItem.TotalAmount = 1;
         _retailStock.Quantity = 1;
+        _updateCommand.RetailQuantity = null;
         _updateCommand.RecordLoss = false;
         _mapperMock.Setup(x => x.Map<InventoryItem>(It.IsAny<InventoryItemCommandDto>()))
             .Returns(_inventoryItem);
@@ -473,6 +481,7 @@ public class UpdateInventoryItemCommandHandlerTests
             .With(r => r.TotalAmount, 1).Create();
         var command = _fixture.Build<UpdateInventoryItemCommand>()
             .With(r => r.RecordLoss, true)
+            .With(r => r.RetailQuantity, (decimal?) null)
             .With(r => r.InventoryItemDto, commandDto).Create();
 
         _mapperMock.Setup(x => x.Map<InventoryItem>(It.IsAny<InventoryItemCommandDto>()))
