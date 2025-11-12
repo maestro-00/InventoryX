@@ -17,5 +17,7 @@ namespace InventoryX.Application.DTOs.InventoryItems
         public byte[]? Image { get; set; }
         public decimal Price { get; set; }
         public decimal TotalAmount { get; set; }
+        public string? SKU { get; set; }
+        public decimal ReOrderLevel { get; set; }
     }
 }
