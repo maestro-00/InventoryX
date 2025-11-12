@@ -15,5 +15,6 @@ namespace InventoryX.Application.Commands.Requests.InventoryItems
         public required InventoryItemCommandDto InventoryItemDto { get; set; }
 
         public bool RecordLoss { get; set; }
+        public decimal? RetailQuantity { get; set; }
     }
 }

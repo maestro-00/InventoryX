@@ -1,6 +1,7 @@
 using System.Transactions;
 using AutoMapper;
 using InventoryX.Application.Commands.Requests.InventoryItems;
+using InventoryX.Application.Exceptions;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
@@ -20,6 +21,10 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
             using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
+                if (request.RetailQuantity > request.InventoryItemDto.TotalAmount)
+                {
+                    throw new CustomException("Retail quantity can't be greater than quantity of the item.", StatusCodes.Status400BadRequest);
+                }
                 var inventoryItemEntity = _mapper.Map<InventoryItem>(request.InventoryItemDto);
                 inventoryItemEntity.Id = request.Id;
                 inventoryItemEntity.Updated_At = DateTime.UtcNow;
@@ -42,19 +47,40 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                         if (saleResponse <= 0) throw new Exception("Failed to update Inventory Item amount as loss");
                     }
                 }
+
                 var retailStock = await _retailStockService.GetRetailStock("InventoryItemId", request.Id);
 
-                if (retailStock is not null)
+                if (request.RetailQuantity != null)
                 {
-                    if (retailStock.Quantity > inventoryItemEntity.TotalAmount)
+                    if (retailStock == null)
                     {
-                        retailStock.Quantity = inventoryItemEntity.TotalAmount;
-                        retailStock.Updated_At = DateTime.UtcNow;
-                        int result = await _retailStockService.UpdateRetailStock(retailStock);
+                        throw new CustomException("Failed to update retail stock quantity. Retail Stock not found",
+                            StatusCodes.Status400BadRequest);
+                    }
 
-                        if (result <= 0) throw new Exception("Failed to update Inventory Item. Failed to reset Retail Stock price.");
+                    retailStock.Quantity = (decimal)request.RetailQuantity;
+                    var updateResult = await _retailStockService.UpdateRetailStock(retailStock);
+                    if (updateResult <= 0) throw new Exception("Failed to update Inventory Item. Failed to update Retail Stock Quantity.");
+                }
+                else
+                {
+                    //Resetting Retail Stock Quantity if Inventory Item Quantity is greater
+                    //than existing Quantity
+                    if (retailStock is not null)
+                    {
+                        if (retailStock.Quantity > inventoryItemEntity.TotalAmount)
+                        {
+                            retailStock.Quantity = inventoryItemEntity.TotalAmount;
+                            retailStock.Updated_At = DateTime.UtcNow;
+                            int result = await _retailStockService.UpdateRetailStock(retailStock);
+
+                            if (result <= 0)
+                                throw new Exception(
+                                    "Failed to update Inventory Item. Failed to reset Retail Stock Quantity.");
+                        }
                     }
                 }
+
                 transactionScope.Complete();
                 return new()
                 {
@@ -62,6 +88,16 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                     Success = true,
                     Message = "Inventory Item has been updated successfully",
                     StatusCode = StatusCodes.Status202Accepted
+                };
+            }
+            catch (CustomException ex)
+            {
+                transactionScope.Dispose();
+                return new()
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    StatusCode = ex.StatusCode
                 };
             }
             catch (Exception ex)
