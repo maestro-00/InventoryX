@@ -41,11 +41,11 @@ namespace InventoryX.Presentation.Controllers
 
         [HttpPut]
         [Route("{id}")]
-        public async Task<ActionResult> Update(int id, InventoryItemCommandDto inventoryItem, bool recordLoss = false)
+        public async Task<ActionResult> Update(int id, InventoryItemCommandDto inventoryItem, decimal? retailQuantity, bool recordLoss = false)
         {
             if (ModelState.IsValid)
             {
-                var response = await _mediator.Send(new UpdateInventoryItemCommand { Id = id, InventoryItemDto = inventoryItem, RecordLoss = recordLoss });
+                var response = await _mediator.Send(new UpdateInventoryItemCommand { Id = id, InventoryItemDto = inventoryItem, RecordLoss = recordLoss, RetailQuantity = retailQuantity});
                 return StatusCode(response.StatusCode, response);
             }
             return BadRequest(ModelState);
