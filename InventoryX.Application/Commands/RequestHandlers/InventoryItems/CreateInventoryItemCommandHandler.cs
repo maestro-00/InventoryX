@@ -1,6 +1,7 @@
 using System.Transactions;
 using AutoMapper;
 using InventoryX.Application.Commands.Requests.InventoryItems;
+using InventoryX.Application.Exceptions;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
@@ -18,6 +19,11 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
             using var transactionScope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
             try
             {
+                if (request.RetailQuantity > request.NewInventoryItemDto.TotalAmount)
+                {
+                    throw new CustomException("Retail quantity can't be greater than quantity of the item.", StatusCodes.Status400BadRequest);
+                }
+
                 var inventoryItemEntity = _mapper.Map<InventoryItem>(request.NewInventoryItemDto);
                 inventoryItemEntity.Created_At = DateTime.UtcNow;
                 var response = await _service.AddInventoryItem(inventoryItemEntity);
@@ -39,6 +45,16 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                 }
                 throw new Exception("Failed to create Inventory Item");
             }
+            catch (CustomException ex)
+            {
+                transactionScope.Dispose();
+                return new()
+                {
+                    Success = false,
+                    Message = ex.Message,
+                    StatusCode = ex.StatusCode
+                };
+            }
             catch (Exception ex)
             {
                 transactionScope.Dispose();
@@ -49,6 +65,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                     StatusCode = StatusCodes.Status500InternalServerError
                 };
             }
+
         }
     }
 }

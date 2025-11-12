@@ -20,5 +20,10 @@ namespace InventoryX.Domain.Models
         public required decimal Price { get; set; }
         [Column(TypeName = "decimal(17,3)")]
         public decimal TotalAmount { get; set; }
+
+        public string? SKU { get; set; }
+
+        [Column(TypeName = "decimal(17,3)")]
+        public decimal ReOrderLevel { get; set; }
     }
 }
