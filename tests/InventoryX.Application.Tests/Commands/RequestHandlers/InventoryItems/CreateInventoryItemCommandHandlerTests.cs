@@ -188,9 +188,6 @@ public class CreateInventoryItemCommandHandlerTests
         CancellationToken token,
         CreateInventoryItemCommandHandler sut)
     {
-        //Ensuring Total Amount is lesser than retail quantity
-        _createCommand.NewInventoryItemDto.TotalAmount = 1;
-        _createCommand.RetailQuantity = 2;
         command.NewInventoryItemDto.TotalAmount = 1;
         command.RetailQuantity = 2;
 
@@ -200,6 +197,33 @@ public class CreateInventoryItemCommandHandlerTests
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(StatusCodes.Status400BadRequest);
+    }
+    [Theory, AutoDomainData]
+    public async Task Handle_WhenRetailQuantityNotGreaterThanTotalAmount_ShouldReturnFailedApiResponse(
+        CreateInventoryItemCommand command,
+        CancellationToken token,
+        [Frozen] Mock<IInventoryItemService> inventoryItemServiceMock,
+        [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+        CreateInventoryItemCommandHandler sut)
+    {
+        const int successResponse = 1;
+        command.NewInventoryItemDto.TotalAmount = 1;
+        command.RetailQuantity = 1;
+        RetailStock? retailStock = null;
+        inventoryItemServiceMock.Setup(x => x.AddInventoryItem(It.IsAny<InventoryItem>()).Result)
+            .Returns(successResponse);
+        retailStockServiceMock.Setup(rss => rss.AddRetailStock(It.IsAny<RetailStock>()).Result)
+            .Callback<RetailStock>(rS => retailStock = rS)
+            .Returns(successResponse);
+
+        var result = await sut.Handle(command, token);
+
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.StatusCode.Should().NotBe(StatusCodes.Status400BadRequest);
+        inventoryItemServiceMock.Verify(iis => iis.AddInventoryItem(It.IsAny<InventoryItem>()), Times.Once);
+        retailStockServiceMock.Verify(rss => rss.AddRetailStock(It.IsAny<RetailStock>()), Times.Once);
+        retailStock.Quantity.Should().Be(command.RetailQuantity);
     }
 
 }
