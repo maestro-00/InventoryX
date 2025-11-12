@@ -35,6 +35,9 @@ public class CreateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenCalled_ShouldCallAddInventoryItemMethod()
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_newlyCreatedIdResponse);
         // _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
@@ -67,10 +70,13 @@ public class CreateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAddInventoryItemServiceFailed_ShouldReturnFailedApiResponse()
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_failedResponse);
         // _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
-        //     .ReturnsAsync(genericResponse); 
+        //     .ReturnsAsync(genericResponse);
 
 
         var result = await _sut.Handle(_createCommand, _cancellationToken);
@@ -83,6 +89,9 @@ public class CreateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAddRetailStockServiceFailed_ShouldReturnFailedApiResponse()
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_newlyCreatedIdResponse);
         _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
@@ -99,6 +108,9 @@ public class CreateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenBothInventoryItemAndRetailStockAddedSuccessful_ShouldReturnSuccessApiResponse()
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         var inventoryItem = _fixture.Create<InventoryItem>();
         _mapperMock.Setup(m => m.Map<InventoryItem>(It.IsAny<InventoryItemCommandDto>()))
             .Returns(inventoryItem);
@@ -122,7 +134,7 @@ public class CreateInventoryItemCommandHandlerTests
         // _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
         //     .ReturnsAsync(_successResponse);
         // _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
-        //     .ReturnsAsync(_failedResponse); 
+        //     .ReturnsAsync(_failedResponse);
 
 
         await _sut.Handle(_createCommand, _cancellationToken);
@@ -136,7 +148,7 @@ public class CreateInventoryItemCommandHandlerTests
         _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
             .ThrowsAsync(new Exception("Exception thrown"));
         // _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
-        //     .ReturnsAsync(genericSuccessResponse); 
+        //     .ReturnsAsync(genericSuccessResponse);
 
 
         var result = await _sut.Handle(_createCommand, _cancellationToken);
@@ -150,6 +162,9 @@ public class CreateInventoryItemCommandHandlerTests
     [Fact]
     public async Task Handle_WhenAddRetailStockThrowsException_ShouldReturnFailedApiResponse()
     {
+        //Ensuring Total Amount is lesser than retail quantity
+        _createCommand.NewInventoryItemDto.TotalAmount = 1;
+        _createCommand.RetailQuantity = 1;
         _serviceMock.Setup(m => m.AddInventoryItem(It.IsAny<InventoryItem>()))
             .ReturnsAsync(_newlyCreatedIdResponse);
         _retailStockMock.Setup(m => m.AddRetailStock(It.IsAny<RetailStock>()))
