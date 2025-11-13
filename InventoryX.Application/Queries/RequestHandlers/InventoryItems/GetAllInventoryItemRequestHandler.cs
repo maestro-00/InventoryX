@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
 {
-    public class GetAllInventoryItemRequestHandler(IInventoryItemService service, IMapper mapper) : IRequestHandler<GetAllInventoryItemRequest, ApiResponse>
+    public class GetAllInventoryItemRequestHandler(IInventoryItemService service, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<GetAllInventoryItemRequest, ApiResponse>
     {
         private readonly IInventoryItemService _service = service;
         private readonly IMapper _mapper = mapper;
@@ -16,7 +16,13 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
             try
             {
                 var response = await _service.GetAllInventoryItems() ?? throw new Exception("Failed to retrieve all inventory items");
-                var inventoryItemDtos = _mapper.Map<IEnumerable<GetInventoryItemDto>>(response);
+                var inventoryItemDtos = _mapper.Map<List<GetInventoryItemDto>>(response);
+                foreach(var item in inventoryItemDtos)
+                {
+                    var retailStock = await retailStockService.GetRetailStock("InventoryItemId", item.Id);
+                    item.RetailQuantity = retailStock?.Quantity ?? 0;
+                }
+
                 return new()
                 {
                     Success = true,

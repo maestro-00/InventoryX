@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
 {
-    public class GetInventoryItemRequestHandler(IInventoryItemService service, IMapper mapper) : IRequestHandler<GetInventoryItemRequest, ApiResponse>
+    public class GetInventoryItemRequestHandler(IInventoryItemService service, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<GetInventoryItemRequest, ApiResponse>
     {
         private readonly IInventoryItemService _service = service;
         private readonly IMapper _mapper = mapper;
@@ -24,8 +24,8 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
                         Success = false
                     };
                 }
-                var response = await _service.GetInventoryItem(request.Id);
-                if (response == null)
+                var inventoryItem = await _service.GetInventoryItem(request.Id);
+                if (inventoryItem == null)
                 {
                     return new ApiResponse
                     {
@@ -34,7 +34,9 @@ namespace InventoryX.Application.Queries.RequestHandlers.InventoryItems
                         Success = false
                     };
                 }
-                var inventoryItemDto = _mapper.Map<GetInventoryItemDto>(response);
+                var retailStock = await retailStockService.GetRetailStock("InventoryItemId", inventoryItem.Id);
+                var inventoryItemDto = _mapper.Map<GetInventoryItemDto>(inventoryItem);
+                inventoryItemDto.RetailQuantity = retailStock?.Quantity ?? 0;
                 return new ApiResponse
                 {
                     Success = true,
