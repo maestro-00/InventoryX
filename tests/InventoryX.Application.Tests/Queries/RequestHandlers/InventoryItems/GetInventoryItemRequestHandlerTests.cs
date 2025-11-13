@@ -8,6 +8,7 @@ public class GetInventoryItemRequestHandlerTests
 {
     private readonly IFixture _fixture;
     private readonly Mock<IInventoryItemService> _serviceMock;
+    private readonly Mock<IRetailStockService> _retailServiceMock;
     private readonly GetInventoryItemRequestHandler _sut;
     private readonly Mock<IMapper> _mapperMock;
     private readonly GetInventoryItemRequest _getRequest;
@@ -18,11 +19,12 @@ public class GetInventoryItemRequestHandlerTests
         _fixture = new Fixture();
         //Mocks
         _serviceMock = _fixture.Freeze<Mock<IInventoryItemService>>();
+        _retailServiceMock = new Mock<IRetailStockService>();
         _mapperMock = _fixture.Freeze<Mock<IMapper>>();
         _getRequest = _fixture.Create<GetInventoryItemRequest>();
         _token = _fixture.Create<CancellationToken>();
 
-        _sut = new GetInventoryItemRequestHandler(_serviceMock.Object, _mapperMock.Object);
+        _sut = new GetInventoryItemRequestHandler(_serviceMock.Object, _retailServiceMock.Object, _mapperMock.Object);
     }
 
     [Fact]
@@ -97,6 +99,35 @@ public class GetInventoryItemRequestHandlerTests
         result.StatusCode.Should().Be(StatusCodes.Status200OK);
         result.Success.Should().BeTrue();
         result.Body.Should().BeEquivalentTo(inventoryItemDto);
+    }
+
+    [Theory, AutoDomainData]
+    public async Task Handle_WhenGetInventoryItemSuccessful_ShouldFetchInventoryRetailQuantity(
+        GetInventoryItemRequest inventoryItemRequest,
+        CancellationToken token,
+        InventoryItem inventoryItem,
+        GetInventoryItemDto inventoryItemDto,
+        Domain.Models.RetailStock retailStock,
+        [Frozen] Mock<IInventoryItemService> serviceMock,
+        [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+        [Frozen] Mock<IMapper> mapperMock,
+        GetInventoryItemRequestHandler sut)
+    {
+        mapperMock.Setup(m => m.Map<GetInventoryItemDto>(It.IsAny<InventoryItem>()))
+            .Returns(inventoryItemDto);
+        serviceMock.Setup(s => s.GetInventoryItem(It.IsAny<int>()))
+            .ReturnsAsync(inventoryItem);
+        retailStockServiceMock.Setup(rss => rss.GetRetailStock("InventoryItemId", inventoryItem.Id).Result)
+            .Returns(retailStock);
+
+        var result = await sut.Handle(inventoryItemRequest, token);
+
+        result.Should().NotBeNull();
+        result.StatusCode.Should().Be(StatusCodes.Status200OK);
+        result.Success.Should().BeTrue();
+        result.Body.Should().BeEquivalentTo(inventoryItemDto);
+        inventoryItemDto.RetailQuantity.Should().Be(retailStock?.Quantity ?? 0);
+        retailStockServiceMock.Verify(rss => rss.GetRetailStock("InventoryItemId",inventoryItem.Id).Result, Times.Once);
     }
 
 }
