@@ -60,7 +60,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
 
                     retailStock.Quantity = (decimal)request.RetailQuantity;
                     var updateResult = await _retailStockService.UpdateRetailStock(retailStock);
-                    if (updateResult <= 0) throw new Exception("Failed to update Inventory Item. Failed to update Retail Stock Quantity.");
+                    if (updateResult < 0) throw new Exception("Failed to update Inventory Item. Failed to update Retail Stock Quantity.");
                 }
                 else
                 {
