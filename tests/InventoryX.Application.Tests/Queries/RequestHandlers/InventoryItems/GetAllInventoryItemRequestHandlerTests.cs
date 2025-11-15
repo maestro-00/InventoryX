@@ -19,10 +19,11 @@ public class GetAllInventoryItemRequestHandlerTests
         //Mocks
         _serviceMock = _fixture.Freeze<Mock<IInventoryItemService>>();
         _mapperMock = _fixture.Freeze<Mock<IMapper>>();
+        Mock<IRetailStockService> retailServiceMock = new Mock<IRetailStockService>();
         _getAllCommand = _fixture.Create<GetAllInventoryItemRequest>();
         _token = _fixture.Create<CancellationToken>();
 
-        _sut = new GetAllInventoryItemRequestHandler(_serviceMock.Object, _mapperMock.Object);
+        _sut = new GetAllInventoryItemRequestHandler(_serviceMock.Object,retailServiceMock.Object, _mapperMock.Object);
     }
 
     [Fact]
@@ -86,5 +87,48 @@ public class GetAllInventoryItemRequestHandlerTests
         result.Success.Should().BeTrue();
         result.Body.Should().BeEquivalentTo(inventoryItemDtos);
     }
+        [Theory, AutoDomainData]
+        public async Task Handle_WhenGetAllInventoryItemsSuccessful_ShouldFetchRetailQuantityOfEachInventoryItem(
+            GetAllInventoryItemRequest inventoryItemRequest,
+            CancellationToken token,
+            IFixture fixture,
+            [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+            [Frozen] Mock<IMapper> mapperMock,
+            GetAllInventoryItemRequestHandler sut)
+        {
+            var inventoryItemDtos = fixture.CreateMany<GetInventoryItemDto>(2).ToList();
+            mapperMock.Setup(m => m.Map<IEnumerable<GetInventoryItemDto>>(It.IsAny<IEnumerable<InventoryItem>>()))
+                .Returns(inventoryItemDtos);
+
+            var result = await sut.Handle(inventoryItemRequest, token);
+
+            result.Should().NotBeNull();
+            result.StatusCode.Should().Be(StatusCodes.Status200OK);
+            result.Success.Should().BeTrue();
+            retailStockServiceMock.Verify(rss => rss.GetRetailStock("InventoryItemId", It.IsAny<int>()), Times.Exactly(inventoryItemDtos.Count));
+        }
+
+        [Theory, AutoDomainData]
+        public async Task Handle_WhenGetRetailStockThrowsException_ShouldReturnFailedResponse(
+            GetAllInventoryItemRequest inventoryItemRequest,
+            CancellationToken token,
+            IFixture fixture,
+            [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+            [Frozen] Mock<IMapper> mapperMock,
+            GetAllInventoryItemRequestHandler sut)
+        {
+            var inventoryItemDtos = fixture.CreateMany<GetInventoryItemDto>(1).ToList();
+            mapperMock.Setup(m => m.Map<IEnumerable<GetInventoryItemDto>>(It.IsAny<IEnumerable<InventoryItem>>()))
+                .Returns(inventoryItemDtos);
+            retailStockServiceMock.Setup(rss => rss.GetRetailStock("InventoryItemId", It.IsAny<int>()).Result)
+                .Throws<Exception>();
+
+            var result = await sut.Handle(inventoryItemRequest, token);
+
+            result.Should().NotBeNull();
+            result.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+            result.Success.Should().BeFalse();
+            retailStockServiceMock.Verify(rss => rss.GetRetailStock("InventoryItemId", It.IsAny<int>()), Times.AtLeastOnce);
+        }
 
 }
