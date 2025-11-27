@@ -12,6 +12,7 @@ namespace InventoryX.Application.Services.IServices
         Task<int> AddSale(Sale entity);
         Task<IEnumerable<Sale>> GetAllSales();
         Task<Sale?> GetSale(int id);
+        Task<List<Sale>> GetSalesByGroupId(int id);
         Task<int> UpdateSale(Sale entity);
         Task<int> DeleteSale(int id);
     }
