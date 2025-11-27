@@ -1,0 +1,30 @@
+using InventoryX.Application;
+using InventoryX.Application.Commands.Requests.SaleGroups;
+using InventoryX.Application.DTOs.SaleGroups;
+using InventoryX.Application.Queries.Requests.SaleGroups;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace InventoryX.Presentation.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class SaleGroupsController(IMediator mediator) : Controller
+{
+
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResponse))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult> Add(SaleGroupCommandDto saleGroup)
+    {
+        if (ModelState.IsValid)
+        {
+            var response = await mediator.Send(new CreateSaleGroupCommand { SaleGroupCommandDto = saleGroup });
+            return StatusCode(response.StatusCode, response);
+        }
+        return BadRequest(ModelState);
+    }
+
+}
