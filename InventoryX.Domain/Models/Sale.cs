@@ -22,6 +22,8 @@ namespace InventoryX.Domain.Models
         public required string UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual required User Seller { get; set; }
-
+        public int? SaleGroupId { get; set; }
+        [ForeignKey("SaleGroupId")]
+        public virtual SaleGroup? SaleGroup { get; set; }
     }
 }
