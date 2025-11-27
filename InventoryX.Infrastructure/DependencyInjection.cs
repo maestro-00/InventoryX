@@ -16,6 +16,7 @@ public static class DependencyInjection
         });
         services.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
         services.AddScoped(typeof(ISalePurchaseRepository<>), typeof(SalePurchaseRepository<>));
+        services.AddScoped<ISaleRepository, SaleRepository>();
         return services;
     }
 }
