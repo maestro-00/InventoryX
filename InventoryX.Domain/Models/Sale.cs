@@ -17,6 +17,8 @@ namespace InventoryX.Domain.Models
         public required decimal Quantity { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public required decimal Price { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public required decimal SubTotal { get; set; }
         public required string UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual required User Seller { get; set; }

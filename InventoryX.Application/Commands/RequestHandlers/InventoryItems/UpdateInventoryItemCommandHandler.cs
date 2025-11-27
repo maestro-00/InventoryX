@@ -43,7 +43,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.InventoryItems
                     var quantityDiff = oldInventoryItem.TotalAmount - inventoryItemEntity.TotalAmount;
                     if (quantityDiff > 0)
                     {
-                        var saleResponse = await _saleService.AddSale(new() { InventoryItem = null, Seller = null, UserId = null, InventoryItemId = inventoryItemEntity.Id, Price = 0, Quantity = quantityDiff, Created_At = DateTime.UtcNow });
+                        var saleResponse = await _saleService.AddSale(new() { InventoryItem = null, Seller = null, UserId = null, InventoryItemId = inventoryItemEntity.Id, Price = 0, Quantity = quantityDiff, SubTotal = 0, Created_At = DateTime.UtcNow });
                         if (saleResponse <= 0) throw new Exception("Failed to update Inventory Item amount as loss");
                     }
                 }
