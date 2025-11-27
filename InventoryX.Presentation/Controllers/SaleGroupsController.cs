@@ -27,4 +27,11 @@ public class SaleGroupsController(IMediator mediator) : Controller
         return BadRequest(ModelState);
     }
 
+    [HttpDelete]
+    [Route("{id:int}")]
+    public async Task<ActionResult> Delete(int id)
+    {
+        var response = await mediator.Send(new DeleteSaleGroupCommand { Id = id });
+        return StatusCode(response.StatusCode, response);
+    }
 }
