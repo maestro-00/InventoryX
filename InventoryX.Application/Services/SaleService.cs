@@ -44,7 +44,9 @@ namespace InventoryX.Application.Services
 
         public Task<List<Sale>> GetSalesByGroupId(int id)
         {
-            return saleRepository.GetSaleBySaleGroupId(id);
+            return saleRepository.GetSaleBySaleGroupId(id,
+                i => i.InventoryItem,
+                i => i.Seller);
         }
 
         public Task<int> UpdateSale(Sale entity)
