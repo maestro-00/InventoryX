@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ISaleService, SaleService>();
         services.AddScoped<IRetailStockService, RetailStockService>();
+        services.AddScoped<ISaleGroupService, SaleGroupService>();
         services.AddTransient<IEmailSender, EmailSender>();
         services.Configure<AuthMessageSenderOptions>(configuration);
         services.Configure<AuthOptions>(configuration.GetSection("Frontend"));

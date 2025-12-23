@@ -9,7 +9,7 @@ using InventoryX.Domain.Models;
 
 namespace InventoryX.Application.Services
 {
-    public class SaleService(ISalePurchaseRepository<Sale> repository, IAuthService authService) : ISaleService
+    public class SaleService(ISalePurchaseRepository<Sale> repository, ISaleRepository saleRepository, IAuthService authService) : ISaleService
     {
         private readonly ISalePurchaseRepository<Sale> _repository = repository;
         private readonly IAuthService _authService = authService;
@@ -40,6 +40,13 @@ namespace InventoryX.Application.Services
                  i => i.InventoryItem,
                  i => i.Seller
                 );
+        }
+
+        public Task<List<Sale>> GetSalesByGroupId(int id)
+        {
+            return saleRepository.GetSaleBySaleGroupId(id,
+                i => i.InventoryItem,
+                i => i.Seller);
         }
 
         public Task<int> UpdateSale(Sale entity)

@@ -15,6 +15,7 @@ namespace InventoryX.Application.DTOs.Sales
         public GetInventoryItemDto InventoryItem { get; set; }
         public decimal Quantity { get; set; }
         public decimal Price { get; set; }
+        public decimal SubTotal { get; set; }
         public GetUserDto? Seller { get; set; }
     }
 }

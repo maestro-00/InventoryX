@@ -17,5 +17,6 @@ namespace InventoryX.Application.DTOs.Sales
         public required decimal Quantity { get; set; }
         [Required]
         public required decimal Price { get; set; }
+        public required decimal SubTotal { get; set; }
     }
 }

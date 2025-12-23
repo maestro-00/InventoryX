@@ -16,6 +16,7 @@ namespace InventoryX.Infrastructure
         {
         }
         public DbSet<InventoryItem> InventoryItems { get; set; }
+        public DbSet<SaleGroup> SaleGroups { get; set; }
         public DbSet<InventoryItemType> InventoryItemTypes { get; set; }
         public DbSet<Sale> Sales { get; set; }
         public DbSet<Purchase> Purchases { get; set; }
@@ -25,6 +26,7 @@ namespace InventoryX.Infrastructure
         {
             base.OnModelCreating(builder);
             builder.Entity<InventoryItem>().HasOne(e => e.Type).WithMany().HasForeignKey(e => e.TypeId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<Sale>().HasOne(e => e.SaleGroup).WithMany().HasForeignKey(e => e.SaleGroupId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<Sale>()
             .HasOne(s => s.Seller)
             .WithMany()
