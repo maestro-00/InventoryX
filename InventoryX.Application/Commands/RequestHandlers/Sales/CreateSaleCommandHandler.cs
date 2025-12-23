@@ -5,13 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
 using InventoryX.Application.Commands.Requests.Sales;
+using InventoryX.Application.Exceptions;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Sales
 {
-    public class CreateSaleCommandHandler(ISaleService service, IMapper mapper) : IRequestHandler<CreateSaleCommand, ApiResponse>
+    public class CreateSaleCommandHandler(ISaleService service,IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<CreateSaleCommand, ApiResponse>
     {
         private readonly ISaleService _service = service;
         private readonly IMapper _mapper = mapper;
@@ -24,12 +26,19 @@ namespace InventoryX.Application.Commands.RequestHandlers.Sales
                 var response = await _service.AddSale(SaleEntity);
                 if (response > 0)
                 {
-                    return new()
+                    var retailStock = await retailStockService.GetRetailStock("InventoryItemId", request.NewSaleDto.InventoryItemId);
+                    if (retailStock == null) throw new CustomException("Failed to create sale.", StatusCodes.Status500InternalServerError);
+                    retailStock.Quantity -= request.NewSaleDto.Quantity;
+                    var updateResult = await retailStockService.UpdateRetailStock(retailStock);
+                    if (updateResult > 0)
                     {
-                        Id = response,
-                        Success = true,
-                        Message = "Sale has been created successfully"
-                    };
+                        return new()
+                        {
+                            Id = response,
+                            Success = true,
+                            Message = "Sale has been created successfully"
+                        };
+                    }
                 }
                 throw new Exception("Failed to create sale");
             }
