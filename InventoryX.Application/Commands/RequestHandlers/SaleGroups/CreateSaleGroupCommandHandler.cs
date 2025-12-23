@@ -20,7 +20,7 @@ public class CreateSaleGroupCommandHandler(ISaleGroupService saleGroupService, I
             saleGroupEntity.Created_At = DateTime.UtcNow;
             var saleGroupResult =  await saleGroupService.AddSaleGroup(saleGroupEntity);
             if (saleGroupResult <= 0) throw new InvalidDataException("Failed to make sale.");
-
+            //TODO: Use bulk insert to persist sales data
             foreach (var sale in request.SaleGroupCommandDto.Sales)
             {
                 var saleEntity = mapper.Map<Sale>(sale);
