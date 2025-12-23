@@ -174,6 +174,12 @@ namespace InventoryX.Infrastructure.Migrations
                     b.Property<decimal>("Quantity")
                         .HasColumnType("decimal(17,3)");
 
+                    b.Property<int?>("SaleGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("SubTotal")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime?>("Updated_At")
                         .HasColumnType("datetime2");
 
@@ -185,9 +191,39 @@ namespace InventoryX.Infrastructure.Migrations
 
                     b.HasIndex("InventoryItemId");
 
+                    b.HasIndex("SaleGroupId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("Sales");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.SaleGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("Created_At")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("Updated_At")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SaleGroups");
                 });
 
             modelBuilder.Entity("InventoryX.Domain.Models.User", b =>
@@ -440,6 +476,11 @@ namespace InventoryX.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("InventoryX.Domain.Models.SaleGroup", "SaleGroup")
+                        .WithMany()
+                        .HasForeignKey("SaleGroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
                     b.HasOne("InventoryX.Domain.Models.User", "Seller")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -447,6 +488,8 @@ namespace InventoryX.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("InventoryItem");
+
+                    b.Navigation("SaleGroup");
 
                     b.Navigation("Seller");
                 });
