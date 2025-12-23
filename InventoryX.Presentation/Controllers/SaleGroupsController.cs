@@ -13,6 +13,19 @@ namespace InventoryX.Presentation.Controllers;
 [Authorize]
 public class SaleGroupsController(IMediator mediator) : Controller
 {
+    [HttpGet("{id}")]
+    public async Task<ActionResult> Get(int id)
+    {
+        var response = await mediator.Send(new GetSaleGroupRequest(id));
+        return StatusCode(response.StatusCode, response);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult> GetAll()
+    {
+        var response = await mediator.Send(new GetAllSaleGroupsRequest());
+        return StatusCode(response.StatusCode, response);
+    }
 
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ApiResponse))]
