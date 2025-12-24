@@ -38,17 +38,17 @@ namespace InventoryX.Presentation.Controllers
             }
             return BadRequest(ModelState);
         }
-        [HttpPut]
-        [Route("{id}")]
-        public async Task<ActionResult> Update(int id, SaleCommandDto Sale)
-        {
-            if (ModelState.IsValid)
-            {
-                var response = await _mediator.Send(new UpdateSaleCommand { Id = id, SaleDto = Sale });
-                return StatusCode(response.StatusCode, response);
-            }
-            return BadRequest(ModelState);
-        }
+        // [HttpPut]
+        // [Route("{id}")]
+        // public async Task<ActionResult> Update(int id, SaleCommandDto Sale)
+        // {
+        //     if (ModelState.IsValid)
+        //     {
+        //         var response = await _mediator.Send(new UpdateSaleCommand { Id = id, SaleDto = Sale });
+        //         return StatusCode(response.StatusCode, response);
+        //     }
+        //     return BadRequest(ModelState);
+        // }
         [HttpDelete]
         [Route("{id}")]
         public async Task<ActionResult> Delete(int id)

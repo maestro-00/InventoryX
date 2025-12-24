@@ -37,7 +37,7 @@ public class SalesControllerTests
         //Act
         var result = await _sut.Get(mockId);
 
-        //Assert 
+        //Assert
         _mediatorMock.Verify(x => x.Send(It.IsAny<GetSaleRequest>(),
             It.IsAny<CancellationToken>()), Times.Once);
         var objResult = result as ObjectResult;
@@ -62,7 +62,7 @@ public class SalesControllerTests
         //Act
         var result = await _sut.GetAll();
 
-        //Assert 
+        //Assert
         _mediatorMock.Verify(x => x.Send(It.IsAny<GetAllSaleRequest>(),
             It.IsAny<CancellationToken>()), Times.Once);
         var objectResult = result as ObjectResult;
@@ -88,7 +88,7 @@ public class SalesControllerTests
         //Act
         var result = await _sut.Add(saleCommandDto);
 
-        //Assert 
+        //Assert
         var objectResult = result as ObjectResult;
         objectResult.Should().NotBeNull();
         objectResult?.StatusCode.Should().Be(statusCode);
@@ -98,7 +98,7 @@ public class SalesControllerTests
     [Fact]
     public async Task Add_WhenCalledWithInvalidModelState_ShouldReturnBadRequest()
     {
-        //Arrange 
+        //Arrange
         var saleCommandDto = _fixture.Create<SaleCommandDto>();
         _sut.ModelState.AddModelError("Quantity", "Required");
         _mediatorMock
@@ -110,59 +110,59 @@ public class SalesControllerTests
         //Act
         var result = await _sut.Add(saleCommandDto);
 
-        //Assert 
+        //Assert
         var badRequestResult = result as BadRequestObjectResult;
         badRequestResult.Should().NotBeNull();
         badRequestResult?.StatusCode.Should().Be(400);
     }
 
-    [Theory]
-    [InlineData(202)]
-    [InlineData(400)]
-    [InlineData(500)]
-    public async Task Update_WhenCalledWithValidModelState_ShouldReturnRightActionResult(int statusCode)
-    {
-        //Arrange
-        _mockApiResponse.StatusCode = statusCode;
-        var saleCommandDto = _fixture.Create<SaleCommandDto>();
-        var id = _fixture.Create<int>();
-        _mediatorMock
-    .Setup(x => x.Send(
-        It.IsAny<UpdateSaleCommand>()
-        , It.IsAny<CancellationToken>()))
-    .ReturnsAsync(_mockApiResponse);
+    // [Theory]
+    // [InlineData(202)]
+    // [InlineData(400)]
+    // [InlineData(500)]
+    // public async Task Update_WhenCalledWithValidModelState_ShouldReturnRightActionResult(int statusCode)
+    // {
+    //     //Arrange
+    //     _mockApiResponse.StatusCode = statusCode;
+    //     var saleCommandDto = _fixture.Create<SaleCommandDto>();
+    //     var id = _fixture.Create<int>();
+    //     _mediatorMock
+    // .Setup(x => x.Send(
+    //     It.IsAny<UpdateSaleCommand>()
+    //     , It.IsAny<CancellationToken>()))
+    // .ReturnsAsync(_mockApiResponse);
+    //
+    //     //Act
+    //     var result = await _sut.Update(id, saleCommandDto);
+    //
+    //     //Assert
+    //     _mediatorMock.Verify(x => x.Send(It.IsAny<UpdateSaleCommand>(), It.IsAny<CancellationToken>()), Times.Once);
+    //     var objectResult = result as ObjectResult;
+    //     objectResult.Should().NotBeNull();
+    //     objectResult?.StatusCode.Should().Be(statusCode);
+    // }
 
-        //Act
-        var result = await _sut.Update(id, saleCommandDto);
-
-        //Assert 
-        _mediatorMock.Verify(x => x.Send(It.IsAny<UpdateSaleCommand>(), It.IsAny<CancellationToken>()), Times.Once);
-        var objectResult = result as ObjectResult;
-        objectResult.Should().NotBeNull();
-        objectResult?.StatusCode.Should().Be(statusCode);
-    }
-
-    [Fact]
-    public async Task Update_WhenCalledWithInvalidModelState_ShouldReturnBadRequest()
-    {
-        //Arrange 
-        var saleCommandDto = _fixture.Create<SaleCommandDto>();
-        var id = _fixture.Create<int>();
-        _sut.ModelState.AddModelError("Quantity", "Required");
-        _mediatorMock
-            .Setup(x => x.Send(
-                It.IsAny<UpdateSaleCommand>()
-                , It.IsAny<CancellationToken>()))!
-            .ReturnsAsync(_mockApiResponse);
-
-        //Act
-        var result = await _sut.Update(id, saleCommandDto);
-
-        //Assert 
-        var badRequestResult = result as BadRequestObjectResult;
-        badRequestResult.Should().NotBeNull();
-        badRequestResult?.StatusCode.Should().Be(400);
-    }
+    // [Fact]
+    // public async Task Update_WhenCalledWithInvalidModelState_ShouldReturnBadRequest()
+    // {
+    //     //Arrange
+    //     var saleCommandDto = _fixture.Create<SaleCommandDto>();
+    //     var id = _fixture.Create<int>();
+    //     _sut.ModelState.AddModelError("Quantity", "Required");
+    //     _mediatorMock
+    //         .Setup(x => x.Send(
+    //             It.IsAny<UpdateSaleCommand>()
+    //             , It.IsAny<CancellationToken>()))!
+    //         .ReturnsAsync(_mockApiResponse);
+    //
+    //     //Act
+    //     var result = await _sut.Update(id, saleCommandDto);
+    //
+    //     //Assert
+    //     var badRequestResult = result as BadRequestObjectResult;
+    //     badRequestResult.Should().NotBeNull();
+    //     badRequestResult?.StatusCode.Should().Be(400);
+    // }
 
     [Theory]
     [InlineData(200)]
@@ -182,7 +182,7 @@ public class SalesControllerTests
         //Act
         var result = await _sut.Delete(id);
 
-        //Assert 
+        //Assert
         _mediatorMock.Verify(x => x.Send(It.IsAny<DeleteSaleCommand>(), It.IsAny<CancellationToken>()), Times.Once);
         var objectResult = result as ObjectResult;
         objectResult.Should().NotBeNull();
