@@ -11,22 +11,33 @@ public class CreateSaleGroupCommandHandlerTests
     public async Task Handle_WhenCalled_AddSaleGroup(
         CancellationToken token,
         SaleGroup saleGroup,
+        Sale sale,
+        InventoryItem inventoryItem,
         [Frozen] Mock<IMapper> mapperMock,
         [Frozen] Mock<ISaleGroupService> saleGroupServiceMock,
         [Frozen] Mock<ISaleService> saleServiceMock,
         [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+        [Frozen] Mock<IInventoryItemService> inventoryItemService,
         CreateSaleGroupCommand saleGroupCommand,
         CreateSaleGroupCommandHandler sut
         )
     {
         const int successResponse = 1;
+        sale.InventoryItem = inventoryItem;
         mapperMock.Setup(m => m.Map<SaleGroup>(saleGroupCommand.SaleGroupCommandDto))
             .Returns(saleGroup);
+
+        mapperMock.Setup(m => m.Map<Sale>(It.IsIn(saleGroupCommand.SaleGroupCommandDto.Sales)))
+            .Returns(sale);
+
         saleGroupServiceMock.Setup(sG => sG.AddSaleGroup(saleGroup).Result)
             .Returns(successResponse);
         saleServiceMock.Setup(sS => sS.AddSale(It.IsAny<Sale>()).Result)
             .Returns(successResponse);
         retailStockServiceMock.Setup(sS => sS.UpdateRetailStock(It.IsAny<RetailStock>()).Result)
+            .Returns(successResponse);
+
+        inventoryItemService.Setup(itemService => itemService.UpdateInventoryItem(It.IsAny<InventoryItem>()).Result)
             .Returns(successResponse);
 
         ApiResponse result = await sut.Handle(saleGroupCommand, token);
@@ -43,11 +54,13 @@ public class CreateSaleGroupCommandHandlerTests
         CancellationToken token,
         SaleGroup saleGroup,
         Sale sale,
+        RetailStock retailStock,
         List<SaleCommandDto> saleDtos,
         [Frozen] Mock<IMapper> mapperMock,
         [Frozen] Mock<ISaleGroupService> saleGroupServiceMock,
         [Frozen] Mock<ISaleService> saleServiceMock,
         [Frozen] Mock<IRetailStockService> retailStockServiceMock,
+        [Frozen] Mock<IInventoryItemService> inventoryItemService,
         CreateSaleGroupCommand saleGroupCommand,
         CreateSaleGroupCommandHandler sut
         )
@@ -62,7 +75,11 @@ public class CreateSaleGroupCommandHandlerTests
             .Returns(sale);
         saleServiceMock.Setup(sS => sS.AddSale(sale).Result)
             .Returns(successResponse);
+        retailStockServiceMock.Setup(sS => sS.GetRetailStock(It.IsAny<string>(), It.IsAny<int>()).Result)
+            .Returns(retailStock);
         retailStockServiceMock.Setup(sS => sS.UpdateRetailStock(It.IsAny<RetailStock>()).Result)
+            .Returns(successResponse);
+        inventoryItemService.Setup(itemService => itemService.UpdateInventoryItem(It.IsAny<InventoryItem>()).Result)
             .Returns(successResponse);
 
         ApiResponse result = await sut.Handle(saleGroupCommand, token);
@@ -183,10 +200,12 @@ public class CreateSaleGroupCommandHandlerTests
         CancellationToken token,
         SaleGroup saleGroup,
         Sale sale,
+        RetailStock retailStock,
         List<SaleCommandDto> saleDtos,
         [Frozen] Mock<IMapper> mapperMock,
         [Frozen] Mock<ISaleGroupService> saleGroupServiceMock,
         [Frozen] Mock<ISaleService> saleServiceMock,
+        [Frozen] Mock<IRetailStockService> retailStockServiceMock,
         CreateSaleGroupCommand saleGroupCommand,
         CreateSaleGroupCommandHandler sut
         )
@@ -202,6 +221,8 @@ public class CreateSaleGroupCommandHandlerTests
             .Returns(sale);
         saleServiceMock.Setup(sS => sS.AddSale(sale).Result)
             .Returns(failedResponse);
+        retailStockServiceMock.Setup(sS => sS.GetRetailStock(It.IsAny<string>(), It.IsAny<int>()).Result)
+            .Returns(retailStock);
 
         ApiResponse result = await sut.Handle(saleGroupCommand, token);
 
@@ -218,10 +239,12 @@ public class CreateSaleGroupCommandHandlerTests
         CancellationToken token,
         SaleGroup saleGroup,
         Sale sale,
+        RetailStock retailStock,
         List<SaleCommandDto> saleDtos,
         [Frozen] Mock<IMapper> mapperMock,
         [Frozen] Mock<ISaleGroupService> saleGroupServiceMock,
         [Frozen] Mock<ISaleService> saleServiceMock,
+        [Frozen] Mock<IRetailStockService> retailStockServiceMock,
         CreateSaleGroupCommand saleGroupCommand,
         CreateSaleGroupCommandHandler sut
         )
@@ -237,6 +260,8 @@ public class CreateSaleGroupCommandHandlerTests
             .Returns(sale);
         saleServiceMock.Setup(sS => sS.AddSale(sale).Result)
             .Throws<Exception>();
+        retailStockServiceMock.Setup(sS => sS.GetRetailStock(It.IsAny<string>(), It.IsAny<int>()).Result)
+            .Returns(retailStock);
 
         ApiResponse result = await sut.Handle(saleGroupCommand, token);
 
