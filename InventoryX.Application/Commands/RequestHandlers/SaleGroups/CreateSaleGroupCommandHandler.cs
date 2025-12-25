@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.SaleGroups;
 
-public class CreateSaleGroupCommandHandler(ISaleGroupService saleGroupService, ISaleService saleService, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<CreateSaleGroupCommand, ApiResponse>
+public class CreateSaleGroupCommandHandler(ISaleGroupService saleGroupService, ISaleService saleService, IInventoryItemService inventoryItemService, IRetailStockService retailStockService, IMapper mapper) : IRequestHandler<CreateSaleGroupCommand, ApiResponse>
 {
     public async Task<ApiResponse> Handle(CreateSaleGroupCommand request, CancellationToken cancellationToken)
     {
@@ -32,8 +32,14 @@ public class CreateSaleGroupCommandHandler(ISaleGroupService saleGroupService, I
                 var retailStock = await retailStockService.GetRetailStock("InventoryItemId", sale.InventoryItemId);
                 if (retailStock == null) throw new CustomException("Failed to make sale.", StatusCodes.Status500InternalServerError);
                 retailStock.Quantity -= sale.Quantity;
-                var updateResult = await retailStockService.UpdateRetailStock(retailStock);
-                if(updateResult <= 0) throw new CustomException("Failed to make sale.",StatusCodes.Status500InternalServerError);
+                var updateRetailStock = await retailStockService.UpdateRetailStock(retailStock);
+                if(updateRetailStock <= 0) throw new Exception("Failed to create sale");
+
+                saleEntity.InventoryItem.TotalAmount -= sale.Quantity;
+
+                var updateInventoryResult = await inventoryItemService.UpdateInventoryItem(saleEntity.InventoryItem);
+                if(updateInventoryResult <= 0) throw new Exception("Failed to create sale");
+
             }
 
             transactionScope.Complete();
