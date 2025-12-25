@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Sales
 {
-    public class UpdateSaleCommandHandler(ISaleService service, IMapper mapper, IRetailStockService retailStockService) : IRequestHandler<UpdateSaleCommand, ApiResponse>
+    public class UpdateSaleCommandHandler(ISaleService service, IInventoryItemService inventoryItemService, IMapper mapper, IRetailStockService retailStockService) : IRequestHandler<UpdateSaleCommand, ApiResponse>
     {
         private readonly ISaleService _service = service;
         private readonly IMapper _mapper = mapper;
@@ -31,15 +31,24 @@ namespace InventoryX.Application.Commands.RequestHandlers.Sales
                 if (response > 0)
                 {
                     var retailStock = await retailStockService.GetRetailStock("InventoryItemId", request.SaleDto.InventoryItemId);
-                    if (retailStock == null) throw new CustomException("Failed to create sale.", StatusCodes.Status500InternalServerError);
+                    if (retailStock == null) throw new CustomException("Failed to update sale.", StatusCodes.Status500InternalServerError);
                     retailStock.Quantity -= (SaleEntity.Quantity - oldSale.Quantity);
-                    await retailStockService.UpdateRetailStock(retailStock);
-                    return new()
+                    var updateRetailStock = await retailStockService.UpdateRetailStock(retailStock);
+                    if(updateRetailStock <= 0) throw new Exception("Failed to update sale");
+
+                    SaleEntity.InventoryItem.TotalAmount -= request.SaleDto.Quantity;
+
+                    var updateInventoryResult = await inventoryItemService.UpdateInventoryItem(SaleEntity.InventoryItem);
+                    if (updateInventoryResult > 0)
                     {
-                        Id = SaleEntity.Id,
-                        Success = true,
-                        Message = "Sale has been updated successfully"
-                    };
+                        return new()
+                        {
+                            Id = response,
+                            Success = true,
+                            Message = "Sale has been updated successfully",
+                            StatusCode = StatusCodes.Status200OK
+                        };
+                    }
                 }
                 throw new Exception("Failed to update Sale");
             }

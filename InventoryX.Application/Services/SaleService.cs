@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using InventoryX.Application.DTOs.Sales;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models;
@@ -53,5 +54,15 @@ namespace InventoryX.Application.Services
         {
             return _repository.Update(entity);
         }
+
+        public async Task<GetSaleStatsDto> GetSaleStats(CancellationToken token)
+        {
+            var totalItems = await saleRepository.GetTotalInventoryItems(token);
+            var totalLowStock = await saleRepository.GetLowStockItems(token);
+            var totalTodaysSales = await saleRepository.GetTodaysSales(token);
+            var totalRevenue = await saleRepository.GetTotalRevenue(token);
+            return new GetSaleStatsDto(totalLowStock, totalRevenue, totalTodaysSales, totalItems);
+        }
+
     }
 }
