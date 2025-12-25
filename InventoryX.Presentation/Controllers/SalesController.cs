@@ -1,5 +1,6 @@
 using InventoryX.Application.Commands.Requests.Sales;
 using InventoryX.Application.DTOs.Sales;
+using InventoryX.Application.Queries.Requests.SaleGroups;
 using InventoryX.Application.Queries.Requests.Sales;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -25,6 +26,13 @@ namespace InventoryX.Presentation.Controllers
         public async Task<ActionResult> GetAll()
         {
             var response = await _mediator.Send(new GetAllSaleRequest());
+            return StatusCode(response.StatusCode, response);
+        }
+
+        [HttpGet("stats")]
+        public async Task<ActionResult> GetSaleStatistics(CancellationToken token)
+        {
+            var response = await _mediator.Send(new GetSaleStatsRequest(), token);
             return StatusCode(response.StatusCode, response);
         }
 
