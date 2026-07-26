@@ -1,10 +1,17 @@
+using System.Text;
 using InventoryX.Application.Extensions;
+using InventoryX.Application.Options;
 using InventoryX.Domain.Models;
-using InventoryX.Infrastructure;
+using InventoryX.Infrastructure.Data;
+using InventoryX.Infrastructure.Data.Seed;
 using InventoryX.Presentation.Authentication;
+using InventoryX.Presentation.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
@@ -37,18 +44,13 @@ namespace InventoryX.Presentation.Configuration
                     });
             });
             services.AddControllers();
-            //Add if only there is a cyclical reference
-            //    .AddJsonOptions(options =>
-            //{
-            //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-            //});
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
             {
                 opt.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
-                    Name = "Authorisation",
+                    Name = "Authorization",
                     Type = SecuritySchemeType.ApiKey
                 });
                 opt.OperationFilter<SecurityRequirementsOperationFilter>();
@@ -85,18 +87,53 @@ namespace InventoryX.Presentation.Configuration
                 };
             });
 
-            // Add Google OAuth
-            services.AddAuthentication()
-            .AddGoogle(googleOptions =>
+            // JWT bearer for the versioned API surface (T018): tokens carry
+            // tenant_id, role and location_scope claims.
+            var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+            var signingKey = string.IsNullOrWhiteSpace(jwtOptions.SigningKey)
+                ? "inventoryx-development-signing-key-do-not-use-in-production"
+                : jwtOptions.SigningKey;
+
+            var authBuilder = services.AddAuthentication()
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtOptions.Issuer,
+                        ValidateAudience = true,
+                        ValidAudience = jwtOptions.Audience,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromMinutes(1),
+                    };
+                });
+
+            // Add Google OAuth only when configured (owner sign-up/sign-in)
+            var googleClientId = configuration["Authentication:Google:ClientId"];
+            var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
+            if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
             {
-                googleOptions.ClientId = configuration["Authentication:Google:ClientId"]
-                                         ?? throw new InvalidOperationException("Google ClientId not configured");
-                googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"]
-                                             ?? throw new InvalidOperationException("Google ClientSecret not configured");
-                googleOptions.CallbackPath = "/api/auth/google-callback";
-                googleOptions.SaveTokens = true;
-                googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
-                googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
+                authBuilder.AddGoogle(googleOptions =>
+                {
+                    googleOptions.ClientId = googleClientId;
+                    googleOptions.ClientSecret = googleClientSecret;
+                    googleOptions.CallbackPath = "/api/auth/google-callback";
+                    googleOptions.SaveTokens = true;
+                    googleOptions.SignInScheme = IdentityConstants.ExternalScheme;
+                    googleOptions.Events.OnTicketReceived = GoogleOAuthHandler.OnTicketReceived;
+                });
+            }
+
+            // Accept either the JWT bearer (API clients) or the Identity cookie
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder(
+                        JwtBearerDefaults.AuthenticationScheme,
+                        IdentityConstants.ApplicationScheme)
+                    .RequireAuthenticatedUser()
+                    .Build();
             });
 
             return services;
@@ -104,7 +141,7 @@ namespace InventoryX.Presentation.Configuration
 
         public static WebApplication UsePresentation(this WebApplication app)
         {
-            app.UseMiddleware<Middleware.ProblemDetailsMiddleware>();
+            app.UseMiddleware<ProblemDetailsMiddleware>();
 
             app.UseSerilogRequestLogging();
 
@@ -121,7 +158,8 @@ namespace InventoryX.Presentation.Configuration
                 try
                 {
                     dbContext.Database.Migrate();
-                    app.Logger.LogInformation("Database migrations applied successfully");
+                    DataSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
+                    app.Logger.LogInformation("Database migrations and seeds applied successfully");
                 }
                 catch (Exception ex)
                 {
@@ -137,6 +175,7 @@ namespace InventoryX.Presentation.Configuration
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+            app.UseMiddleware<TenantResolutionMiddleware>();
             app.UseAuthorization();
 
             app.MapControllers();
