@@ -43,25 +43,25 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 **⚠️ CRITICAL**: Tenant isolation is the constitution's release-blocking rule; it lands here, test-first.
 
-- [ ] T008 [P] Write failing integration tests for tenant isolation (global query filter + cross-tenant write rejection) in tests/InventoryX.Infrastructure.Tests/Data/TenantIsolationTests.cs
-- [ ] T009 [P] Write failing unit tests for tenant resolution middleware (claim → ITenantContext, missing claim → 401) in tests/InventoryX.Presentation.Tests/Middleware/TenantResolutionMiddlewareTests.cs
-- [ ] T010 Extend BaseModel with TenantId, UpdatedAt/UpdatedBy, rowversion concurrency token in InventoryX.Domain/Models/Common/BaseModel.cs
-- [ ] T011 [P] Create Tenant entity (country, currency GHS default, business type, valuation method, thresholds, onboarding checklist JSON) in InventoryX.Domain/Models/Tenancy/Tenant.cs
-- [ ] T012 [P] Create PlanDefinition and UsageCounter entities in InventoryX.Domain/Models/Tenancy/PlanDefinition.cs and UsageCounter.cs
-- [ ] T013 [P] Create Subscription entity with status enum (Trialing|Active|PastDue|ReadOnly|Cancelled|PurgePending) and period/grace/purge fields in InventoryX.Domain/Models/Tenancy/Subscription.cs
-- [ ] T014 [P] Create append-only AuditLogEntry entity, Notification entity (type, channel, consolidation key) and INotificationService raise mechanism (consumed by US4/US5/US6 before US7's alert scanner) in InventoryX.Domain/Models/Auditing/AuditLogEntry.cs, Notification.cs + InventoryX.Application/Services/IServices/INotificationService.cs
-- [ ] T015 Define ITenantContext in InventoryX.Application/Services/IServices/ITenantContext.cs; implement HttpTenantContext in InventoryX.Infrastructure/Services/HttpTenantContext.cs
-- [ ] T016 Add tenant-resolution middleware populating ITenantContext from JWT tenant_id claim in InventoryX.Presentation/Middleware/TenantResolutionMiddleware.cs (makes T009 green)
-- [ ] T017 Apply EF global query filters on all tenant-owned entities + SaveChanges interceptor stamping TenantId and rejecting cross-tenant writes in InventoryX.Infrastructure/Data/ (makes T008 green)
-- [ ] T018 Extend Identity user with TenantId, IsOwner; issue JWT with tenant_id, role, location_scope claims (update token service and Google flow) in InventoryX.Infrastructure and InventoryX.Application/Services
-- [ ] T019 Create Role with permission atoms (Sell, Refund+limit, Discount+maxPercent, VoidSale, ViewProfit, ManageStock, ManagePurchasing, ManagePricing, ManageUsers, ViewReports, ApproveAdjustments) and seed six fixed roles in InventoryX.Domain/Models/Tenancy/Role.cs + InventoryX.Infrastructure/Data/Seed/RoleSeeder.cs
-- [ ] T020 Add FluentValidation ValidationBehavior<TRequest,TResponse> MediatR pipeline stage + DI registration in InventoryX.Application/Behaviors/ValidationBehavior.cs
-- [ ] T021 [P] Add AuditBehavior writing AuditLogEntry for sensitive commands (marker interface IAuditedCommand) in InventoryX.Application/Behaviors/AuditBehavior.cs
-- [ ] T022 [P] Add IPlanEnforcer + PlanEnforcementBehavior skeleton (feature gates, limit checks → 402 problem) in InventoryX.Application/Services/IServices/IPlanEnforcer.cs and InventoryX.Application/Behaviors/PlanEnforcementBehavior.cs
-- [ ] T023 [P] Seed the four PlanDefinitions (caps: Free 300 / Standard 3,000 monthly sales; limits per spec FR-009/010) in InventoryX.Infrastructure/Data/Seed/PlanSeeder.cs
-- [ ] T024 [P] Create TaxTreatment entity + Ghana seed (GH-STD: VAT 15% + NHIL 2.5% + GETFund 2.5% + COVID 1% per research R11; GH-ZERO; GH-EXEMPT) in InventoryX.Domain/Models/Catalog/TaxTreatment.cs + InventoryX.Infrastructure/Data/Seed/TaxSeeder.cs
-- [ ] T025 Schema-evolution migration with data preservation: InventoryItemType→Category, InventoryItem→Product, RetailStock→StockLevel, SaleGroup→Sale/Sale→SaleLine, Purchase→GoodsReceipt history (research R4) in InventoryX.Infrastructure/Migrations/
-- [ ] T026 Remove pre-versioned routes; regenerate baseline migration; verify dotnet ef database update from clean DB per quickstart.md
+- [X] T008 [P] Write failing integration tests for tenant isolation (global query filter + cross-tenant write rejection) in tests/InventoryX.Infrastructure.Tests/Data/TenantIsolationTests.cs
+- [X] T009 [P] Write failing unit tests for tenant resolution middleware (claim → ITenantContext, missing claim → 401) in tests/InventoryX.Presentation.Tests/Middleware/TenantResolutionMiddlewareTests.cs
+- [X] T010 Extend BaseModel with TenantId, UpdatedAt/UpdatedBy, rowversion concurrency token in InventoryX.Domain/Models/Common/BaseModel.cs
+- [X] T011 [P] Create Tenant entity (country, currency GHS default, business type, valuation method, thresholds, onboarding checklist JSON) in InventoryX.Domain/Models/Tenancy/Tenant.cs
+- [X] T012 [P] Create PlanDefinition and UsageCounter entities in InventoryX.Domain/Models/Tenancy/PlanDefinition.cs and UsageCounter.cs
+- [X] T013 [P] Create Subscription entity with status enum (Trialing|Active|PastDue|ReadOnly|Cancelled|PurgePending) and period/grace/purge fields in InventoryX.Domain/Models/Tenancy/Subscription.cs
+- [X] T014 [P] Create append-only AuditLogEntry entity, Notification entity (type, channel, consolidation key) and INotificationService raise mechanism (consumed by US4/US5/US6 before US7's alert scanner) in InventoryX.Domain/Models/Auditing/AuditLogEntry.cs, Notification.cs + InventoryX.Application/Services/IServices/INotificationService.cs
+- [X] T015 Define ITenantContext in InventoryX.Application/Services/IServices/ITenantContext.cs; implement HttpTenantContext in InventoryX.Infrastructure/Services/HttpTenantContext.cs
+- [X] T016 Add tenant-resolution middleware populating ITenantContext from JWT tenant_id claim in InventoryX.Presentation/Middleware/TenantResolutionMiddleware.cs (makes T009 green)
+- [X] T017 Apply EF global query filters on all tenant-owned entities + SaveChanges interceptor stamping TenantId and rejecting cross-tenant writes in InventoryX.Infrastructure/Data/ (makes T008 green)
+- [X] T018 Extend Identity user with TenantId, IsOwner; issue JWT with tenant_id, role, location_scope claims (update token service and Google flow) in InventoryX.Infrastructure and InventoryX.Application/Services
+- [X] T019 Create Role with permission atoms (Sell, Refund+limit, Discount+maxPercent, VoidSale, ViewProfit, ManageStock, ManagePurchasing, ManagePricing, ManageUsers, ViewReports, ApproveAdjustments) and seed six fixed roles in InventoryX.Domain/Models/Tenancy/Role.cs + InventoryX.Infrastructure/Data/Seed/RoleSeeder.cs
+- [X] T020 Add FluentValidation ValidationBehavior<TRequest,TResponse> MediatR pipeline stage + DI registration in InventoryX.Application/Behaviors/ValidationBehavior.cs
+- [X] T021 [P] Add AuditBehavior writing AuditLogEntry for sensitive commands (marker interface IAuditedCommand) in InventoryX.Application/Behaviors/AuditBehavior.cs
+- [X] T022 [P] Add IPlanEnforcer + PlanEnforcementBehavior skeleton (feature gates, limit checks → 402 problem) in InventoryX.Application/Services/IServices/IPlanEnforcer.cs and InventoryX.Application/Behaviors/PlanEnforcementBehavior.cs
+- [X] T023 [P] Seed the four PlanDefinitions (caps: Free 300 / Standard 3,000 monthly sales; limits per spec FR-009/010) in InventoryX.Infrastructure/Data/Seed/PlanSeeder.cs
+- [X] T024 [P] Create TaxTreatment entity + Ghana seed (GH-STD: VAT 15% + NHIL 2.5% + GETFund 2.5% + COVID 1% per research R11; GH-ZERO; GH-EXEMPT) in InventoryX.Domain/Models/Catalog/TaxTreatment.cs + InventoryX.Infrastructure/Data/Seed/TaxSeeder.cs
+- [X] T025 Schema-evolution migration with data preservation: InventoryItemType→Category, InventoryItem→Product, RetailStock→StockLevel, SaleGroup→Sale/Sale→SaleLine, Purchase→GoodsReceipt history (research R4) in InventoryX.Infrastructure/Migrations/
+- [X] T026 Remove pre-versioned routes; regenerate baseline migration; verify dotnet ef database update from clean DB per quickstart.md
 
 **Checkpoint**: Isolation tests green, seeds applied — user stories can begin (in parallel if staffed)
 
