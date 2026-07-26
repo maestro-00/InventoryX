@@ -1,7 +1,10 @@
 using System.Reflection;
+using FluentValidation;
+using InventoryX.Application.Behaviors;
 using InventoryX.Application.Options;
 using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
+using MediatR;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,15 +15,18 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
-        services.AddAutoMapper(cfg => {} , Assembly.GetExecutingAssembly());
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies()));
-        services.AddScoped<IInventoryItemService, InventoryItemService>();
-        services.AddScoped<IInventoryItemTypeService, InventoryItemTypeService>();
-        services.AddScoped<IPurchaseService, PurchaseService>();
+        var assembly = Assembly.GetExecutingAssembly();
+
+        services.AddAutoMapper(cfg => { }, assembly);
+        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+        services.AddValidatorsFromAssembly(assembly);
+
+        // Pipeline order: validation → plan enforcement → audit → handler
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PlanEnforcementBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
+
         services.AddScoped<IAuthService, AuthService>();
-        services.AddScoped<ISaleService, SaleService>();
-        services.AddScoped<IRetailStockService, RetailStockService>();
-        services.AddScoped<ISaleGroupService, SaleGroupService>();
         services.AddTransient<IEmailSender, EmailSender>();
         services.Configure<AuthMessageSenderOptions>(configuration);
         services.Configure<AuthOptions>(configuration.GetSection("Frontend"));
