@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace InventoryX.Presentation.Configuration
@@ -103,6 +104,10 @@ namespace InventoryX.Presentation.Configuration
 
         public static WebApplication UsePresentation(this WebApplication app)
         {
+            app.UseMiddleware<Middleware.ProblemDetailsMiddleware>();
+
+            app.UseSerilogRequestLogging();
+
             // Configure CORS - must come before other middleware
             app.UseCors("AllowSpecificOrigin");
 
