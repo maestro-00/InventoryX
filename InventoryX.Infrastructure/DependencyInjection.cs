@@ -31,6 +31,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         services.AddScoped<IPlanEnforcer, PlanEnforcer>();
+        services.AddScoped<IStockLedger, StockLedger>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 
         return services;
