@@ -149,10 +149,11 @@ namespace InventoryX.Application.Commands.RequestHandlers.Catalog
                     await context.ProductVariants.AnyAsync(v => v.Sku == variant.Sku, cancellationToken))
                     throw new ConflictException($"A variant with SKU '{variant.Sku}' already exists.");
 
-                product.Variants.Add(new Domain.Models.Catalog.ProductVariant
+                context.ProductVariants.Add(new Domain.Models.Catalog.ProductVariant
                 {
                     TenantId = product.TenantId,
                     ProductId = product.Id,
+                    Product = product,
                     AttributeValues = JsonSerializer.Serialize(variant.AttributeValues),
                     Sku = variant.Sku,
                     Barcode = variant.Barcode,
