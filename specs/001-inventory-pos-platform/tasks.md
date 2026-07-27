@@ -75,7 +75,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Tests (write first, must fail)
 
-- [ ] T027 [P] [US1] Failing tests for RegisterTenantCommand (tenant+owner+Trialing sub created, defaults by business type) in tests/InventoryX.Application.Tests/Tenancy/RegisterTenantCommandTests.cs
+- [X] T027 [P] [US1] Failing tests for RegisterTenantCommand (tenant+owner+Trialing sub created, defaults by business type) in tests/InventoryX.Application.Tests/Tenancy/RegisterTenantCommandTests.cs
 - [ ] T028 [P] [US1] Failing tests for Product/Category/Variant command+query handlers and validators (sku uniqueness, variant matrix) in tests/InventoryX.Application.Tests/Catalog/
 - [ ] T029 [P] [US1] Failing tests for StockLedger (movement append + StockLevel projection, opening stock) in tests/InventoryX.Application.Tests/Inventory/StockLedgerTests.cs
 - [ ] T030 [P] [US1] Failing tests for CreateSaleCommand (stock decrement, Ghana tax snapshot math from quickstart A, open-shift invariant) in tests/InventoryX.Application.Tests/Selling/CreateSaleCommandTests.cs
