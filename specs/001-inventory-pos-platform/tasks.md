@@ -83,7 +83,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Implementation
 
-- [ ] T032 [US1] RegisterTenantCommand + handler + validator (tenant, owner user, Trialing Professional subscription, onboarding checklist init) in InventoryX.Application/Commands/{Requests,RequestHandlers}/Tenancy/
+- [X] T032 [US1] RegisterTenantCommand + handler + validator (tenant, owner user, Trialing Professional subscription, onboarding checklist init) in InventoryX.Application/Commands/{Requests,RequestHandlers}/Tenancy/
 - [ ] T033 [US1] AuthController v1: register, login, refresh, google, 2FA enroll/verify per contracts/auth-tenancy.md in InventoryX.Presentation/Controllers/v1/AuthController.cs
 - [ ] T034 [P] [US1] Location entity + CRUD commands/queries/validators + LocationsController (plan cap via PlanEnforcer) in InventoryX.Domain/Models/Inventory/Location.cs, InventoryX.Application/.../Inventory/, InventoryX.Presentation/Controllers/v1/LocationsController.cs
 - [ ] T035 [US1] Evolve Category (tree, unique name per parent) + CategoriesController in InventoryX.Domain/Models/Catalog/Category.cs + InventoryX.Presentation/Controllers/v1/CategoriesController.cs
