@@ -5,6 +5,8 @@ using InventoryX.Domain.Models;
 using InventoryX.Domain.Models.Auditing;
 using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Common;
+using InventoryX.Domain.Models.Inventory;
+using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +29,19 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<TaxTreatment> TaxTreatments => Set<TaxTreatment>();
+
+        public DbSet<Location> Locations => Set<Location>();
+        public DbSet<Category> Categories => Set<Category>();
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
+        public DbSet<StockLevel> StockLevels => Set<StockLevel>();
+        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+        public DbSet<Register> Registers => Set<Register>();
+        public DbSet<Shift> Shifts => Set<Shift>();
+        public DbSet<Sale> Sales => Set<Sale>();
+        public DbSet<SaleLine> SaleLines => Set<SaleLine>();
+        public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+        public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -53,6 +68,44 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<TaxTreatment>().HasIndex(t => t.Code).IsUnique();
 
             builder.Entity<User>().HasIndex(u => u.TenantId);
+
+            builder.Entity<Category>()
+                .HasIndex(c => new { c.TenantId, c.Name, c.ParentId }).IsUnique();
+            builder.Entity<Category>()
+                .HasOne(c => c.Parent).WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Product>()
+                .HasIndex(p => new { p.TenantId, p.Sku }).IsUnique().HasFilter("[Sku] IS NOT NULL");
+            builder.Entity<Product>().HasIndex(p => new { p.TenantId, p.Barcode });
+            builder.Entity<Product>()
+                .HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.SetNull);
+            builder.Entity<Product>()
+                .HasOne(p => p.TaxTreatment).WithMany().HasForeignKey(p => p.TaxTreatmentId).OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ProductVariant>()
+                .HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey(v => v.ProductId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<ProductVariant>()
+                .HasIndex(v => new { v.TenantId, v.Sku }).IsUnique().HasFilter("[Sku] IS NOT NULL");
+
+            builder.Entity<StockLevel>()
+                .HasIndex(s => new { s.TenantId, s.ProductId, s.VariantId, s.LocationId, s.BatchId }).IsUnique();
+
+            builder.Entity<StockMovement>()
+                .HasIndex(m => new { m.TenantId, m.ProductId, m.OccurredAt });
+            builder.Entity<StockMovement>()
+                .HasIndex(m => new { m.TenantId, m.LocationId, m.OccurredAt });
+
+            builder.Entity<Register>().HasIndex(r => new { r.TenantId, r.LocationId });
+
+            builder.Entity<Shift>().HasIndex(s => new { s.TenantId, s.RegisterId, s.Status });
+
+            builder.Entity<Sale>()
+                .HasIndex(s => new { s.TenantId, s.ClientSaleId }).IsUnique();
+            builder.Entity<Sale>().HasIndex(s => new { s.TenantId, s.OccurredAt });
+            builder.Entity<Sale>()
+                .HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Sale>()
+                .HasMany(s => s.Payments).WithOne().HasForeignKey(p => p.SaleId).OnDelete(DeleteBehavior.Cascade);
 
             ApplyTenantQueryFilters(builder);
         }

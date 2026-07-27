@@ -1,5 +1,7 @@
 using InventoryX.Domain.Models.Auditing;
 using InventoryX.Domain.Models.Catalog;
+using InventoryX.Domain.Models.Inventory;
+using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +22,19 @@ namespace InventoryX.Application.Repository
         DbSet<AuditLogEntry> AuditLogEntries { get; }
         DbSet<Notification> Notifications { get; }
         DbSet<TaxTreatment> TaxTreatments { get; }
+
+        DbSet<Location> Locations { get; }
+        DbSet<Category> Categories { get; }
+        DbSet<Product> Products { get; }
+        DbSet<ProductVariant> ProductVariants { get; }
+        DbSet<StockLevel> StockLevels { get; }
+        DbSet<StockMovement> StockMovements { get; }
+        DbSet<Register> Registers { get; }
+        DbSet<Shift> Shifts { get; }
+        DbSet<Sale> Sales { get; }
+        DbSet<SaleLine> SaleLines { get; }
+        DbSet<SalePayment> SalePayments { get; }
+        DbSet<ImportJob> ImportJobs { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
