@@ -79,7 +79,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T028 [P] [US1] Failing tests for Product/Category/Variant command+query handlers and validators (sku uniqueness, variant matrix) in tests/InventoryX.Application.Tests/Catalog/
 - [X] T029 [P] [US1] Failing tests for StockLedger (movement append + StockLevel projection, opening stock) in tests/InventoryX.Application.Tests/Inventory/StockLedgerTests.cs
 - [X] T030 [P] [US1] Failing tests for CreateSaleCommand (stock decrement, Ghana tax snapshot math from quickstart A, open-shift invariant) in tests/InventoryX.Application.Tests/Selling/CreateSaleCommandTests.cs
-- [ ] T031 [P] [US1] Failing end-to-end scenario A test (register→location→product→stock→sale→stock=8) in tests/InventoryX.Presentation.Tests/Scenarios/FirstSaleScenarioTests.cs
+- [X] T031 [P] [US1] Failing end-to-end scenario A test (register→location→product→stock→sale→stock=8) in tests/InventoryX.Presentation.Tests/Scenarios/FirstSaleScenarioTests.cs
 
 ### Implementation
 
