@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         services.AddScoped<IPlanEnforcer, PlanEnforcer>();
         services.AddScoped<IStockLedger, StockLedger>();
+        services.AddScoped<ISpreadsheetImportService, SpreadsheetImportService>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 
         return services;
