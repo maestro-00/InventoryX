@@ -30,7 +30,7 @@ namespace InventoryX.Application.Commands.Requests.Selling
     /// per line, ledger decrement and usage-counter increment (T042).
     /// Idempotent by ClientSaleId (research R6).
     /// </summary>
-    public class CreateSaleCommand : IRequest<SaleDto>, IPlanLimitedCommand
+    public class CreateSaleCommand : IRequest<SaleDto>, IPlanLimitedCommand, IAuditedCommand
     {
         public Guid ClientSaleId { get; init; } = Guid.NewGuid();
         public Guid RegisterId { get; init; }
@@ -44,5 +44,8 @@ namespace InventoryX.Application.Commands.Requests.Selling
         public bool AllowNegativeStock { get; init; }
 
         public UsageMetric Metric => UsageMetric.SalesThisMonth;
+        public string AuditAction => "sale.create";
+        public string AuditEntityType => "Sale";
+        public string AuditEntityId => ClientSaleId.ToString();
     }
 }

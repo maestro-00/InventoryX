@@ -4,6 +4,7 @@ using InventoryX.Application.DTOs.Selling;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
+using InventoryX.Application.Validators.Selling;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
@@ -87,6 +88,9 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                 .Include(p => p.TaxTreatment).Include(p => p.Variants)
                 .Where(p => productIds.Contains(p.Id) && !p.IsDeleted)
                 .ToDictionaryAsync(p => p.Id, cancellationToken);
+            var role = string.IsNullOrWhiteSpace(tenantContext.Role)
+                ? null
+                : await context.AppRoles.FirstOrDefaultAsync(r => r.Name == tenantContext.Role, cancellationToken);
 
             var sale = new Sale
             {
@@ -117,7 +121,14 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                         ?? throw new NotFoundException($"Variant {lineRequest.VariantId} not found.");
 
                 var unitPrice = lineRequest.UnitPrice ?? variant?.SellingPrice ?? product.SellingPrice;
-                var net = Math.Round(lineRequest.Qty * unitPrice - lineRequest.LineDiscount, 4);
+                var grossLineAmount = lineRequest.Qty * unitPrice;
+                var discountAuthorizedBy = DiscountPolicyValidator.ResolveAuthorizer(
+                    grossLineAmount,
+                    lineRequest.LineDiscount,
+                    role,
+                    tenantContext.UserId,
+                    lineRequest.DiscountAuthorizedBy);
+                var net = Math.Round(grossLineAmount - lineRequest.LineDiscount, 4);
                 var components = taxCalculator.Calculate(net, product.TaxTreatment?.ComponentsJson ?? "[]");
                 var taxAmount = Math.Round(components.Sum(c => c.Amount), 2);
 
@@ -131,7 +142,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                     UnitPrice = unitPrice,
                     PriceOverridden = lineRequest.UnitPrice is not null,
                     LineDiscount = lineRequest.LineDiscount,
-                    DiscountAuthorizedBy = lineRequest.DiscountAuthorizedBy,
+                    DiscountAuthorizedBy = discountAuthorizedBy,
                     TaxComponents = JsonSerializer.Serialize(components, SerializerOptions),
                     TaxAmount = taxAmount,
                     LineTotal = Math.Round(net + taxAmount, 2),
