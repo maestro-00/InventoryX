@@ -43,6 +43,8 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<SaleLine> SaleLines => Set<SaleLine>();
         public DbSet<SalePayment> SalePayments => Set<SalePayment>();
         public DbSet<Receipt> Receipts => Set<Receipt>();
+        public DbSet<ReturnTransaction> ReturnTransactions => Set<ReturnTransaction>();
+        public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
         public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -116,6 +118,13 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Receipt>().HasIndex(r => new { r.TenantId, r.Number }).IsUnique();
             builder.Entity<Receipt>().HasIndex(r => new { r.TenantId, r.SaleId }).IsUnique();
             builder.Entity<Receipt>().HasOne(r => r.Sale).WithMany().HasForeignKey(r => r.SaleId).OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ReturnTransaction>().HasIndex(r => new { r.TenantId, r.OriginalSaleId });
+            builder.Entity<ReturnTransaction>()
+                .HasOne(r => r.OriginalSale).WithMany().HasForeignKey(r => r.OriginalSaleId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<ReturnTransaction>()
+                .HasMany(r => r.Lines).WithOne().HasForeignKey(l => l.ReturnTransactionId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<ReturnLine>().HasIndex(l => new { l.TenantId, l.SaleLineId });
 
             ApplyTenantQueryFilters(builder);
         }
