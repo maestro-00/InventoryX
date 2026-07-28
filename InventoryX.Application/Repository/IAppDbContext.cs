@@ -30,6 +30,7 @@ namespace InventoryX.Application.Repository
         DbSet<StockLevel> StockLevels { get; }
         DbSet<StockMovement> StockMovements { get; }
         DbSet<Register> Registers { get; }
+        DbSet<FavouritesLayout> FavouritesLayouts { get; }
         DbSet<Shift> Shifts { get; }
         DbSet<Sale> Sales { get; }
         DbSet<SaleLine> SaleLines { get; }

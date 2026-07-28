@@ -37,6 +37,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<StockLevel> StockLevels => Set<StockLevel>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         public DbSet<Register> Registers => Set<Register>();
+        public DbSet<FavouritesLayout> FavouritesLayouts => Set<FavouritesLayout>();
         public DbSet<Shift> Shifts => Set<Shift>();
         public DbSet<Sale> Sales => Set<Sale>();
         public DbSet<SaleLine> SaleLines => Set<SaleLine>();
@@ -96,6 +97,10 @@ namespace InventoryX.Infrastructure.Data
                 .HasIndex(m => new { m.TenantId, m.LocationId, m.OccurredAt });
 
             builder.Entity<Register>().HasIndex(r => new { r.TenantId, r.LocationId });
+            builder.Entity<FavouritesLayout>()
+                .HasIndex(f => new { f.TenantId, f.RegisterId }).IsUnique();
+            builder.Entity<FavouritesLayout>()
+                .HasOne(f => f.Register).WithMany().HasForeignKey(f => f.RegisterId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Shift>().HasIndex(s => new { s.TenantId, s.RegisterId, s.Status });
 

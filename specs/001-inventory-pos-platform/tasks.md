@@ -116,7 +116,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 ### Implementation
 
 - [X] T048 [US2] SalePayment multi-tender support (Cash|Card|MobileMoney|BankTransfer|Cheque recorded tenders, split, change due; StoreCredit/GiftCard/loyalty/on-account deferred per spec Assumptions — enum values reserved) in CreateSaleCommand + InventoryX.Domain/Models/Selling/SalePayment.cs
-- [ ] T049 [US2] Held sales: Held status (no stock effect), complete/recall/list endpoints per contracts/pos-sales-sync.md; plus FavouritesLayout entity (per-register configurable grid, FR-038) with GET/PUT /registers/{id}/favourites in InventoryX.Application/.../Selling/ + InventoryX.Domain/Models/Selling/FavouritesLayout.cs + SalesController/RegistersController
+- [X] T049 [US2] Held sales: Held status (no stock effect), complete/recall/list endpoints per contracts/pos-sales-sync.md; plus FavouritesLayout entity (per-register configurable grid, FR-038) with GET/PUT /registers/{id}/favourites in InventoryX.Application/.../Selling/ + InventoryX.Domain/Models/Selling/FavouritesLayout.cs + SalesController/RegistersController
 - [ ] T050 [US2] Line/sale discount validation against role MaxPercent with manager escalation + AuditBehavior coverage in InventoryX.Application/Validators/Selling/
 - [ ] T051 [US2] Receipt entity (sequential per-tenant numbering, structured fiscal payload with levy lines) + GET receipt + tenant receipt-template endpoints in InventoryX.Domain/Models/Selling/Receipt.cs + InventoryX.Application/Services/IServices/IReceiptBuilder.cs + controllers
 - [ ] T052 [US2] Receipt delivery: email via existing SendGrid service, SMS/QR delivery log in InventoryX.Infrastructure/Services/ReceiptDeliveryService.cs + POST /sales/{id}/receipt/deliver

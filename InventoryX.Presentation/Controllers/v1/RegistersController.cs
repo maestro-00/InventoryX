@@ -12,6 +12,7 @@ namespace InventoryX.Presentation.Controllers.v1;
 public sealed class RegistersController(ISender sender) : ApiControllerBase
 {
     public sealed record OpenShiftRequest(decimal OpeningFloat);
+    public sealed record FavouritesRequest(string LayoutJson);
 
     [HttpGet]
     public async Task<ActionResult<List<RegisterDto>>> List(
@@ -41,4 +42,21 @@ public sealed class RegistersController(ISender sender) : ApiControllerBase
         }, cancellationToken);
         return CreatedAtAction(nameof(List), new { locationId = result.RegisterId }, result);
     }
+
+    [HttpGet("{registerId:guid}/favourites")]
+    public async Task<ActionResult<FavouritesLayoutDto>> GetFavourites(
+        Guid registerId,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetFavouritesLayoutQuery { RegisterId = registerId }, cancellationToken));
+
+    [HttpPut("{registerId:guid}/favourites")]
+    public async Task<ActionResult<FavouritesLayoutDto>> PutFavourites(
+        Guid registerId,
+        FavouritesRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new UpsertFavouritesLayoutCommand
+        {
+            RegisterId = registerId,
+            LayoutJson = request.LayoutJson,
+        }, cancellationToken));
 }
