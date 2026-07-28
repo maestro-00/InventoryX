@@ -157,6 +157,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                         throw new FluentValidation.ValidationException($"Unknown tender type '{payment.Tender}'.");
                     if (tender is TenderType.StoreCredit or TenderType.GiftCard or TenderType.LoyaltyPoints or TenderType.OnAccount)
                         throw new FluentValidation.ValidationException($"Tender '{tender}' is not available in this cycle.");
+                    if (payment.Amount <= 0)
+                        throw new FluentValidation.ValidationException("Tender amounts must be greater than zero.");
                     sale.Payments.Add(new SalePayment { Tender = tender, Amount = payment.Amount, Reference = payment.Reference });
                     tendered += payment.Amount;
                 }
@@ -168,6 +170,9 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                 var overpay = Math.Round(tendered - sale.GrandTotal, 2);
                 if (overpay > 0 && !sale.Payments.Any(p => p.Tender == TenderType.Cash))
                     throw new FluentValidation.ValidationException("Change can only be given on cash tenders.");
+                var cashTendered = sale.Payments.Where(p => p.Tender == TenderType.Cash).Sum(p => p.Amount);
+                if (overpay > cashTendered)
+                    throw new FluentValidation.ValidationException("Change cannot exceed the cash portion of the payment.");
                 sale.ChangeGiven = overpay;
 
                 // Held sales have no stock effect; completed sales decrement now
