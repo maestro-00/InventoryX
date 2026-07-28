@@ -1,4 +1,7 @@
 using InventoryX.Application.Commands.Requests.Tenancy;
+using InventoryX.Application.Commands.Requests.Selling;
+using InventoryX.Application.DTOs.Selling;
+using InventoryX.Application.Queries.Requests.Selling;
 using InventoryX.Application.Queries.Requests.Tenancy;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +13,8 @@ namespace InventoryX.Presentation.Controllers.v1;
 [Authorize]
 public sealed class TenantController(ISender sender) : ApiControllerBase
 {
+    public sealed record ReceiptTemplateRequest(string TemplateJson);
+
     [HttpGet]
     public async Task<ActionResult<TenantDto>> Get(CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetTenantQuery(), cancellationToken));
@@ -20,6 +25,17 @@ public sealed class TenantController(ISender sender) : ApiControllerBase
         UpdateTenantCommand command,
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(command, cancellationToken));
+
+    [HttpGet("receipt-template")]
+    public async Task<ActionResult<ReceiptTemplateDto>> GetReceiptTemplate(CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetReceiptTemplateQuery(), cancellationToken));
+
+    [HttpPut("receipt-template")]
+    [Authorize(Roles = "Owner,Administrator")]
+    public async Task<ActionResult<ReceiptTemplateDto>> PutReceiptTemplate(
+        ReceiptTemplateRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new UpdateReceiptTemplateCommand(request.TemplateJson), cancellationToken));
 
     [HttpPost("sample-data")]
     [Authorize(Roles = "Owner,Administrator")]

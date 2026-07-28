@@ -60,7 +60,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
         IStockLedger stockLedger,
         ITaxCalculator taxCalculator,
         ITenantContext tenantContext,
-        IPlanEnforcer planEnforcer) : IRequestHandler<CreateSaleCommand, SaleDto>
+        IPlanEnforcer planEnforcer,
+        IReceiptBuilder? receiptBuilder = null) : IRequestHandler<CreateSaleCommand, SaleDto>
     {
         private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
@@ -218,6 +219,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
             }
 
             context.Sales.Add(sale);
+            if (!isHeld && receiptBuilder is not null)
+                await receiptBuilder.BuildAsync(sale, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 
             if (!isHeld)

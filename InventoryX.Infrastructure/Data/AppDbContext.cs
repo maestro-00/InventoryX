@@ -42,6 +42,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Sale> Sales => Set<Sale>();
         public DbSet<SaleLine> SaleLines => Set<SaleLine>();
         public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+        public DbSet<Receipt> Receipts => Set<Receipt>();
         public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -111,6 +112,10 @@ namespace InventoryX.Infrastructure.Data
                 .HasMany(s => s.Lines).WithOne().HasForeignKey(l => l.SaleId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<Sale>()
                 .HasMany(s => s.Payments).WithOne().HasForeignKey(p => p.SaleId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Receipt>().HasIndex(r => new { r.TenantId, r.SequenceNumber }).IsUnique();
+            builder.Entity<Receipt>().HasIndex(r => new { r.TenantId, r.Number }).IsUnique();
+            builder.Entity<Receipt>().HasIndex(r => new { r.TenantId, r.SaleId }).IsUnique();
+            builder.Entity<Receipt>().HasOne(r => r.Sale).WithMany().HasForeignKey(r => r.SaleId).OnDelete(DeleteBehavior.Restrict);
 
             ApplyTenantQueryFilters(builder);
         }

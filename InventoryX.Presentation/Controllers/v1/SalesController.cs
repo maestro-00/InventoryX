@@ -33,6 +33,10 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
     public async Task<ActionResult<List<SaleDto>>> Held(CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetHeldSalesQuery(), cancellationToken));
 
+    [HttpGet("{id:guid}/receipt")]
+    public async Task<ActionResult<ReceiptDto>> Receipt(Guid id, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetSaleReceiptQuery(id), cancellationToken));
+
     [HttpGet("held/{id:guid}")]
     public async Task<ActionResult<SaleDto>> RecallHeld(Guid id, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetHeldSaleQuery { Id = id }, cancellationToken));

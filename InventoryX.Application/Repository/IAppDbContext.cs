@@ -35,6 +35,7 @@ namespace InventoryX.Application.Repository
         DbSet<Sale> Sales { get; }
         DbSet<SaleLine> SaleLines { get; }
         DbSet<SalePayment> SalePayments { get; }
+        DbSet<Receipt> Receipts { get; }
         DbSet<ImportJob> ImportJobs { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

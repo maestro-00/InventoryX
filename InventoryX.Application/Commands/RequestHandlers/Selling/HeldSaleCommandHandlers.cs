@@ -15,7 +15,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
     public class CompleteHeldSaleCommandHandler(
         IAppDbContext context,
         IStockLedger stockLedger,
-        IPlanEnforcer planEnforcer) : IRequestHandler<CompleteHeldSaleCommand, SaleDto>
+        IPlanEnforcer planEnforcer,
+        IReceiptBuilder? receiptBuilder = null) : IRequestHandler<CompleteHeldSaleCommand, SaleDto>
     {
         public async Task<SaleDto> Handle(CompleteHeldSaleCommand request, CancellationToken cancellationToken)
         {
@@ -75,6 +76,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
 
             sale.ChangeGiven = overpay;
             sale.Status = SaleStatus.Completed;
+            if (receiptBuilder is not null)
+                await receiptBuilder.BuildAsync(sale, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             await planEnforcer.IncrementUsageAsync(UsageMetric.SalesThisMonth, cancellationToken: cancellationToken);
             return SaleMapping.ToDto(sale);
