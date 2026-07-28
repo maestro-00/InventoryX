@@ -48,7 +48,23 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(new CompleteHeldSaleCommand { SaleId = id, Payments = request.Payments }, cancellationToken));
 
+    [HttpGet("lookup")]
+    public async Task<ActionResult<List<SaleDto>>> Lookup(
+        [FromQuery] string? receiptNumber,
+        [FromQuery] string? search,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new LookupSaleForReturnQuery { ReceiptNumber = receiptNumber, Search = search }, cancellationToken));
+
+    [HttpPost("{id:guid}/void")]
+    public async Task<ActionResult<SaleDto>> Void(
+        Guid id,
+        [FromBody] VoidSaleRequest? request,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new VoidSaleCommand { SaleId = id, Reason = request?.Reason }, cancellationToken));
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<SaleDto>> Get(Guid id, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetSaleQuery { Id = id }, cancellationToken));
 }
+
+public sealed record VoidSaleRequest(string? Reason);

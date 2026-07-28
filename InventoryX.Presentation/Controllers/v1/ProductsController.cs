@@ -26,6 +26,12 @@ public sealed class ProductsController(ISender sender) : ApiControllerBase
     public async Task<ActionResult<ProductDto>> ByBarcode(string barcode, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetProductByBarcodeQuery { Barcode = barcode, IncludeCost = CanViewProfit }, cancellationToken));
 
+    [HttpGet("{id:guid}/availability")]
+    public async Task<ActionResult<InventoryX.Application.DTOs.Selling.ProductAvailabilityDto>> Availability(
+        Guid id, [FromQuery] Guid? variantId, [FromQuery] Guid? locationId, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new InventoryX.Application.Queries.Requests.Selling.GetProductAvailabilityQuery
+        { ProductId = id, VariantId = variantId, LocationId = locationId }, cancellationToken));
+
     [HttpPost]
     public async Task<ActionResult<ProductDto>> Create(CreateProductCommand command, CancellationToken cancellationToken)
     {
