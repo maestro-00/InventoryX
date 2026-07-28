@@ -95,7 +95,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T041 [US1] Minimal Register + Shift entities with open-shift command (full cash mgmt lands in US6) in InventoryX.Domain/Models/Selling/Register.cs, Shift.cs + InventoryX.Application/Commands/.../Selling/OpenShiftCommand.cs
 - [X] T042 [US1] CreateSaleCommand: Completed sale, cash tender, price+tax snapshot per line (Ghana components), ledger decrement, UsageCounter increment + SalesController POST/GET per contracts/pos-sales-sync.md in InventoryX.Application/Commands/.../Selling/ + InventoryX.Presentation/Controllers/v1/SalesController.cs
 - [X] T043 [US1] Tenant profile + onboarding checklist GET/PATCH, sample data load/remove per contracts/auth-tenancy.md in InventoryX.Application/.../Tenancy/ + InventoryX.Presentation/Controllers/v1/TenantController.cs
-- [ ] T044 [US1] AutoMapper profiles + DTOs for tenancy/catalog/inventory/selling areas in InventoryX.Application/DTOs/ and mapping profiles in InventoryX.Application/Extensions/
+- [X] T044 [US1] AutoMapper profiles + DTOs for tenancy/catalog/inventory/selling areas in InventoryX.Application/DTOs/ and mapping profiles in InventoryX.Application/Extensions/
 
 **Checkpoint**: Scenario A green end-to-end — MVP demonstrable
 
