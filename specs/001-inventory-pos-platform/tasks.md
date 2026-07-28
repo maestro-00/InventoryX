@@ -109,7 +109,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Tests (write first, must fail)
 
-- [ ] T045 [P] [US2] Failing tests for split tender + change due + tender sum validation in tests/InventoryX.Application.Tests/Selling/SalePaymentTests.cs
+- [X] T045 [P] [US2] Failing tests for split tender + change due + tender sum validation in tests/InventoryX.Application.Tests/Selling/SalePaymentTests.cs
 - [ ] T046 [P] [US2] Failing tests for return/exchange rules (original price+tax, threshold/receiptless → authorization, quarantine disposition) in tests/InventoryX.Application.Tests/Selling/ReturnCommandTests.cs
 - [ ] T047 [P] [US2] Failing tests for discount cap per role + escalation + audit attribution in tests/InventoryX.Application.Tests/Selling/DiscountPolicyTests.cs
 
