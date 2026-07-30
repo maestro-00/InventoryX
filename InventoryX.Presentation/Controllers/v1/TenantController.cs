@@ -4,6 +4,7 @@ using InventoryX.Application.DTOs.Selling;
 using InventoryX.Application.Queries.Requests.Selling;
 using InventoryX.Application.Queries.Requests.Tenancy;
 using MediatR;
+using InventoryX.Application.Services.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,7 +12,7 @@ namespace InventoryX.Presentation.Controllers.v1;
 
 [Route("api/v1/tenant")]
 [Authorize]
-public sealed class TenantController(ISender sender) : ApiControllerBase
+public sealed class TenantController(ISender sender, ITenantExportService exportService) : ApiControllerBase
 {
     public sealed record ReceiptTemplateRequest(string TemplateJson);
 
@@ -52,4 +53,9 @@ public sealed class TenantController(ISender sender) : ApiControllerBase
         await sender.Send(new RemoveSampleDataCommand(), cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("export")]
+    [Authorize(Roles = "Owner")]
+    public async Task<IActionResult> Export(CancellationToken cancellationToken) =>
+        File(await exportService.CreateArchiveAsync(cancellationToken), "application/zip", "inventoryx-export.zip");
 }

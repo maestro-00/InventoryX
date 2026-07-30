@@ -199,7 +199,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T081 [US5] BillingInvoice generation + SendGrid email + list/PDF endpoints + billing contact PATCH in InventoryX.Domain/Models/Tenancy/BillingInvoice.cs + InventoryX.Application/.../Billing/ + InventoryX.Infrastructure/Services/InvoicePdfService.cs
 - [X] T082 [US5] Outbox table + BillingWorker BackgroundService: renewals, 7-day retry ladder with owner notifications, grace→ReadOnly, trial expiry→Free, purge at 90 days after final warning in InventoryX.Infrastructure/BackgroundJobs/BillingWorker.cs
 - [X] T083 [US5] Complete PlanEnforcementBehavior: UsageCounter maintenance on creates/sales, monthly cap checks, ReadOnly write-block (export/billing exempt) in InventoryX.Application/Behaviors/PlanEnforcementBehavior.cs
-- [ ] T084 [US5] Full data export job (all tenant data → downloadable archive; available in every subscription state) + /tenant/export endpoints in InventoryX.Application/.../Tenancy/ + InventoryX.Infrastructure/Services/TenantExportService.cs
+- [X] T084 [US5] Full data export job (all tenant data → downloadable archive; available in every subscription state) + /tenant/export endpoints in InventoryX.Application/.../Tenancy/ + InventoryX.Infrastructure/Services/TenantExportService.cs
 
 **Checkpoint**: Quickstart scenario D passes — the commercial engine works
 
