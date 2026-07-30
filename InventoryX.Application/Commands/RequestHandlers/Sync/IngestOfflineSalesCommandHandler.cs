@@ -4,6 +4,7 @@ using InventoryX.Application.Commands.Requests.Sync;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using MediatR;
+using InventoryX.Domain.Models.Auditing;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Sync;
 
@@ -13,7 +14,8 @@ public sealed class IngestOfflineSalesCommandHandler(
     ITaxCalculator taxCalculator,
     ITenantContext tenantContext,
     IPlanEnforcer planEnforcer,
-    IReceiptBuilder? receiptBuilder = null) : IRequestHandler<IngestOfflineSalesCommand, List<OfflineSaleIngestResult>>
+    IReceiptBuilder? receiptBuilder = null,
+    INotificationService? notificationService = null) : IRequestHandler<IngestOfflineSalesCommand, List<OfflineSaleIngestResult>>
 {
     public async Task<List<OfflineSaleIngestResult>> Handle(IngestOfflineSalesCommand request, CancellationToken cancellationToken)
     {
@@ -30,6 +32,13 @@ public sealed class IngestOfflineSalesCommandHandler(
                     input.ClientSaleId,
                     sale.Id,
                     sale.StockConflictFlag ? "applied_with_conflict" : "applied"));
+                if (sale.StockConflictFlag && notificationService is not null)
+                    await notificationService.RaiseAsync(
+                        NotificationType.StockConflict,
+                        ResolveSyncConflictCommandHandler.Key(sale.Id),
+                        "Offline stock conflict",
+                        $"Sale {sale.Id} caused or encountered contested stock and requires review.",
+                        cancellationToken: cancellationToken);
             }
             catch (Exception exception) when (exception is FluentValidation.ValidationException
                                                or Exceptions.NotFoundException
