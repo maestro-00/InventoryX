@@ -28,6 +28,20 @@ public sealed class StockController(ISender sender) : ApiControllerBase
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(query, cancellationToken));
 
+    [HttpPost("movements/{id:guid}/correct")]
+    [Authorize(Roles = "Owner,Administrator,Manager")]
+    public async Task<ActionResult<StockMovementDto>> CorrectMovement(
+        Guid id,
+        CorrectMovementCommand command,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new CorrectMovementCommand
+        {
+            MovementId = id,
+            CorrectedQtyDelta = command.CorrectedQtyDelta,
+            ReasonCode = command.ReasonCode,
+            Note = command.Note,
+        }, cancellationToken));
+
     [HttpPost("adjustments")]
     public async Task<ActionResult<RecordStockAdjustmentResult>> RecordAdjustment(
         RecordStockAdjustmentCommand command,

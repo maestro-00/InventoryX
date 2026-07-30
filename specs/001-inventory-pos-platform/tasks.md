@@ -147,7 +147,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T061 [P] [US3] Consumption command (internal use write-off) in InventoryX.Application/Commands/.../Inventory/RecordConsumptionCommand.cs
 - [X] T062 [US3] StockCount entity + open/submit-lines/submit/approve/reject flow posting CountCorrection movements + CountsController in InventoryX.Domain/Models/Inventory/StockCount.cs + InventoryX.Application/.../Inventory/ + InventoryX.Presentation/Controllers/v1/CountsController.cs
 - [X] T063 [US3] Stock queries: levels with business-wide rollup (groupBy=product), paged movement ledger with filters + StockController GETs per contracts/inventory.md in InventoryX.Application/Queries/.../Inventory/
-- [ ] T064 [US3] Movement correction command creating compensating entries (originals immutable) in InventoryX.Application/Commands/.../Inventory/CorrectMovementCommand.cs
+- [X] T064 [US3] Movement correction command creating compensating entries (originals immutable) in InventoryX.Application/Commands/.../Inventory/CorrectMovementCommand.cs
 - [ ] T065 [US3] Enforce Manager location_scope on all location-bound operations (authorization handler) in InventoryX.Presentation/Middleware/LocationScopeAuthorizationHandler.cs
 
 **Checkpoint**: Multi-location inventory truth with full audit trail
