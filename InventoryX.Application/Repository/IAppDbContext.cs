@@ -4,6 +4,7 @@ using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Domain.Models;
+using InventoryX.Domain.Models.Purchasing;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Repository
@@ -52,6 +53,7 @@ namespace InventoryX.Application.Repository
         DbSet<ReturnTransaction> ReturnTransactions { get; }
         DbSet<ReturnLine> ReturnLines { get; }
         DbSet<ImportJob> ImportJobs { get; }
+        DbSet<Supplier> Suppliers { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

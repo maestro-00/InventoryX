@@ -8,6 +8,7 @@ using InventoryX.Domain.Models.Common;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
+using InventoryX.Domain.Models.Purchasing;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,6 +60,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<ReturnTransaction> ReturnTransactions => Set<ReturnTransaction>();
         public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
         public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
+        public DbSet<Supplier> Suppliers => Set<Supplier>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -156,6 +158,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<ReturnTransaction>()
                 .HasMany(r => r.Lines).WithOne().HasForeignKey(l => l.ReturnTransactionId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<ReturnLine>().HasIndex(l => new { l.TenantId, l.SaleLineId });
+            builder.Entity<Supplier>().HasIndex(item => new { item.TenantId, item.Name }).IsUnique();
 
             ApplyTenantQueryFilters(builder);
         }
