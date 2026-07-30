@@ -136,7 +136,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Tests (write first, must fail)
 
-- [ ] T056 [P] [US3] Failing tests for transfer state machine (Draft→Dispatched→Received/WithDiscrepancy, InTransit quantities) in tests/InventoryX.Application.Tests/Inventory/StockTransferTests.cs
+- [X] T056 [P] [US3] Failing tests for transfer state machine (Draft→Dispatched→Received/WithDiscrepancy, InTransit quantities) in tests/InventoryX.Application.Tests/Inventory/StockTransferTests.cs
 - [ ] T057 [P] [US3] Failing tests for adjustment approval threshold (approver ≠ requester) in tests/InventoryX.Application.Tests/Inventory/AdjustmentApprovalTests.cs
 - [ ] T058 [P] [US3] Failing tests for count variance calculation + approval posting corrections in tests/InventoryX.Application.Tests/Inventory/StockCountTests.cs
 
