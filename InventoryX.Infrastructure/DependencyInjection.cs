@@ -33,6 +33,7 @@ public static class DependencyInjection
             var settings = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaystackOptions>>().Value;
             client.BaseAddress = new Uri(settings.BaseUrl);
         });
+        services.AddScoped<PaystackWebhookProcessor>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();

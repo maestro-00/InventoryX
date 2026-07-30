@@ -24,6 +24,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<PlanDefinition> PlanDefinitions => Set<PlanDefinition>();
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
+        public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
         public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
         public DbSet<RegisterPin> RegisterPins => Set<RegisterPin>();
         public DbSet<Role> AppRoles => Set<Role>();
@@ -67,6 +68,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Subscription>()
                 .HasOne(s => s.Plan).WithMany().HasForeignKey(s => s.PlanDefinitionId).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<Subscription>().HasIndex(s => new { s.TenantId, s.Status });
+            builder.Entity<ProcessedWebhookEvent>().HasIndex(item => item.EventId).IsUnique();
 
             builder.Entity<UsageCounter>()
                 .HasIndex(c => new { c.TenantId, c.Metric, c.PeriodKey }).IsUnique();
