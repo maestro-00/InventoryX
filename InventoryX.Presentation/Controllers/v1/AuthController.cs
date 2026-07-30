@@ -36,6 +36,12 @@ public sealed class AuthController(ISender sender) : ApiControllerBase
     public async Task<ActionResult<LoginResult>> Refresh(RefreshTokenCommand command, CancellationToken cancellationToken) =>
         Ok(await sender.Send(command, cancellationToken));
 
+    [HttpPost("pin/exchange")]
+    public async Task<ActionResult<RegisterPinExchangeResult>> ExchangePin(
+        ExchangeRegisterPinCommand command,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(command, cancellationToken));
+
     [HttpPost("google")]
     [AllowAnonymous]
     public IActionResult Google([FromQuery] string? returnUrl = null)

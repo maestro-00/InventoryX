@@ -25,6 +25,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<PlanDefinition> PlanDefinitions => Set<PlanDefinition>();
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
         public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
+        public DbSet<RegisterPin> RegisterPins => Set<RegisterPin>();
         public DbSet<Role> AppRoles => Set<Role>();
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
         public DbSet<Notification> Notifications => Set<Notification>();
@@ -80,6 +81,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<TaxTreatment>().HasIndex(t => t.Code).IsUnique();
 
             builder.Entity<User>().HasIndex(u => u.TenantId);
+            builder.Entity<RegisterPin>().HasIndex(p => new { p.TenantId, p.UserId }).IsUnique();
 
             builder.Entity<Category>()
                 .HasIndex(c => new { c.TenantId, c.Name, c.ParentId }).IsUnique();

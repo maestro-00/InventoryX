@@ -3,6 +3,7 @@ using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
+using InventoryX.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Repository
@@ -15,9 +16,11 @@ namespace InventoryX.Application.Repository
     public interface IAppDbContext
     {
         DbSet<Tenant> Tenants { get; }
+        DbSet<User> Users { get; }
         DbSet<PlanDefinition> PlanDefinitions { get; }
         DbSet<Subscription> Subscriptions { get; }
         DbSet<UsageCounter> UsageCounters { get; }
+        DbSet<RegisterPin> RegisterPins { get; }
         DbSet<Role> AppRoles { get; }
         DbSet<AuditLogEntry> AuditLogEntries { get; }
         DbSet<Notification> Notifications { get; }
