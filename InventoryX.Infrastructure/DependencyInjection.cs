@@ -3,6 +3,7 @@ using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Infrastructure.Data;
 using InventoryX.Infrastructure.Services;
+using InventoryX.Infrastructure.BackgroundJobs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,7 @@ public static class DependencyInjection
         });
         services.AddScoped<PaystackWebhookProcessor>();
         services.AddScoped<IBillingInvoiceService, InvoicePdfService>();
+        services.AddHostedService<BillingWorker>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();

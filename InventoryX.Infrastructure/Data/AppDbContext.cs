@@ -26,6 +26,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
         public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
         public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
+        public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
         public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
         public DbSet<RegisterPin> RegisterPins => Set<RegisterPin>();
         public DbSet<Role> AppRoles => Set<Role>();
@@ -72,6 +73,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<ProcessedWebhookEvent>().HasIndex(item => item.EventId).IsUnique();
             builder.Entity<BillingInvoice>().HasIndex(item => new { item.TenantId, item.Number }).IsUnique();
             builder.Entity<BillingInvoice>().HasIndex(item => item.PaymentReference).IsUnique().HasFilter("[PaymentReference] IS NOT NULL");
+            builder.Entity<OutboxMessage>().HasIndex(item => new { item.ProcessedAt, item.OccurredAt });
 
             builder.Entity<UsageCounter>()
                 .HasIndex(c => new { c.TenantId, c.Metric, c.PeriodKey }).IsUnique();
