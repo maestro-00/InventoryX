@@ -192,7 +192,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 ### Implementation
 
 - [X] T076 [US5] IPaymentGateway abstraction + PaystackGateway (initialize authorization, charge, verify; card + mtn/telecel/at MoMo channels; PaystackOptions from env) in InventoryX.Application/Services/IServices/IPaymentGateway.cs + InventoryX.Infrastructure/Services/PaystackGateway.cs + InventoryX.Application/Options/PaystackOptions.cs
-- [ ] T077 [P] [US5] GET /billing/plans and GET /billing/subscription (status, usage vs limits) per contracts/billing.md in InventoryX.Application/Queries/.../Billing/ + InventoryX.Presentation/Controllers/v1/BillingController.cs
+- [X] T077 [P] [US5] GET /billing/plans and GET /billing/subscription (status, usage vs limits) per contracts/billing.md in InventoryX.Application/Queries/.../Billing/ + InventoryX.Presentation/Controllers/v1/BillingController.cs
 - [ ] T078 [US5] Upgrade (immediate, pro-rata charge) / downgrade (period-end, over-limit acknowledgement) / cancel / reactivate commands in InventoryX.Application/Commands/.../Billing/
 - [ ] T079 [US5] Payment-method initialization endpoint (card | mobile_money + provider + msisdn) in BillingController + gateway wiring
 - [ ] T080 [US5] Paystack webhook endpoint: signature check, idempotent by event id, drives charge success/failure into state machine in InventoryX.Presentation/Controllers/v1/PaystackWebhookController.cs
