@@ -1,6 +1,8 @@
 using FluentAssertions;
 using InventoryX.Application.Commands.RequestHandlers.Selling;
 using InventoryX.Application.Commands.Requests.Selling;
+using InventoryX.Application.Commands.RequestHandlers.Sync;
+using InventoryX.Application.Commands.Requests.Sync;
 using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Common.Tests;
@@ -47,6 +49,63 @@ public sealed class OfflineSaleIngestTests : IDisposable
         (await context.Sales.CountAsync()).Should().Be(1);
         (await context.StockLevels.SingleAsync()).QtyOnHand.Should().Be(8m);
         (await context.StockMovements.CountAsync(m => m.Type == MovementType.Sale)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Batch_returns_per_sale_results_and_honors_occurrence_time()
+    {
+        await using var context = _db.CreateContext();
+        var location = new Location { Name = "Main" };
+        var product = new Product { Name = "Sugar", SellingPrice = 10m };
+        var register = new Register { Name = "R1", LocationId = location.Id };
+        var shift = new Shift { RegisterId = register.Id, OpenedBy = "cashier-1", OpenedAt = DateTime.UtcNow };
+        context.AddRange(location, product, register, shift);
+        await context.SaveChangesAsync();
+        var ledger = new StockLedger(context);
+        await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, product.Id, location.Id, 1m)]);
+        await context.SaveChangesAsync();
+        var occurredAt = DateTime.UtcNow.AddHours(-2);
+        var validId = Guid.NewGuid();
+        var handler = new IngestOfflineSalesCommandHandler(
+            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+
+        var results = await handler.Handle(new IngestOfflineSalesCommand
+        {
+            Sales =
+            [
+                new CreateSaleCommand
+                {
+                    ClientSaleId = validId, RegisterId = register.Id, ShiftId = shift.Id, OccurredAt = occurredAt,
+                    Lines = [new CreateSaleLineDto { ProductId = product.Id, Qty = 2m }],
+                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
+                },
+                new CreateSaleCommand
+                {
+                    RegisterId = register.Id, ShiftId = shift.Id,
+                    Lines = [new CreateSaleLineDto { ProductId = Guid.NewGuid(), Qty = 1m }],
+                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 10m }],
+                },
+            ],
+        }, CancellationToken.None);
+
+        results.Should().ContainSingle(r => r.ClientSaleId == validId && r.Status == "applied_with_conflict");
+        results.Should().ContainSingle(r => r.Status == "rejected" && r.Error != null);
+        (await context.Sales.SingleAsync(s => s.ClientSaleId == validId)).OccurredAt.Should().Be(occurredAt);
+
+        var replay = await handler.Handle(new IngestOfflineSalesCommand
+        {
+            Sales =
+            [
+                new CreateSaleCommand
+                {
+                    ClientSaleId = validId, RegisterId = register.Id, ShiftId = shift.Id, OccurredAt = occurredAt,
+                    Lines = [new CreateSaleLineDto { ProductId = product.Id, Qty = 2m }],
+                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
+                },
+            ],
+        }, CancellationToken.None);
+        replay.Single().SaleId.Should().Be(results.Single(r => r.ClientSaleId == validId).SaleId);
+        (await context.Sales.CountAsync()).Should().Be(1);
     }
 
     public void Dispose() => _db.Dispose();
