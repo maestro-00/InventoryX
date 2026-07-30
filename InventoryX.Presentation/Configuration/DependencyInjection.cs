@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
+using MediatR;
 
 namespace InventoryX.Presentation.Configuration
 {
@@ -44,6 +45,7 @@ namespace InventoryX.Presentation.Configuration
                     });
             });
             services.AddControllers();
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LocationScopeAuthorizationHandler<,>));
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
             {
