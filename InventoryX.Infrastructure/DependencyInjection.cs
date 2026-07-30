@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<IPlanEnforcer, PlanEnforcer>();
         services.AddScoped<IStockLedger, StockLedger>();
         services.AddScoped<IReceiptBuilder, ReceiptBuilder>();
+        services.AddScoped<IReceiptDeliveryService, ReceiptDeliveryService>();
         services.AddScoped<ISpreadsheetImportService, SpreadsheetImportService>();
         services.AddSingleton<ITokenService, JwtTokenService>();
 

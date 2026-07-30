@@ -36,6 +36,7 @@ namespace InventoryX.Application.Repository
         DbSet<SaleLine> SaleLines { get; }
         DbSet<SalePayment> SalePayments { get; }
         DbSet<Receipt> Receipts { get; }
+        DbSet<ReceiptDeliveryLog> ReceiptDeliveryLogs { get; }
         DbSet<ReturnTransaction> ReturnTransactions { get; }
         DbSet<ReturnLine> ReturnLines { get; }
         DbSet<ImportJob> ImportJobs { get; }

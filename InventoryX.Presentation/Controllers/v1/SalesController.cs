@@ -13,6 +13,7 @@ namespace InventoryX.Presentation.Controllers.v1;
 public sealed class SalesController(ISender sender) : ApiControllerBase
 {
     public sealed record CompleteHeldSaleRequest(List<CreateSalePaymentDto> Payments);
+    public sealed record DeliverReceiptRequest(string Channel, string Destination);
 
     [HttpPost]
     public async Task<ActionResult<SaleDto>> Create(
@@ -36,6 +37,18 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
     [HttpGet("{id:guid}/receipt")]
     public async Task<ActionResult<ReceiptDto>> Receipt(Guid id, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetSaleReceiptQuery(id), cancellationToken));
+
+    [HttpPost("{id:guid}/receipt/deliver")]
+    public async Task<ActionResult<ReceiptDeliveryResultDto>> DeliverReceipt(
+        Guid id,
+        [FromBody] DeliverReceiptRequest request,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new DeliverReceiptCommand
+        {
+            SaleId = id,
+            Channel = request.Channel,
+            Destination = request.Destination,
+        }, cancellationToken));
 
     [HttpGet("held/{id:guid}")]
     public async Task<ActionResult<SaleDto>> RecallHeld(Guid id, CancellationToken cancellationToken) =>
