@@ -5,6 +5,7 @@ using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Selling;
+using InventoryX.Domain.Models.Auditing;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,7 @@ public sealed class RecordCashMovementCommandHandler(IAppDbContext context, ITen
         return new CashMovementDto { Id = movement.Id, Amount = movement.Amount, Type = movement.Type.ToString(), Reason = movement.Reason };
     }
 }
-public sealed class CloseShiftCommandHandler(IAppDbContext context, ITenantContext tenantContext) : IRequestHandler<CloseShiftCommand, ShiftDto>
+public sealed class CloseShiftCommandHandler(IAppDbContext context, ITenantContext tenantContext, INotificationService notificationService) : IRequestHandler<CloseShiftCommand, ShiftDto>
 {
     public async Task<ShiftDto> Handle(CloseShiftCommand request, CancellationToken cancellationToken)
     {
@@ -32,7 +33,14 @@ public sealed class CloseShiftCommandHandler(IAppDbContext context, ITenantConte
         var movements = await context.CashMovements.Where(item => item.ShiftId == shift.Id).ToListAsync(cancellationToken);
         shift.ExpectedCash = shift.OpeningFloat + payments - change + movements.Sum(item => item.Type == CashMovementType.CashIn ? item.Amount : -item.Amount);
         shift.ClosingCounted = request.ClosingCounted; shift.Variance = request.ClosingCounted - shift.ExpectedCash; shift.Status = ShiftStatus.Closed; shift.ClosedAt = DateTime.UtcNow; shift.ClosedBy = tenantContext.UserId ?? "unknown";
+        var tenant = await context.Tenants.SingleAsync(item => item.Id == shift.TenantId, cancellationToken);
+        shift.VarianceFlagged = tenant.TillVarianceThreshold is not null && Math.Abs(shift.Variance.Value) >= tenant.TillVarianceThreshold.Value;
         await context.SaveChangesAsync(cancellationToken);
+        if (shift.VarianceFlagged)
+            await notificationService.RaiseAsync(NotificationType.TillVariance, $"till-variance:{shift.Id}", "Shift variance requires review", $"Variance: {shift.Variance:0.00}", cancellationToken: cancellationToken);
+        var voids = await context.Sales.CountAsync(item => item.ShiftId == shift.Id && item.Status == SaleStatus.Voided, cancellationToken);
+        if (voids >= 3)
+            await notificationService.RaiseAsync(NotificationType.UnusualVoids, $"unusual-voids:{shift.Id}", "Unusual void activity", $"{voids} voids occurred during this shift.", cancellationToken: cancellationToken);
         return new ShiftDto { Id = shift.Id, RegisterId = shift.RegisterId, OpenedBy = shift.OpenedBy, OpenedAt = shift.OpenedAt, OpeningFloat = shift.OpeningFloat, Status = shift.Status.ToString() };
     }
 }
