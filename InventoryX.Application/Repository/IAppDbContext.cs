@@ -29,6 +29,8 @@ namespace InventoryX.Application.Repository
         DbSet<ProductVariant> ProductVariants { get; }
         DbSet<StockLevel> StockLevels { get; }
         DbSet<StockMovement> StockMovements { get; }
+        DbSet<StockTransfer> StockTransfers { get; }
+        DbSet<StockTransferLine> StockTransferLines { get; }
         DbSet<Register> Registers { get; }
         DbSet<FavouritesLayout> FavouritesLayouts { get; }
         DbSet<Shift> Shifts { get; }

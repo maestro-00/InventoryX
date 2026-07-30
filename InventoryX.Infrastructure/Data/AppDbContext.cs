@@ -36,6 +36,8 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<ProductVariant> ProductVariants => Set<ProductVariant>();
         public DbSet<StockLevel> StockLevels => Set<StockLevel>();
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+        public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
+        public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
         public DbSet<Register> Registers => Set<Register>();
         public DbSet<FavouritesLayout> FavouritesLayouts => Set<FavouritesLayout>();
         public DbSet<Shift> Shifts => Set<Shift>();
@@ -99,6 +101,9 @@ namespace InventoryX.Infrastructure.Data
                 .HasIndex(m => new { m.TenantId, m.ProductId, m.OccurredAt });
             builder.Entity<StockMovement>()
                 .HasIndex(m => new { m.TenantId, m.LocationId, m.OccurredAt });
+            builder.Entity<StockTransfer>().HasIndex(t => new { t.TenantId, t.Status });
+            builder.Entity<StockTransfer>()
+                .HasMany(t => t.Lines).WithOne().HasForeignKey(line => line.StockTransferId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Register>().HasIndex(r => new { r.TenantId, r.LocationId });
             builder.Entity<FavouritesLayout>()
