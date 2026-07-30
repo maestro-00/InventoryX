@@ -214,7 +214,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 ### Tests (write first, must fail)
 
 - [X] T085 [P] [US6] Failing tests for shift close (uncounted drawer → 400, expected-cash computation from tenders + movements, variance threshold flag) in tests/InventoryX.Application.Tests/Selling/ShiftCloseTests.cs
-- [ ] T086 [P] [US6] Failing tests for Z-report aggregation (sales, tenders, refunds, discounts, voids, variance per register+staff) in tests/InventoryX.Application.Tests/Selling/ZReportTests.cs
+- [X] T086 [P] [US6] Failing tests for Z-report aggregation (sales, tenders, refunds, discounts, voids, variance per register+staff) in tests/InventoryX.Application.Tests/Selling/ZReportTests.cs
 
 ### Implementation
 
