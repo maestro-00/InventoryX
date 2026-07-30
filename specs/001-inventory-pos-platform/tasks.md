@@ -167,7 +167,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Implementation
 
-- [ ] T068 [US4] Snapshot delta query by rowversion watermark (products, variants, prices, tax, stock for register's location) + GET /sync/snapshot in InventoryX.Application/Queries/.../Sync/ + InventoryX.Presentation/Controllers/v1/SyncController.cs
+- [X] T068 [US4] Snapshot delta query by rowversion watermark (products, variants, prices, tax, stock for register's location) + GET /sync/snapshot in InventoryX.Application/Queries/.../Sync/ + InventoryX.Presentation/Controllers/v1/SyncController.cs
 - [ ] T069 [US4] Batch offline-sale ingest command: per-sale idempotent upsert on (TenantId, ClientSaleId), per-sale result applied|applied_with_conflict|rejected, OccurredAt honored + POST /sync/sales in InventoryX.Application/Commands/.../Sync/IngestOfflineSalesCommand.cs
 - [ ] T070 [US4] Conflict review: GET /sync/conflicts + resolve (acceptAsIs | adjustWithReason → movement) with notification raise in InventoryX.Application/.../Sync/ + SyncController
 - [ ] T071 [US4] RegisterPin entity + PIN set endpoint + /auth/pin/exchange issuing register-scoped short-lived JWT (research R3) in InventoryX.Domain/Models/Tenancy/RegisterPin.cs + InventoryX.Application/.../Auth/ + AuthController
