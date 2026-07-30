@@ -221,7 +221,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T087 [US6] CashMovement entity + cash in/out command with reasons + shift-close command computing expected cash and variance in InventoryX.Domain/Models/Selling/CashMovement.cs + InventoryX.Application/.../Selling/
 - [X] T088 [US6] Variance-above-threshold manager notification + UnusualVoids detection hook in InventoryX.Application/Commands/RequestHandlers/Selling/CloseShiftCommandHandler.cs
 - [X] T089 [US6] Z-report query + GET /shifts/{id}/z-report in InventoryX.Application/Queries/.../Selling/ + ShiftsController per contracts/pos-sales-sync.md
-- [ ] T090 [US6] Registers CRUD with plan cap + concurrent-shift prevention + sale-requires-open-shift enforcement finalized in InventoryX.Presentation/Controllers/v1/RegistersController.cs + validators
+- [X] T090 [US6] Registers CRUD with plan cap + concurrent-shift prevention + sale-requires-open-shift enforcement finalized in InventoryX.Presentation/Controllers/v1/RegistersController.cs + validators
 
 **Checkpoint**: Daily POS operating cycle complete (quickstart A step 8 fully honored)
 

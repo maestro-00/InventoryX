@@ -12,6 +12,8 @@ namespace InventoryX.Presentation.Controllers.v1;
 public sealed class RegistersController(ISender sender) : ApiControllerBase
 {
     public sealed record OpenShiftRequest(decimal OpeningFloat);
+    public sealed record CashMovementRequest(string Type, decimal Amount, string Reason);
+    public sealed record CloseShiftRequest(decimal? ClosingCounted);
     public sealed record FavouritesRequest(string LayoutJson);
 
     [HttpGet]
@@ -42,6 +44,14 @@ public sealed class RegistersController(ISender sender) : ApiControllerBase
         }, cancellationToken);
         return CreatedAtAction(nameof(List), new { locationId = result.RegisterId }, result);
     }
+
+    [HttpPost("shifts/{shiftId:guid}/cash-movements")]
+    public async Task<ActionResult<CashMovementDto>> CashMovement(Guid shiftId, CashMovementRequest request, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new RecordCashMovementCommand { ShiftId = shiftId, Type = request.Type, Amount = request.Amount, Reason = request.Reason }, cancellationToken));
+
+    [HttpPost("shifts/{shiftId:guid}/close")]
+    public async Task<ActionResult<ShiftDto>> CloseShift(Guid shiftId, CloseShiftRequest request, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new CloseShiftCommand { ShiftId = shiftId, ClosingCounted = request.ClosingCounted }, cancellationToken));
 
     [HttpGet("shifts/{shiftId:guid}/z-report")]
     public async Task<ActionResult<ZReportDto>> ZReport(Guid shiftId, CancellationToken cancellationToken) =>
