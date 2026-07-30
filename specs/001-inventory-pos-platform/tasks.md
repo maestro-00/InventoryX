@@ -235,7 +235,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Tests (write first, must fail)
 
-- [ ] T091 [P] [US7] Failing tests for PO state machine + value-threshold approval (illegal transition → 409) in tests/InventoryX.Application.Tests/Purchasing/PurchaseOrderStateTests.cs
+- [X] T091 [P] [US7] Failing tests for PO state machine + value-threshold approval (illegal transition → 409) in tests/InventoryX.Application.Tests/Purchasing/PurchaseOrderStateTests.cs
 - [ ] T092 [P] [US7] Failing tests for FEFO batch selection at sale + batch-required validation for batch-tracked products in tests/InventoryX.Application.Tests/Inventory/FefoIssueTests.cs
 - [ ] T093 [P] [US7] Failing tests for receipt of short/over/damaged deliveries (order stays open or closes short with reason) in tests/InventoryX.Application.Tests/Purchasing/GoodsReceiptTests.cs
 
