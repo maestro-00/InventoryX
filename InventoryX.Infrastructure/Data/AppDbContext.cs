@@ -25,6 +25,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<PlanDefinition> PlanDefinitions => Set<PlanDefinition>();
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
         public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
+        public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
         public DbSet<UsageCounter> UsageCounters => Set<UsageCounter>();
         public DbSet<RegisterPin> RegisterPins => Set<RegisterPin>();
         public DbSet<Role> AppRoles => Set<Role>();
@@ -69,6 +70,8 @@ namespace InventoryX.Infrastructure.Data
                 .HasOne(s => s.Plan).WithMany().HasForeignKey(s => s.PlanDefinitionId).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<Subscription>().HasIndex(s => new { s.TenantId, s.Status });
             builder.Entity<ProcessedWebhookEvent>().HasIndex(item => item.EventId).IsUnique();
+            builder.Entity<BillingInvoice>().HasIndex(item => new { item.TenantId, item.Number }).IsUnique();
+            builder.Entity<BillingInvoice>().HasIndex(item => item.PaymentReference).IsUnique().HasFilter("[PaymentReference] IS NOT NULL");
 
             builder.Entity<UsageCounter>()
                 .HasIndex(c => new { c.TenantId, c.Metric, c.PeriodKey }).IsUnique();

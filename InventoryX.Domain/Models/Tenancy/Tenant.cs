@@ -44,6 +44,7 @@ namespace InventoryX.Domain.Models.Tenancy
         /// <summary>JSON receipt template customization (header, footer, fields).</summary>
         public string? ReceiptTemplate { get; set; }
         public string? BillingEmail { get; set; }
+        public string? BillingTaxNumber { get; set; }
         public string? Address { get; set; }
         public string? Phone { get; set; }
     }

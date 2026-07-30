@@ -1,6 +1,7 @@
 using InventoryX.Application.Queries.Requests.Billing;
 using InventoryX.Application.Commands.Requests.Billing;
 using MediatR;
+using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -46,4 +47,25 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
         InitializePaymentMethodCommand command,
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(command, cancellationToken));
+
+    [HttpGet("invoices")]
+    [Authorize(Roles = "Owner")]
+    public async Task<ActionResult<List<BillingInvoiceDto>>> Invoices(CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetBillingInvoicesQuery(), cancellationToken));
+
+    [HttpGet("invoices/{id:guid}/pdf")]
+    [Authorize(Roles = "Owner")]
+    public async Task<IActionResult> InvoicePdf(Guid id, CancellationToken cancellationToken)
+    {
+        var invoice = await sender.Send(new GetBillingInvoicePdfQuery(id), cancellationToken);
+        return File(Encoding.UTF8.GetBytes(invoice.Content), "application/pdf", $"{invoice.Number}.pdf");
+    }
+
+    [HttpPatch("contact")]
+    [Authorize(Roles = "Owner")]
+    public async Task<IActionResult> Contact(UpdateBillingContactCommand command, CancellationToken cancellationToken)
+    {
+        await sender.Send(command, cancellationToken);
+        return NoContent();
+    }
 }

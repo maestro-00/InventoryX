@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using InventoryX.Application.Options;
 using InventoryX.Application.Services;
+using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +14,7 @@ namespace InventoryX.Infrastructure.Services;
 public sealed record PaystackWebhookResult(bool AlreadyProcessed, string EventType, string? Reference);
 
 /// <summary>Verifies Paystack callbacks and applies charge events exactly once.</summary>
-public sealed class PaystackWebhookProcessor(AppDbContext context, IOptions<PaystackOptions> options)
+public sealed class PaystackWebhookProcessor(AppDbContext context, IOptions<PaystackOptions> options, IBillingInvoiceService invoiceService)
 {
     private readonly string _secretKey = options.Value.SecretKey;
 
@@ -67,6 +68,7 @@ public sealed class PaystackWebhookProcessor(AppDbContext context, IOptions<Pays
                 {
                     SubscriptionStateMachine.RecordChargeSuccess(subscription, DateTime.UtcNow);
                     subscription.PaymentMethodRef = GetAuthorizationCode(data) ?? subscription.PaymentMethodRef;
+                    await invoiceService.GenerateAndEmailAsync(subscription, reference, cancellationToken);
                 }
                 else
                     SubscriptionStateMachine.RecordChargeFailure(subscription, DateTime.UtcNow);

@@ -34,6 +34,7 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(settings.BaseUrl);
         });
         services.AddScoped<PaystackWebhookProcessor>();
+        services.AddScoped<IBillingInvoiceService, InvoicePdfService>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
