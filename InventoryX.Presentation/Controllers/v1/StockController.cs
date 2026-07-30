@@ -40,4 +40,10 @@ public sealed class StockController(ISender sender) : ApiControllerBase
     [HttpGet("adjustment-reasons")]
     public async Task<ActionResult<List<AdjustmentReasonDto>>> AdjustmentReasons(CancellationToken cancellationToken) =>
         Ok(await sender.Send(new GetAdjustmentReasonsQuery(), cancellationToken));
+
+    [HttpPost("consumption")]
+    public async Task<ActionResult<RecordStockAdjustmentResult>> RecordConsumption(
+        RecordConsumptionCommand command,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(command, cancellationToken));
 }
