@@ -38,6 +38,9 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<StockMovement> StockMovements => Set<StockMovement>();
         public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
         public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
+        public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+        public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
+        public DbSet<AdjustmentReason> AdjustmentReasons => Set<AdjustmentReason>();
         public DbSet<Register> Registers => Set<Register>();
         public DbSet<FavouritesLayout> FavouritesLayouts => Set<FavouritesLayout>();
         public DbSet<Shift> Shifts => Set<Shift>();
@@ -104,6 +107,10 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<StockTransfer>().HasIndex(t => new { t.TenantId, t.Status });
             builder.Entity<StockTransfer>()
                 .HasMany(t => t.Lines).WithOne().HasForeignKey(line => line.StockTransferId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<StockAdjustment>().HasIndex(adjustment => new { adjustment.TenantId, adjustment.Status });
+            builder.Entity<StockAdjustment>()
+                .HasMany(adjustment => adjustment.Lines).WithOne().HasForeignKey(line => line.StockAdjustmentId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<AdjustmentReason>().HasIndex(reason => new { reason.TenantId, reason.Code }).IsUnique();
 
             builder.Entity<Register>().HasIndex(r => new { r.TenantId, r.LocationId });
             builder.Entity<FavouritesLayout>()

@@ -26,4 +26,18 @@ public sealed class StockController(ISender sender) : ApiControllerBase
         RecordStockAdjustmentCommand command,
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(command, cancellationToken));
+
+    [HttpPost("adjustments/{id:guid}/approve")]
+    [Authorize(Roles = "Owner,Administrator,Manager")]
+    public async Task<ActionResult<RecordStockAdjustmentResult>> ApproveAdjustment(Guid id, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new ApproveStockAdjustmentCommand { AdjustmentId = id }, cancellationToken));
+
+    [HttpPost("adjustments/{id:guid}/reject")]
+    [Authorize(Roles = "Owner,Administrator,Manager")]
+    public async Task<ActionResult<RecordStockAdjustmentResult>> RejectAdjustment(Guid id, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new RejectStockAdjustmentCommand { AdjustmentId = id }, cancellationToken));
+
+    [HttpGet("adjustment-reasons")]
+    public async Task<ActionResult<List<AdjustmentReasonDto>>> AdjustmentReasons(CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetAdjustmentReasonsQuery(), cancellationToken));
 }

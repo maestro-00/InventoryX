@@ -8,6 +8,7 @@ namespace InventoryX.Infrastructure.Data.Seed
             await RoleSeeder.SeedAsync(context, cancellationToken);
             await PlanSeeder.SeedAsync(context, cancellationToken);
             await TaxSeeder.SeedAsync(context, cancellationToken);
+            await AdjustmentReasonSeeder.SeedAsync(context, cancellationToken);
         }
     }
 }

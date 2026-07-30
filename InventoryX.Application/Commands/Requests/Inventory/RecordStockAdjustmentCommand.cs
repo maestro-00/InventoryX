@@ -11,7 +11,7 @@ namespace InventoryX.Application.Commands.Requests.Inventory
         public decimal? UnitCost { get; init; }
     }
 
-    public record RecordStockAdjustmentResult(string Status, List<Guid> MovementProductIds);
+    public record RecordStockAdjustmentResult(string Status, List<Guid> MovementProductIds, Guid? AdjustmentId = null);
 
     /// <summary>
     /// Reasoned stock adjustment (T039 uses reason "Correction" for opening
@@ -27,5 +27,21 @@ namespace InventoryX.Application.Commands.Requests.Inventory
         public string AuditAction => "stock.adjustment";
         public string AuditEntityType => "StockMovement";
         public string AuditEntityId => LocationId.ToString();
+    }
+
+    public sealed class ApproveStockAdjustmentCommand : IRequest<RecordStockAdjustmentResult>, ITenantWriteCommand, IAuditedCommand
+    {
+        public Guid AdjustmentId { get; init; }
+        public string AuditAction => "stock.adjustment.approve";
+        public string AuditEntityType => "StockAdjustment";
+        public string AuditEntityId => AdjustmentId.ToString();
+    }
+
+    public sealed class RejectStockAdjustmentCommand : IRequest<RecordStockAdjustmentResult>, ITenantWriteCommand, IAuditedCommand
+    {
+        public Guid AdjustmentId { get; init; }
+        public string AuditAction => "stock.adjustment.reject";
+        public string AuditEntityType => "StockAdjustment";
+        public string AuditEntityId => AdjustmentId.ToString();
     }
 }

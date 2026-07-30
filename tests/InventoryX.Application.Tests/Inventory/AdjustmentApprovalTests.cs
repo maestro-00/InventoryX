@@ -49,5 +49,36 @@ public sealed class AdjustmentApprovalTests : IDisposable
         handlerType.Should().NotBeNull("adjustment approval must reject approver == requester");
     }
 
+    [Fact]
+    public async Task Requester_cannot_approve_but_a_different_approver_posts_stock()
+    {
+        await using var context = _db.CreateContext();
+        var tenant = new Tenant { Id = _tenantId, Name = "Shop", AdjustmentApprovalThreshold = 50m };
+        var location = new Location { Name = "Main" };
+        var product = new Product { Name = "Sugar", SellingPrice = 10m };
+        context.AddRange(tenant, location, product);
+        await context.SaveChangesAsync();
+        var ledger = new StockLedger(context);
+        var record = new RecordStockAdjustmentCommandHandler(context, ledger, _db.TenantContext);
+        var pending = await record.Handle(new RecordStockAdjustmentCommand
+        {
+            LocationId = location.Id,
+            Lines = [new AdjustmentLineDto { ProductId = product.Id, QtyDelta = 10m, UnitCost = 10m }],
+        }, CancellationToken.None);
+        pending.AdjustmentId.Should().NotBeNull();
+        var adjustmentId = pending.AdjustmentId.GetValueOrDefault();
+
+        var approve = new ApproveStockAdjustmentCommandHandler(context, ledger, _db.TenantContext);
+        var sameUser = () => approve.Handle(
+            new ApproveStockAdjustmentCommand { AdjustmentId = adjustmentId }, CancellationToken.None);
+        await sameUser.Should().ThrowAsync<InventoryX.Application.Exceptions.ConflictException>();
+
+        _db.TenantContext.UserId = "approver-1";
+        var result = await approve.Handle(
+            new ApproveStockAdjustmentCommand { AdjustmentId = adjustmentId }, CancellationToken.None);
+        result.Status.Should().Be("Applied");
+        (await context.StockLevels.SingleAsync()).QtyOnHand.Should().Be(10m);
+    }
+
     public void Dispose() => _db.Dispose();
 }
