@@ -187,7 +187,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 - [X] T073 [P] [US5] Failing tests for subscription state machine (all transitions incl. trial expiry → Free/Active, grace → ReadOnly, cancel → purge clock) in tests/InventoryX.Application.Tests/Billing/SubscriptionStateMachineTests.cs
 - [X] T074 [P] [US5] Failing tests for plan enforcement (module gates, 301st sale 402 with upgradeHint, ReadOnly write-block except export/billing) in tests/InventoryX.Application.Tests/Billing/PlanEnforcementTests.cs
-- [ ] T075 [P] [US5] Failing tests for Paystack webhook signature verification + event idempotency in tests/InventoryX.Infrastructure.Tests/Services/PaystackWebhookTests.cs
+- [X] T075 [P] [US5] Failing tests for Paystack webhook signature verification + event idempotency in tests/InventoryX.Infrastructure.Tests/Services/PaystackWebhookTests.cs
 
 ### Implementation
 
