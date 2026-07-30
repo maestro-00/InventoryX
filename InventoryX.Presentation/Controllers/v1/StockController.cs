@@ -21,6 +21,13 @@ public sealed class StockController(ISender sender) : ApiControllerBase
         CancellationToken cancellationToken) =>
         Ok(await sender.Send(query with { IncludeCost = CanViewProfit }, cancellationToken));
 
+    [HttpGet("movements")]
+    [Authorize(Roles = "Owner,Administrator,Manager,StockClerk")]
+    public async Task<ActionResult<PagedResult<StockMovementDto>>> Movements(
+        [FromQuery] GetStockMovementsQuery query,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(query, cancellationToken));
+
     [HttpPost("adjustments")]
     public async Task<ActionResult<RecordStockAdjustmentResult>> RecordAdjustment(
         RecordStockAdjustmentCommand command,

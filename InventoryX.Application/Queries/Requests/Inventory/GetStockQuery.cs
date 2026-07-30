@@ -16,4 +16,14 @@ namespace InventoryX.Application.Queries.Requests.Inventory
     }
 
     public class GetLocationsQuery : IRequest<List<LocationDto>>;
+
+    public record GetStockMovementsQuery : PageRequest, IRequest<PagedResult<StockMovementDto>>
+    {
+        public Guid? ProductId { get; init; }
+        public Guid? LocationId { get; init; }
+        public string? Type { get; init; }
+        public DateTime? From { get; init; }
+        public DateTime? To { get; init; }
+        public string? UserId { get; init; }
+    }
 }

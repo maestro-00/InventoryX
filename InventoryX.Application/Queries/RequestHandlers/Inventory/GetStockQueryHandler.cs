@@ -3,6 +3,7 @@ using InventoryX.Application.DTOs.Common;
 using InventoryX.Application.DTOs.Inventory;
 using InventoryX.Application.Queries.Requests.Inventory;
 using InventoryX.Application.Repository;
+using InventoryX.Domain.Models.Inventory;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -90,6 +91,37 @@ namespace InventoryX.Application.Queries.RequestHandlers.Inventory
                 .OrderBy(l => l.Name)
                 .ToListAsync(cancellationToken);
             return locations.Select(LocationMapping.ToDto).ToList();
+        }
+    }
+
+    public sealed class GetStockMovementsQueryHandler(IAppDbContext context)
+        : IRequestHandler<GetStockMovementsQuery, PagedResult<StockMovementDto>>
+    {
+        public async Task<PagedResult<StockMovementDto>> Handle(GetStockMovementsQuery request, CancellationToken cancellationToken)
+        {
+            var query = context.StockMovements.AsNoTracking().AsQueryable();
+            if (request.ProductId is Guid productId) query = query.Where(m => m.ProductId == productId);
+            if (request.LocationId is Guid locationId) query = query.Where(m => m.LocationId == locationId);
+            if (request.From is DateTime from) query = query.Where(m => m.OccurredAt >= from);
+            if (request.To is DateTime to) query = query.Where(m => m.OccurredAt <= to);
+            if (!string.IsNullOrWhiteSpace(request.UserId)) query = query.Where(m => m.UserId == request.UserId);
+            if (!string.IsNullOrWhiteSpace(request.Type))
+            {
+                if (!Enum.TryParse<MovementType>(request.Type, true, out var type))
+                    throw new FluentValidation.ValidationException("Unknown stock movement type.");
+                query = query.Where(m => m.Type == type);
+            }
+
+            var total = await query.LongCountAsync(cancellationToken);
+            var rows = await query.OrderByDescending(m => m.OccurredAt).ThenByDescending(m => m.Id)
+                .Skip(request.Skip).Take(request.PageSize)
+                .Select(m => new StockMovementDto
+                {
+                    Id = m.Id, Type = m.Type.ToString(), ProductId = m.ProductId, VariantId = m.VariantId,
+                    BatchId = m.BatchId, LocationId = m.LocationId, QtyDelta = m.QtyDelta,
+                    ReasonCode = m.ReasonCode, Note = m.Note, UserId = m.UserId, OccurredAt = m.OccurredAt,
+                }).ToListAsync(cancellationToken);
+            return PagedResult<StockMovementDto>.Create(rows, request.Page, request.PageSize, total);
         }
     }
 }
