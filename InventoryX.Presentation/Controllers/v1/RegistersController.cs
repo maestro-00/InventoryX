@@ -43,6 +43,10 @@ public sealed class RegistersController(ISender sender) : ApiControllerBase
         return CreatedAtAction(nameof(List), new { locationId = result.RegisterId }, result);
     }
 
+    [HttpGet("shifts/{shiftId:guid}/z-report")]
+    public async Task<ActionResult<ZReportDto>> ZReport(Guid shiftId, CancellationToken cancellationToken) =>
+        Ok(await sender.Send(new GetZReportQuery(shiftId), cancellationToken));
+
     [HttpGet("{registerId:guid}/favourites")]
     public async Task<ActionResult<FavouritesLayoutDto>> GetFavourites(
         Guid registerId,
