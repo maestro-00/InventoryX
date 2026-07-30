@@ -17,6 +17,7 @@ namespace InventoryX.Application.Queries.RequestHandlers.Catalog
             var query = context.Products
                 .Include(p => p.TaxTreatment).Include(p => p.Variants)
                 .Where(p => !p.IsDeleted);
+            var unsearchedQuery = query;
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
@@ -47,9 +48,62 @@ namespace InventoryX.Application.Queries.RequestHandlers.Catalog
                 .Skip(request.Skip).Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
+            // SQL Server installations can add a trigram/full-text index later, but keep a
+            // provider-neutral fallback for a single misspelt character today.  It runs only
+            // when the indexed LIKE search found no result and caps its candidate set.
+            if (total == 0 && !string.IsNullOrWhiteSpace(request.Search))
+            {
+                var search = request.Search.Trim();
+                var firstCharacter = search.Substring(0, 1);
+                var candidates = await unsearchedQuery
+                    .Where(p => p.Name.Contains(firstCharacter) ||
+                                (p.Sku != null && p.Sku.Contains(firstCharacter)) ||
+                                (p.Barcode != null && p.Barcode.Contains(firstCharacter)))
+                    .OrderBy(p => p.Name)
+                    .Take(500)
+                    .ToListAsync(cancellationToken);
+
+                var threshold = Math.Max(1, search.Length / 4);
+                items = candidates
+                    .Where(p => IsTypoMatch(search, p, threshold))
+                    .OrderBy(p => BestDistance(search, p))
+                    .ThenBy(p => p.Name)
+                    .Skip(request.Skip).Take(request.PageSize)
+                    .ToList();
+                total = candidates.LongCount(p => IsTypoMatch(search, p, threshold));
+            }
+
             return PagedResult<ProductDto>.Create(
                 items.Select(p => ProductMapping.ToDto(p, request.IncludeCost)).ToList(),
                 request.Page, request.PageSize, total);
+        }
+
+        private static bool IsTypoMatch(string search, Product product, int threshold) =>
+            BestDistance(search, product) <= threshold;
+
+        private static int BestDistance(string search, Product product) =>
+            new[] { product.Name, product.Sku, product.Barcode }
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .SelectMany(value => value!.Split([' ', '-', '_', '/'], StringSplitOptions.RemoveEmptyEntries))
+                .Select(value => LevenshteinDistance(search, value))
+                .DefaultIfEmpty(int.MaxValue)
+                .Min();
+
+        private static int LevenshteinDistance(string source, string target)
+        {
+            source = source.ToUpperInvariant();
+            target = target.ToUpperInvariant();
+            var previous = Enumerable.Range(0, target.Length + 1).ToArray();
+            for (var i = 1; i <= source.Length; i++)
+            {
+                var current = new int[target.Length + 1];
+                current[0] = i;
+                for (var j = 1; j <= target.Length; j++)
+                    current[j] = Math.Min(Math.Min(current[j - 1] + 1, previous[j] + 1),
+                        previous[j - 1] + (source[i - 1] == target[j - 1] ? 0 : 1));
+                previous = current;
+            }
+            return previous[target.Length];
         }
     }
 

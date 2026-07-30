@@ -2,6 +2,8 @@ using FluentAssertions;
 using InventoryX.Application.Commands.RequestHandlers.Catalog;
 using InventoryX.Application.Commands.Requests.Catalog;
 using InventoryX.Application.Exceptions;
+using InventoryX.Application.Queries.RequestHandlers.Catalog;
+using InventoryX.Application.Queries.Requests.Catalog;
 using InventoryX.Application.Validators.Catalog;
 using InventoryX.Common.Tests;
 using Microsoft.EntityFrameworkCore;
@@ -104,6 +106,19 @@ public sealed class ProductCommandTests : IDisposable
         var act = () => handler.Handle(new CreateCategoryCommand { Name = "Drinks" }, CancellationToken.None);
 
         await act.Should().ThrowAsync<ConflictException>();
+    }
+
+    [Fact]
+    public async Task Product_search_falls_back_to_a_single_typo_match()
+    {
+        await using var context = _db.CreateContext();
+        var createHandler = new CreateProductCommandHandler(context);
+        await createHandler.Handle(NewProduct("Sugar 1kg"), CancellationToken.None);
+        var handler = new GetProductsQueryHandler(context);
+
+        var result = await handler.Handle(new GetProductsQuery { Search = "Suger" }, CancellationToken.None);
+
+        result.Items.Should().ContainSingle(product => product.Name == "Sugar 1kg");
     }
 
     public void Dispose() => _db.Dispose();
