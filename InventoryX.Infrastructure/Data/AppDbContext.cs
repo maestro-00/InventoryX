@@ -50,6 +50,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Register> Registers => Set<Register>();
         public DbSet<FavouritesLayout> FavouritesLayouts => Set<FavouritesLayout>();
         public DbSet<Shift> Shifts => Set<Shift>();
+        public DbSet<CashMovement> CashMovements => Set<CashMovement>();
         public DbSet<Sale> Sales => Set<Sale>();
         public DbSet<SaleLine> SaleLines => Set<SaleLine>();
         public DbSet<SalePayment> SalePayments => Set<SalePayment>();
@@ -132,6 +133,7 @@ namespace InventoryX.Infrastructure.Data
                 .HasOne(f => f.Register).WithMany().HasForeignKey(f => f.RegisterId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Shift>().HasIndex(s => new { s.TenantId, s.RegisterId, s.Status });
+            builder.Entity<CashMovement>().HasIndex(item => new { item.TenantId, item.ShiftId, item.RecordedAt });
 
             builder.Entity<Sale>()
                 .HasIndex(s => new { s.TenantId, s.ClientSaleId }).IsUnique();

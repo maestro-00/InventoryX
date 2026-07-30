@@ -43,6 +43,7 @@ namespace InventoryX.Application.Repository
         DbSet<Register> Registers { get; }
         DbSet<FavouritesLayout> FavouritesLayouts { get; }
         DbSet<Shift> Shifts { get; }
+        DbSet<CashMovement> CashMovements { get; }
         DbSet<Sale> Sales { get; }
         DbSet<SaleLine> SaleLines { get; }
         DbSet<SalePayment> SalePayments { get; }

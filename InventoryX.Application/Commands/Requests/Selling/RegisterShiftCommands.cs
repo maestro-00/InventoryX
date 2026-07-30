@@ -19,4 +19,18 @@ namespace InventoryX.Application.Commands.Requests.Selling
         public Guid RegisterId { get; init; }
         public decimal OpeningFloat { get; init; }
     }
+
+    public sealed class RecordCashMovementCommand : IRequest<CashMovementDto>, ITenantWriteCommand
+    {
+        public Guid ShiftId { get; init; }
+        public string Type { get; init; } = "CashOut";
+        public decimal Amount { get; init; }
+        public required string Reason { get; init; }
+    }
+
+    public sealed class CloseShiftCommand : IRequest<ShiftDto>, ITenantWriteCommand
+    {
+        public Guid ShiftId { get; init; }
+        public decimal? ClosingCounted { get; init; }
+    }
 }
