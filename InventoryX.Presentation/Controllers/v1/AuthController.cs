@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using InventoryX.Presentation.Swagger;
 
 namespace InventoryX.Presentation.Controllers.v1;
 
@@ -37,6 +38,7 @@ public sealed class AuthController(ISender sender) : ApiControllerBase
         Ok(await sender.Send(command, cancellationToken));
 
     [HttpPost("pin/exchange")]
+    [LiveOnly("PIN exchange requires an authenticated device session and live credential verification.")]
     public async Task<ActionResult<RegisterPinExchangeResult>> ExchangePin(
         ExchangeRegisterPinCommand command,
         CancellationToken cancellationToken) =>

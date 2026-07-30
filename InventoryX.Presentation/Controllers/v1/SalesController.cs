@@ -5,6 +5,7 @@ using InventoryX.Application.Queries.Requests.Selling;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using InventoryX.Presentation.Swagger;
 
 namespace InventoryX.Presentation.Controllers.v1;
 
@@ -39,6 +40,7 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
         Ok(await sender.Send(new GetSaleReceiptQuery(id), cancellationToken));
 
     [HttpPost("{id:guid}/receipt/deliver")]
+    [LiveOnly("Email and SMS receipt delivery requires connectivity.")]
     public async Task<ActionResult<ReceiptDeliveryResultDto>> DeliverReceipt(
         Guid id,
         [FromBody] DeliverReceiptRequest request,

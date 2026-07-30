@@ -5,6 +5,7 @@ using InventoryX.Application.Queries.Requests.Catalog;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using InventoryX.Presentation.Swagger;
 
 namespace InventoryX.Presentation.Controllers.v1;
 
@@ -27,6 +28,7 @@ public sealed class ProductsController(ISender sender) : ApiControllerBase
         Ok(await sender.Send(new GetProductByBarcodeQuery { Barcode = barcode, IncludeCost = CanViewProfit }, cancellationToken));
 
     [HttpGet("{id:guid}/availability")]
+    [LiveOnly("Availability outside the cached register snapshot requires a live stock query.")]
     public async Task<ActionResult<InventoryX.Application.DTOs.Selling.ProductAvailabilityDto>> Availability(
         Guid id, [FromQuery] Guid? variantId, [FromQuery] Guid? locationId, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new InventoryX.Application.Queries.Requests.Selling.GetProductAvailabilityQuery

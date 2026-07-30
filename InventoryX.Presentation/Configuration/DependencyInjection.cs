@@ -16,6 +16,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using MediatR;
+using InventoryX.Presentation.Swagger;
 
 namespace InventoryX.Presentation.Configuration
 {
@@ -56,6 +57,7 @@ namespace InventoryX.Presentation.Configuration
                     Type = SecuritySchemeType.ApiKey
                 });
                 opt.OperationFilter<SecurityRequirementsOperationFilter>();
+                opt.OperationFilter<LiveOnlyOperationFilter>();
             }
             );
 

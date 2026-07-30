@@ -171,7 +171,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T069 [US4] Batch offline-sale ingest command: per-sale idempotent upsert on (TenantId, ClientSaleId), per-sale result applied|applied_with_conflict|rejected, OccurredAt honored + POST /sync/sales in InventoryX.Application/Commands/.../Sync/IngestOfflineSalesCommand.cs
 - [X] T070 [US4] Conflict review: GET /sync/conflicts + resolve (acceptAsIs | adjustWithReason → movement) with notification raise in InventoryX.Application/.../Sync/ + SyncController
 - [X] T071 [US4] RegisterPin entity + PIN set endpoint + /auth/pin/exchange issuing register-scoped short-lived JWT (research R3) in InventoryX.Domain/Models/Tenancy/RegisterPin.cs + InventoryX.Application/.../Auth/ + AuthController
-- [ ] T072 [US4] Mark live-only endpoints in OpenAPI (operation extension) so clients can grey them out offline in InventoryX.Presentation/ Swagger configuration
+- [X] T072 [US4] Mark live-only endpoints in OpenAPI (operation extension) so clients can grey them out offline in InventoryX.Presentation/ Swagger configuration
 
 **Checkpoint**: Quickstart scenario B passes — offline honesty guaranteed
 
