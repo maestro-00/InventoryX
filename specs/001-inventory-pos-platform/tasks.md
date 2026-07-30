@@ -163,7 +163,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 ### Tests (write first, must fail)
 
 - [X] T066 [P] [US4] Failing tests for idempotent ingest (same ClientSaleId replay returns original result, no duplicate stock effect) in tests/InventoryX.Application.Tests/Sync/OfflineSaleIngestTests.cs
-- [ ] T067 [P] [US4] Failing tests for conflict flagging on negative/contested stock (sale recorded, StockConflictFlag set, no silent overwrite) in tests/InventoryX.Application.Tests/Sync/StockConflictTests.cs
+- [X] T067 [P] [US4] Failing tests for conflict flagging on negative/contested stock (sale recorded, StockConflictFlag set, no silent overwrite) in tests/InventoryX.Application.Tests/Sync/StockConflictTests.cs
 
 ### Implementation
 
