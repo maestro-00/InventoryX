@@ -4,7 +4,7 @@ using MediatR;
 
 namespace InventoryX.Application.Commands.Requests.Billing;
 
-public sealed class InitializePaymentMethodCommand : IRequest<PaymentInitializationResult>, ITenantWriteCommand, IAuditedCommand
+public sealed class InitializePaymentMethodCommand : IRequest<PaymentInitializationResult>, IReadOnlyWriteExemptCommand, IAuditedCommand
 {
     public string Channel { get; init; } = "card";
     public string? Provider { get; init; }

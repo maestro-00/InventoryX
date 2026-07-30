@@ -5,7 +5,7 @@ using MediatR;
 
 namespace InventoryX.Application.Commands.Requests.Billing;
 
-public sealed class UpgradeSubscriptionCommand : IRequest<BillingSubscriptionDto>, ITenantWriteCommand, IAuditedCommand
+public sealed class UpgradeSubscriptionCommand : IRequest<BillingSubscriptionDto>, IReadOnlyWriteExemptCommand, IAuditedCommand
 {
     public Guid PlanDefinitionId { get; init; }
     public BillingCycle BillingCycle { get; init; } = BillingCycle.Monthly;
@@ -15,7 +15,7 @@ public sealed class UpgradeSubscriptionCommand : IRequest<BillingSubscriptionDto
     public string AuditEntityId => "current";
 }
 
-public sealed class DowngradeSubscriptionCommand : IRequest<BillingSubscriptionDto>, ITenantWriteCommand, IAuditedCommand
+public sealed class DowngradeSubscriptionCommand : IRequest<BillingSubscriptionDto>, IReadOnlyWriteExemptCommand, IAuditedCommand
 {
     public Guid PlanDefinitionId { get; init; }
     public bool AcknowledgeOverLimit { get; init; }
@@ -24,14 +24,14 @@ public sealed class DowngradeSubscriptionCommand : IRequest<BillingSubscriptionD
     public string AuditEntityId => "current";
 }
 
-public sealed class CancelSubscriptionCommand : IRequest<BillingSubscriptionDto>, ITenantWriteCommand, IAuditedCommand
+public sealed class CancelSubscriptionCommand : IRequest<BillingSubscriptionDto>, IReadOnlyWriteExemptCommand, IAuditedCommand
 {
     public string AuditAction => "billing.subscription.cancel";
     public string AuditEntityType => "Subscription";
     public string AuditEntityId => "current";
 }
 
-public sealed class ReactivateSubscriptionCommand : IRequest<BillingSubscriptionDto>, ITenantWriteCommand, IAuditedCommand
+public sealed class ReactivateSubscriptionCommand : IRequest<BillingSubscriptionDto>, IReadOnlyWriteExemptCommand, IAuditedCommand
 {
     public string AuditAction => "billing.subscription.reactivate";
     public string AuditEntityType => "Subscription";

@@ -7,6 +7,9 @@ namespace InventoryX.Application.Behaviors
     /// <summary>Marker for commands that mutate tenant data (blocked while ReadOnly).</summary>
     public interface ITenantWriteCommand;
 
+    /// <summary>Marks billing and tenant-export writes that remain allowed while a subscription is ReadOnly.</summary>
+    public interface IReadOnlyWriteExemptCommand : ITenantWriteCommand;
+
     /// <summary>Marker for commands that create a plan-capped entity or sale.</summary>
     public interface IPlanLimitedCommand : ITenantWriteCommand
     {
@@ -28,7 +31,7 @@ namespace InventoryX.Application.Behaviors
     {
         public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            if (request is ITenantWriteCommand)
+            if (request is ITenantWriteCommand && request is not IReadOnlyWriteExemptCommand)
                 await planEnforcer.EnsureWritableAsync(cancellationToken);
 
             if (request is IFeatureGatedCommand featureGated)
