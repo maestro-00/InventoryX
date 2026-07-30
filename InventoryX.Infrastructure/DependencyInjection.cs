@@ -27,6 +27,12 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.Configure<PaystackOptions>(configuration.GetSection(PaystackOptions.SectionName));
+        services.AddHttpClient<IPaymentGateway, PaystackGateway>((provider, client) =>
+        {
+            var settings = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaystackOptions>>().Value;
+            client.BaseAddress = new Uri(settings.BaseUrl);
+        });
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
