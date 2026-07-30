@@ -39,4 +39,11 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
     [Authorize(Roles = "Owner")]
     public async Task<ActionResult<BillingSubscriptionDto>> Reactivate(CancellationToken cancellationToken) =>
         Ok(await sender.Send(new ReactivateSubscriptionCommand(), cancellationToken));
+
+    [HttpPost("payment-method")]
+    [Authorize(Roles = "Owner")]
+    public async Task<ActionResult<InventoryX.Application.Services.IServices.PaymentInitializationResult>> PaymentMethod(
+        InitializePaymentMethodCommand command,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(command, cancellationToken));
 }
