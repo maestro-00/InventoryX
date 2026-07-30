@@ -41,6 +41,8 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
         public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
         public DbSet<AdjustmentReason> AdjustmentReasons => Set<AdjustmentReason>();
+        public DbSet<StockCount> StockCounts => Set<StockCount>();
+        public DbSet<StockCountLine> StockCountLines => Set<StockCountLine>();
         public DbSet<Register> Registers => Set<Register>();
         public DbSet<FavouritesLayout> FavouritesLayouts => Set<FavouritesLayout>();
         public DbSet<Shift> Shifts => Set<Shift>();
@@ -111,6 +113,8 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<StockAdjustment>()
                 .HasMany(adjustment => adjustment.Lines).WithOne().HasForeignKey(line => line.StockAdjustmentId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<AdjustmentReason>().HasIndex(reason => new { reason.TenantId, reason.Code }).IsUnique();
+            builder.Entity<StockCount>().HasIndex(count => new { count.TenantId, count.LocationId, count.Status });
+            builder.Entity<StockCount>().HasMany(count => count.Lines).WithOne().HasForeignKey(line => line.StockCountId).OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Register>().HasIndex(r => new { r.TenantId, r.LocationId });
             builder.Entity<FavouritesLayout>()
