@@ -242,7 +242,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 ### Implementation
 
 - [X] T094 [US7] Supplier entity + CRUD + supplier-product links (codes, prices) + SuppliersController per contracts/purchasing.md in InventoryX.Domain/Models/Purchasing/Supplier.cs + InventoryX.Application/.../Purchasing/ + InventoryX.Presentation/Controllers/v1/SuppliersController.cs
-- [ ] T095 [US7] PurchaseOrder + lines with full state machine, approval gate, origin tracking + PurchaseOrdersController in InventoryX.Domain/Models/Purchasing/PurchaseOrder.cs + InventoryX.Application/.../Purchasing/ + InventoryX.Presentation/Controllers/v1/PurchaseOrdersController.cs
+- [X] T095 [US7] PurchaseOrder + lines with full state machine, approval gate, origin tracking + PurchaseOrdersController in InventoryX.Domain/Models/Purchasing/PurchaseOrder.cs + InventoryX.Application/.../Purchasing/ + InventoryX.Presentation/Controllers/v1/PurchaseOrdersController.cs
 - [ ] T096 [P] [US7] PO PDF generation + email-to-supplier send in InventoryX.Infrastructure/Services/PurchaseOrderPdfService.cs + send endpoint
 - [ ] T097 [US7] Batch entity + GoodsReceipt flow (batch number + expiry capture, ledger Receipt movements, PO Partially/FullyReceived updates, close-short) in InventoryX.Domain/Models/Inventory/Batch.cs + InventoryX.Domain/Models/Purchasing/GoodsReceipt.cs + InventoryX.Application/.../Purchasing/
 - [ ] T098 [US7] FEFO batch selection in sale/issue paths (earliest expiry first, explicit batchId override) wired into StockLedger + CreateSaleCommand in InventoryX.Infrastructure/Services/StockLedger.cs

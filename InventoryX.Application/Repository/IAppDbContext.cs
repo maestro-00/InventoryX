@@ -54,6 +54,8 @@ namespace InventoryX.Application.Repository
         DbSet<ReturnLine> ReturnLines { get; }
         DbSet<ImportJob> ImportJobs { get; }
         DbSet<Supplier> Suppliers { get; }
+        DbSet<PurchaseOrder> PurchaseOrders { get; }
+        DbSet<PurchaseOrderLine> PurchaseOrderLines { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

@@ -61,6 +61,8 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
         public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
         public DbSet<Supplier> Suppliers => Set<Supplier>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -159,6 +161,9 @@ namespace InventoryX.Infrastructure.Data
                 .HasMany(r => r.Lines).WithOne().HasForeignKey(l => l.ReturnTransactionId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<ReturnLine>().HasIndex(l => new { l.TenantId, l.SaleLineId });
             builder.Entity<Supplier>().HasIndex(item => new { item.TenantId, item.Name }).IsUnique();
+            builder.Entity<PurchaseOrder>().HasIndex(item => new { item.TenantId, item.Status, item.RequiredBy });
+            builder.Entity<PurchaseOrder>().HasOne(item => item.Supplier).WithMany().HasForeignKey(item => item.SupplierId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<PurchaseOrder>().HasMany(item => item.Lines).WithOne().HasForeignKey(item => item.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
 
             ApplyTenantQueryFilters(builder);
         }
