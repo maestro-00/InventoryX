@@ -248,7 +248,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T098 [US7] FEFO batch selection in sale/issue paths (earliest expiry first, explicit batchId override) wired into StockLedger + CreateSaleCommand in InventoryX.Infrastructure/Services/StockLedger.cs
 - [X] T099 [P] [US7] Batch recall trace query (backward: supplier/receipt; forward: sales) + GET /batches/{id}/trace in InventoryX.Application/Queries/.../Inventory/
 - [X] T100 [US7] SupplierInvoice recording with price-variance flag + landed-cost allocation across receipt lines (recalculates unit costs per valuation method) in InventoryX.Domain/Models/Purchasing/SupplierInvoice.cs + InventoryX.Application/.../Purchasing/
-- [ ] T101 [US7] Reorder suggestions query (sales rate × lead time grouping by supplier) + apply→draft POs per contracts/inventory.md in InventoryX.Application/Queries/.../Purchasing/ReorderSuggestionsQueryHandler.cs
+- [X] T101 [US7] Reorder suggestions query (sales rate × lead time grouping by supplier) + apply→draft POs per contracts/inventory.md in InventoryX.Application/Queries/.../Purchasing/ReorderSuggestionsQueryHandler.cs
 - [ ] T102 [US7] AlertScanWorker BackgroundService raising via the Foundational Notification entity/service from T014 (low/out-of-stock, expiry horizon, overstock, slow-moving; consolidation by key) in InventoryX.Infrastructure/BackgroundJobs/AlertScanWorker.cs
 - [ ] T103 [P] [US7] Supplier performance metrics (on-time rate, achieved lead time, price history) derived query in InventoryX.Application/Queries/.../Purchasing/SupplierPerformanceQueryHandler.cs
 
