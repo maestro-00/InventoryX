@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IPurchaseOrderPdfService, PurchaseOrderPdfService>();
         services.AddScoped<ITenantExportService, TenantExportService>();
         services.AddHostedService<BillingWorker>();
+        services.AddHostedService<AlertScanWorker>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
