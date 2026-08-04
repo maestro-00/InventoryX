@@ -357,3 +357,7 @@ migration present is the merge gate for every PR.
 - Every task cites its contract/data-model source; consult
   specs/001-inventory-pos-platform/contracts/ before implementing an endpoint
 - Commit per task or logical group; constitution commit-message conventions apply
+
+## Phase 12: Convergence
+
+- [ ] T120 Remediate the AutoMapper 15.0.1 high-severity vulnerability GHSA-rvv3-g6hj-g44x and verify restore/build/tests remain green per Constitution V (partial)
