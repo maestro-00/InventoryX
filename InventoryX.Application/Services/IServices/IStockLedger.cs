@@ -17,6 +17,8 @@ namespace InventoryX.Application.Services.IServices
         bool AllowNegative = false,
         DateTime? OccurredAt = null);
 
+    public sealed record BatchAllocation(Guid BatchId, decimal Quantity);
+
     /// <summary>
     /// Append-only stock ledger (research R5): stages a StockMovement row and
     /// the matching StockLevel projection update on the current unit of work.
@@ -25,5 +27,8 @@ namespace InventoryX.Application.Services.IServices
     public interface IStockLedger
     {
         Task AppendAsync(IReadOnlyList<StockMovementRequest> movements, CancellationToken cancellationToken = default);
+        Task<IReadOnlyList<BatchAllocation>> AllocateFefoAsync(Guid productId, Guid? variantId, Guid locationId,
+            decimal quantity, Guid? explicitBatchId = null, bool allowNegative = false,
+            CancellationToken cancellationToken = default);
     }
 }

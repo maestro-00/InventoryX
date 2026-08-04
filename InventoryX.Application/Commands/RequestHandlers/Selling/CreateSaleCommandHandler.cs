@@ -6,6 +6,7 @@ using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Application.Validators.Selling;
 using InventoryX.Domain.Models.Inventory;
+using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 using MediatR;
@@ -129,30 +130,48 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                     role,
                     tenantContext.UserId,
                     lineRequest.DiscountAuthorizedBy);
-                var net = Math.Round(grossLineAmount - lineRequest.LineDiscount, 4);
-                var components = taxCalculator.Calculate(net, product.TaxTreatment?.ComponentsJson ?? "[]");
-                var taxAmount = Math.Round(components.Sum(c => c.Amount), 2);
-
-                sale.Lines.Add(new SaleLine
+                IReadOnlyList<(Guid? BatchId, decimal Quantity)> allocations;
+                if (!isHeld && product.TrackingMode == TrackingMode.Batch)
                 {
-                    ProductId = product.Id,
-                    VariantId = variant?.Id,
-                    BatchId = lineRequest.BatchId,
-                    ProductName = variant is null ? product.Name : $"{product.Name} ({variant.Sku ?? "variant"})",
-                    Qty = lineRequest.Qty,
-                    UnitPrice = unitPrice,
-                    PriceOverridden = lineRequest.UnitPrice is not null,
-                    LineDiscount = lineRequest.LineDiscount,
-                    DiscountAuthorizedBy = discountAuthorizedBy,
-                    TaxComponents = JsonSerializer.Serialize(components, SerializerOptions),
-                    TaxAmount = taxAmount,
-                    LineTotal = Math.Round(net + taxAmount, 2),
-                    Note = lineRequest.Note,
-                });
+                    allocations = (await stockLedger.AllocateFefoAsync(product.Id, variant?.Id, register.LocationId,
+                        lineRequest.Qty, lineRequest.BatchId, request.AllowNegativeStock, cancellationToken))
+                        .Select(allocation => ((Guid?)allocation.BatchId, allocation.Quantity)).ToList();
+                }
+                else
+                {
+                    if (product.TrackingMode != TrackingMode.Batch && lineRequest.BatchId is not null)
+                        throw new FluentValidation.ValidationException("A batch can only be selected for batch-tracked products.");
+                    allocations = [(lineRequest.BatchId, lineRequest.Qty)];
+                }
+
+                decimal allocatedTax = 0;
+                decimal allocatedDiscount = 0;
+                for (var allocationIndex = 0; allocationIndex < allocations.Count; allocationIndex++)
+                {
+                    var allocation = allocations[allocationIndex];
+                    var ratio = allocation.Quantity / lineRequest.Qty;
+                    var allocationDiscount = allocationIndex == allocations.Count - 1
+                        ? lineRequest.LineDiscount - allocatedDiscount
+                        : Math.Round(lineRequest.LineDiscount * ratio, 4);
+                    allocatedDiscount += allocationDiscount;
+                    var allocationNet = Math.Round(allocation.Quantity * unitPrice - allocationDiscount, 4);
+                    var components = taxCalculator.Calculate(allocationNet, product.TaxTreatment?.ComponentsJson ?? "[]");
+                    var allocationTax = Math.Round(components.Sum(component => component.Amount), 2);
+                    allocatedTax += allocationTax;
+                    sale.Lines.Add(new SaleLine
+                    {
+                        ProductId = product.Id, VariantId = variant?.Id, BatchId = allocation.BatchId,
+                        ProductName = variant is null ? product.Name : $"{product.Name} ({variant.Sku ?? "variant"})",
+                        Qty = allocation.Quantity, UnitPrice = unitPrice, PriceOverridden = lineRequest.UnitPrice is not null,
+                        LineDiscount = allocationDiscount, DiscountAuthorizedBy = discountAuthorizedBy,
+                        TaxComponents = JsonSerializer.Serialize(components, SerializerOptions), TaxAmount = allocationTax,
+                        LineTotal = Math.Round(allocationNet + allocationTax, 2), Note = lineRequest.Note,
+                    });
+                }
 
                 subtotal += Math.Round(lineRequest.Qty * unitPrice, 2);
                 discountTotal += lineRequest.LineDiscount;
-                taxTotal += taxAmount;
+                taxTotal += allocatedTax;
             }
 
             sale.Subtotal = Math.Round(subtotal, 2);

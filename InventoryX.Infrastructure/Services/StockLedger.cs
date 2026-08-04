@@ -13,6 +13,57 @@ namespace InventoryX.Infrastructure.Services
     /// </summary>
     public class StockLedger(AppDbContext context) : IStockLedger
     {
+        public async Task<IReadOnlyList<BatchAllocation>> AllocateFefoAsync(Guid productId, Guid? variantId,
+            Guid locationId, decimal quantity, Guid? explicitBatchId = null, bool allowNegative = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (quantity <= 0) throw new FluentValidation.ValidationException("Issue quantity must be positive.");
+            var today = DateTime.UtcNow.Date;
+            var levels = await context.StockLevels.AsNoTracking()
+                .Where(level => level.ProductId == productId && level.VariantId == variantId &&
+                    level.LocationId == locationId && level.BatchId != null)
+                .ToListAsync(cancellationToken);
+            var batchIds = levels.Select(level => level.BatchId!.Value).Distinct().ToList();
+            var batches = await context.Batches.AsNoTracking().Where(batch => batchIds.Contains(batch.Id))
+                .ToDictionaryAsync(batch => batch.Id, cancellationToken);
+
+            if (explicitBatchId is Guid requestedBatch)
+            {
+                if (!batches.TryGetValue(requestedBatch, out var batch) || batch.ProductId != productId ||
+                    batch.VariantId != variantId || batch.ExpiresAt?.Date <= today)
+                    throw new ConflictException("The requested batch is unavailable, expired, or does not belong to this product.");
+                var available = levels.Single(level => level.BatchId == requestedBatch).QtyOnHand;
+                if (available < quantity && !allowNegative)
+                    throw new ConflictException($"Insufficient stock in batch {batch.BatchNumber}: {available} available, {quantity} requested.");
+                return [new BatchAllocation(requestedBatch, quantity)];
+            }
+
+            var candidates = levels.Where(level => level.QtyOnHand > 0 && batches.TryGetValue(level.BatchId!.Value, out var batch) &&
+                    (batch.ExpiresAt is null || batch.ExpiresAt.Value.Date > today))
+                .OrderBy(level => batches[level.BatchId!.Value].ExpiresAt is null)
+                .ThenBy(level => batches[level.BatchId!.Value].ExpiresAt)
+                .ThenBy(level => batches[level.BatchId!.Value].ReceivedAt)
+                .ThenBy(level => batches[level.BatchId!.Value].BatchNumber, StringComparer.Ordinal)
+                .ToList();
+            if (candidates.Count == 0) throw new ConflictException("No saleable batch stock is available for this product.");
+            var remaining = quantity;
+            var allocations = new List<BatchAllocation>();
+            foreach (var level in candidates)
+            {
+                var allocated = Math.Min(level.QtyOnHand, remaining);
+                if (allocated > 0) allocations.Add(new BatchAllocation(level.BatchId!.Value, allocated));
+                remaining -= allocated;
+                if (remaining <= 0) break;
+            }
+            if (remaining > 0)
+            {
+                if (!allowNegative) throw new ConflictException($"Insufficient batch stock: {quantity - remaining} available, {quantity} requested.");
+                var first = allocations[0];
+                allocations[0] = first with { Quantity = first.Quantity + remaining };
+            }
+            return allocations;
+        }
+
         public async Task AppendAsync(IReadOnlyList<StockMovementRequest> movements, CancellationToken cancellationToken = default)
         {
             foreach (var request in movements)
