@@ -5,6 +5,7 @@ using InventoryX.Application.Exceptions;
 using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Purchasing;
 using InventoryX.Domain.Models.Tenancy;
+using InventoryX.Domain.Models.Inventory;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Tests.Purchasing;
@@ -41,13 +42,14 @@ public sealed class PurchaseOrderStateTests : IDisposable
         await using var context = _db.CreateContext();
         context.Tenants.Add(new Tenant { Id = _tenantId, Name = "Shop", PoApprovalThreshold = 100m });
         var supplier = new Supplier { Name = "Acme" };
-        context.Suppliers.Add(supplier);
+        var location = new Location { Name = "Warehouse" };
+        context.AddRange(supplier, location);
         await context.SaveChangesAsync();
 
         var create = new PurchaseOrderCommandHandler(context);
         var created = await create.Handle(new CreatePurchaseOrderCommand
         {
-            SupplierId = supplier.Id,
+            SupplierId = supplier.Id, DeliverToLocationId = location.Id,
             Origin = PurchaseOrderOrigin.Manual,
             Lines = [new PurchaseOrderLineInput(Guid.NewGuid(), null, "Sugar", 10m, 10m)],
         }, CancellationToken.None);
@@ -66,13 +68,14 @@ public sealed class PurchaseOrderStateTests : IDisposable
         await using var context = _db.CreateContext();
         context.Tenants.Add(new Tenant { Id = _tenantId, Name = "Shop", PoApprovalThreshold = 101m });
         var supplier = new Supplier { Name = "Acme" };
-        context.Suppliers.Add(supplier);
+        var location = new Location { Name = "Warehouse" };
+        context.AddRange(supplier, location);
         await context.SaveChangesAsync();
 
         var handler = new PurchaseOrderCommandHandler(context);
         var created = await handler.Handle(new CreatePurchaseOrderCommand
         {
-            SupplierId = supplier.Id,
+            SupplierId = supplier.Id, DeliverToLocationId = location.Id,
             Origin = PurchaseOrderOrigin.ReorderSuggestion,
             OriginReferenceId = Guid.NewGuid(),
             Lines = [new PurchaseOrderLineInput(Guid.NewGuid(), null, "Sugar", 10m, 10m)],

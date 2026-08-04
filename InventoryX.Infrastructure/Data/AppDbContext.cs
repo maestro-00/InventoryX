@@ -63,6 +63,9 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Supplier> Suppliers => Set<Supplier>();
         public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
         public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+        public DbSet<Batch> Batches => Set<Batch>();
+        public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
+        public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -164,6 +167,11 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<PurchaseOrder>().HasIndex(item => new { item.TenantId, item.Status, item.RequiredBy });
             builder.Entity<PurchaseOrder>().HasOne(item => item.Supplier).WithMany().HasForeignKey(item => item.SupplierId).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<PurchaseOrder>().HasMany(item => item.Lines).WithOne().HasForeignKey(item => item.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<Batch>().HasIndex(item => new { item.TenantId, item.ProductId, item.VariantId, item.BatchNumber }).IsUnique();
+            builder.Entity<Batch>().HasIndex(item => new { item.TenantId, item.ExpiresAt });
+            builder.Entity<GoodsReceipt>().HasIndex(item => new { item.TenantId, item.ReceiptNumber }).IsUnique();
+            builder.Entity<GoodsReceipt>().HasMany(item => item.Lines).WithOne().HasForeignKey(item => item.GoodsReceiptId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<GoodsReceiptLine>().HasOne<Batch>().WithMany().HasForeignKey(item => item.BatchId).OnDelete(DeleteBehavior.Restrict);
 
             ApplyTenantQueryFilters(builder);
         }

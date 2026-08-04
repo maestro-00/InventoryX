@@ -26,7 +26,7 @@ public sealed class PurchaseOrdersController(ISender sender) : ApiControllerBase
 
     [HttpPatch("{id:guid}")]
     public Task<PurchaseOrderDto> Update(Guid id, UpdatePurchaseOrderCommand command, CancellationToken cancellationToken) =>
-        sender.Send(new UpdatePurchaseOrderCommand { Id = id, RequiredBy = command.RequiredBy, Notes = command.Notes, Lines = command.Lines }, cancellationToken);
+        sender.Send(new UpdatePurchaseOrderCommand { Id = id, DeliverToLocationId = command.DeliverToLocationId, RequiredBy = command.RequiredBy, Notes = command.Notes, Lines = command.Lines }, cancellationToken);
 
     [HttpPost("{id:guid}/submit")]
     [ProducesResponseType(StatusCodes.Status423Locked)]
@@ -52,6 +52,15 @@ public sealed class PurchaseOrdersController(ISender sender) : ApiControllerBase
         var document = await sender.Send(new GetPurchaseOrderPdfQuery(id), cancellationToken);
         return File(document.Content, document.ContentType, document.FileName);
     }
+
+    [HttpPost("{id:guid}/receipts")]
+    public Task<GoodsReceiptDto> RecordReceipt(Guid id, RecordGoodsReceiptCommand command, CancellationToken cancellationToken) =>
+        sender.Send(new RecordGoodsReceiptCommand { PurchaseOrderId = id, LocationId = command.LocationId, Notes = command.Notes, Lines = command.Lines }, cancellationToken);
+
+    [HttpPost("{id:guid}/close-short")]
+    public Task<PurchaseOrderDto> CloseShort(Guid id, ClosePurchaseOrderShortRequest request, CancellationToken cancellationToken) =>
+        sender.Send(new ClosePurchaseOrderShortCommand(id, request.Reason), cancellationToken);
 }
 
 public sealed record CancelPurchaseOrderRequest(string Reason);
+public sealed record ClosePurchaseOrderShortRequest(string Reason);

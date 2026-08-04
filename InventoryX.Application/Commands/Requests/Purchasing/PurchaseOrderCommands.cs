@@ -7,11 +7,12 @@ namespace InventoryX.Application.Commands.Requests.Purchasing;
 
 public sealed record PurchaseOrderLineInput(Guid ProductId, Guid? VariantId, string Description, decimal OrderedQty, decimal UnitCost);
 public sealed record PurchaseOrderLineDto(Guid Id, Guid ProductId, Guid? VariantId, string Description, decimal OrderedQty, decimal ReceivedQty, decimal DamagedQty, decimal UnitCost);
-public sealed record PurchaseOrderDto(Guid Id, Guid SupplierId, PurchaseOrderStatus Status, PurchaseOrderOrigin Origin, Guid? OriginReferenceId, DateTime? RequiredBy, string? Notes, decimal Total, IReadOnlyList<PurchaseOrderLineDto> Lines);
+public sealed record PurchaseOrderDto(Guid Id, Guid SupplierId, Guid DeliverToLocationId, PurchaseOrderStatus Status, PurchaseOrderOrigin Origin, Guid? OriginReferenceId, DateTime? RequiredBy, string? Notes, decimal Total, IReadOnlyList<PurchaseOrderLineDto> Lines);
 
 public sealed class CreatePurchaseOrderCommand : IRequest<PurchaseOrderDto>, IFeatureGatedCommand
 {
     public Guid SupplierId { get; init; }
+    public Guid DeliverToLocationId { get; init; }
     public PurchaseOrderOrigin Origin { get; init; }
     public Guid? OriginReferenceId { get; init; }
     public DateTime? RequiredBy { get; init; }
@@ -23,6 +24,7 @@ public sealed class CreatePurchaseOrderCommand : IRequest<PurchaseOrderDto>, IFe
 public sealed class UpdatePurchaseOrderCommand : IRequest<PurchaseOrderDto>, ITenantWriteCommand
 {
     public Guid Id { get; init; }
+    public Guid DeliverToLocationId { get; init; }
     public DateTime? RequiredBy { get; init; }
     public string? Notes { get; init; }
     public List<PurchaseOrderLineInput> Lines { get; init; } = [];

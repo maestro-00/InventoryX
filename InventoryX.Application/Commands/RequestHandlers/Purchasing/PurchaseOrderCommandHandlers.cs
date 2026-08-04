@@ -16,9 +16,11 @@ public sealed class PurchaseOrderCommandHandler(IAppDbContext context)
         ValidateLines(request.Lines);
         if (!await context.Suppliers.AnyAsync(s => s.Id == request.SupplierId, cancellationToken))
             throw new NotFoundException("Supplier not found.");
+        if (!await context.Locations.AnyAsync(location => location.Id == request.DeliverToLocationId && !location.IsDeleted, cancellationToken))
+            throw new NotFoundException("Delivery location not found.");
         var order = new PurchaseOrder
         {
-            SupplierId = request.SupplierId, Origin = request.Origin, OriginReferenceId = request.OriginReferenceId,
+            SupplierId = request.SupplierId, DeliverToLocationId = request.DeliverToLocationId, Origin = request.Origin, OriginReferenceId = request.OriginReferenceId,
             RequiredBy = request.RequiredBy, Notes = request.Notes, Lines = MapLines(request.Lines),
         };
         context.PurchaseOrders.Add(order);
@@ -34,6 +36,7 @@ public sealed class PurchaseOrderCommandHandler(IAppDbContext context)
         context.PurchaseOrderLines.RemoveRange(order.Lines);
         order.Lines = MapLines(request.Lines);
         order.RequiredBy = request.RequiredBy;
+        if (request.DeliverToLocationId != Guid.Empty) order.DeliverToLocationId = request.DeliverToLocationId;
         order.Notes = request.Notes;
         await context.SaveChangesAsync(cancellationToken);
         return Map(order);
@@ -43,7 +46,7 @@ public sealed class PurchaseOrderCommandHandler(IAppDbContext context)
         await context.PurchaseOrders.Include(order => order.Lines).SingleOrDefaultAsync(order => order.Id == id, cancellationToken)
         ?? throw new NotFoundException("Purchase order not found.");
 
-    internal static PurchaseOrderDto Map(PurchaseOrder order) => new(order.Id, order.SupplierId, order.Status, order.Origin,
+    internal static PurchaseOrderDto Map(PurchaseOrder order) => new(order.Id, order.SupplierId, order.DeliverToLocationId, order.Status, order.Origin,
         order.OriginReferenceId, order.RequiredBy, order.Notes, order.Total,
         order.Lines.Select(line => new PurchaseOrderLineDto(line.Id, line.ProductId, line.VariantId, line.Description,
             line.OrderedQty, line.ReceivedQty, line.DamagedQty, line.UnitCost)).ToList());

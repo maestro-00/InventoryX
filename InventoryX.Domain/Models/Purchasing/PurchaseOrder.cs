@@ -20,6 +20,7 @@ public sealed class PurchaseOrder : BaseModel
 {
     public Guid SupplierId { get; set; }
     public Supplier? Supplier { get; set; }
+    public Guid DeliverToLocationId { get; set; }
     public PurchaseOrderStatus Status { get; private set; } = PurchaseOrderStatus.Draft;
     public PurchaseOrderOrigin Origin { get; set; } = PurchaseOrderOrigin.Manual;
     public Guid? OriginReferenceId { get; set; }
@@ -30,6 +31,7 @@ public sealed class PurchaseOrder : BaseModel
     public DateTime? SentAt { get; private set; }
     public DateTime? ClosedAt { get; private set; }
     public string? CancellationReason { get; private set; }
+    public string? ClosedShortReason { get; private set; }
     public List<PurchaseOrderLine> Lines { get; set; } = [];
 
     [NotMapped]
@@ -66,6 +68,15 @@ public sealed class PurchaseOrder : BaseModel
         if (Status is not (PurchaseOrderStatus.PartiallyReceived or PurchaseOrderStatus.FullyReceived))
             throw new InvalidOperationException("Only received purchase orders can be closed.");
         Status = PurchaseOrderStatus.Closed;
+        ClosedAt = now;
+    }
+
+    public void CloseShort(string reason, DateTime now)
+    {
+        Ensure(PurchaseOrderStatus.PartiallyReceived, "Only partially received purchase orders can be closed short.");
+        if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("A close-short reason is required.");
+        Status = PurchaseOrderStatus.Closed;
+        ClosedShortReason = reason.Trim();
         ClosedAt = now;
     }
 
