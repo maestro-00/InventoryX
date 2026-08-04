@@ -264,7 +264,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Tests (write first, must fail)
 
-- [ ] T104 [P] [US8] Failing tests for dashboard aggregates (today vs same day last week) + ViewProfit redaction (FR-050) in tests/InventoryX.Application.Tests/Reports/DashboardQueryTests.cs
+- [X] T104 [P] [US8] Failing tests for dashboard aggregates (today vs same day last week) + ViewProfit redaction (FR-050) in tests/InventoryX.Application.Tests/Reports/DashboardQueryTests.cs
 - [ ] T105 [P] [US8] Failing tests for Ghana tax report totals by rate/levy and period in tests/InventoryX.Application.Tests/Reports/TaxReportTests.cs
 
 ### Implementation
