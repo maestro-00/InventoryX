@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITaxCalculator, TaxCalculator>();
         services.AddTransient<IEmailSender, EmailSender>();
+        services.AddTransient<IAttachmentEmailSender, EmailSender>();
         services.Configure<AuthMessageSenderOptions>(configuration);
         services.Configure<AuthOptions>(configuration.GetSection("Frontend"));
         services.AddHttpContextAccessor();

@@ -1,4 +1,5 @@
 using InventoryX.Application.Options;
+using InventoryX.Application.Services.IServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -7,7 +8,7 @@ using SendGrid.Helpers.Mail;
 
 namespace InventoryX.Application.Services;
 
-public class EmailSender : IEmailSender
+public class EmailSender : IEmailSender, IAttachmentEmailSender
 {
     private readonly ILogger _logger;
 
@@ -48,5 +49,23 @@ public class EmailSender : IEmailSender
         _logger.LogInformation(response.IsSuccessStatusCode
             ? $"Email to {toEmail} queued successfully!"
             : $"Failure Email to {toEmail}");
+    }
+
+    public async Task SendAsync(string to, string subject, string htmlBody, string fileName, string contentType, byte[] content,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrEmpty(Options.SendGridKey)) throw new InvalidOperationException("SendGridKey is null or empty");
+        var client = new SendGridClient(Options.SendGridKey);
+        var message = new SendGridMessage
+        {
+            From = new EmailAddress(Options.SenderEmail, Options.SenderName), Subject = subject,
+            PlainTextContent = "Please see the attached document.", HtmlContent = htmlBody,
+        };
+        message.AddTo(new EmailAddress(to));
+        message.AddAttachment(fileName, Convert.ToBase64String(content), contentType);
+        message.SetClickTracking(false, false);
+        var response = await client.SendEmailAsync(message, cancellationToken);
+        if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"Email delivery failed with status {(int)response.StatusCode}.");
+        _logger.LogInformation("Email with attachment {FileName} queued to {Recipient}", fileName, to);
     }
 }

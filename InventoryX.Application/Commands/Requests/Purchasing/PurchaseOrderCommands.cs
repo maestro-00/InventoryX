@@ -35,3 +35,5 @@ public sealed record RejectPurchaseOrderCommand(Guid Id) : IRequest<PurchaseOrde
 { public string AuditAction => "purchase_order.reject"; public string AuditEntityType => "PurchaseOrder"; public string AuditEntityId => Id.ToString(); }
 public sealed record CancelPurchaseOrderCommand(Guid Id, string Reason) : IRequest<PurchaseOrderDto>, ITenantWriteCommand, IAuditedCommand
 { public string AuditAction => "purchase_order.cancel"; public string AuditEntityType => "PurchaseOrder"; public string AuditEntityId => Id.ToString(); }
+public sealed record SendPurchaseOrderCommand(Guid Id) : IRequest<PurchaseOrderEmailResult>, ITenantWriteCommand, IAuditedCommand
+{ public string AuditAction => "purchase_order.email"; public string AuditEntityType => "PurchaseOrder"; public string AuditEntityId => Id.ToString(); }

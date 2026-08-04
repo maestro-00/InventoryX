@@ -40,6 +40,18 @@ public sealed class PurchaseOrdersController(ISender sender) : ApiControllerBase
 
     [HttpPost("{id:guid}/cancel")]
     public Task<PurchaseOrderDto> Cancel(Guid id, CancelPurchaseOrderRequest request, CancellationToken cancellationToken) => sender.Send(new CancelPurchaseOrderCommand(id, request.Reason), cancellationToken);
+
+    [HttpPost("{id:guid}/send")]
+    public Task<Application.Services.IServices.PurchaseOrderEmailResult> Send(Guid id, CancellationToken cancellationToken) =>
+        sender.Send(new SendPurchaseOrderCommand(id), cancellationToken);
+
+    [HttpGet("{id:guid}/pdf")]
+    [Produces("application/pdf")]
+    public async Task<IActionResult> Download(Guid id, CancellationToken cancellationToken)
+    {
+        var document = await sender.Send(new GetPurchaseOrderPdfQuery(id), cancellationToken);
+        return File(document.Content, document.ContentType, document.FileName);
+    }
 }
 
 public sealed record CancelPurchaseOrderRequest(string Reason);

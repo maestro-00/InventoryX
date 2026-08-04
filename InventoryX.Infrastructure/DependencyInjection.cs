@@ -36,6 +36,7 @@ public static class DependencyInjection
         });
         services.AddScoped<PaystackWebhookProcessor>();
         services.AddScoped<IBillingInvoiceService, InvoicePdfService>();
+        services.AddScoped<IPurchaseOrderPdfService, PurchaseOrderPdfService>();
         services.AddScoped<ITenantExportService, TenantExportService>();
         services.AddHostedService<BillingWorker>();
 

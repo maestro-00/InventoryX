@@ -21,3 +21,10 @@ public sealed class GetPurchaseOrdersQueryHandler(IAppDbContext context) : IRequ
         return PagedResult<PurchaseOrderDto>.Create(items.Select(PurchaseOrderCommandHandler.Map).ToList(), Math.Max(1, request.Page), Math.Clamp(request.PageSize, 1, 100), total);
     }
 }
+
+public sealed class GetPurchaseOrderPdfQueryHandler(Services.IServices.IPurchaseOrderPdfService documents)
+    : IRequestHandler<GetPurchaseOrderPdfQuery, Services.IServices.PurchaseOrderDocument>
+{
+    public Task<Services.IServices.PurchaseOrderDocument> Handle(GetPurchaseOrderPdfQuery request, CancellationToken cancellationToken) =>
+        documents.GenerateAsync(request.Id, cancellationToken);
+}

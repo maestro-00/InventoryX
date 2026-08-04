@@ -103,3 +103,9 @@ public sealed class CancelPurchaseOrderCommandHandler(IAppDbContext context) : I
         await context.SaveChangesAsync(cancellationToken); return PurchaseOrderCommandHandler.Map(order);
     }
 }
+
+public sealed class SendPurchaseOrderCommandHandler(IPurchaseOrderPdfService documents) : IRequestHandler<SendPurchaseOrderCommand, PurchaseOrderEmailResult>
+{
+    public Task<PurchaseOrderEmailResult> Handle(SendPurchaseOrderCommand request, CancellationToken cancellationToken) =>
+        documents.EmailAsync(request.Id, cancellationToken);
+}
