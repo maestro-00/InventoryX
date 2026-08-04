@@ -59,6 +59,8 @@ namespace InventoryX.Application.Repository
         DbSet<Batch> Batches { get; }
         DbSet<GoodsReceipt> GoodsReceipts { get; }
         DbSet<GoodsReceiptLine> GoodsReceiptLines { get; }
+        DbSet<SupplierInvoice> SupplierInvoices { get; }
+        DbSet<SupplierInvoiceLine> SupplierInvoiceLines { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
