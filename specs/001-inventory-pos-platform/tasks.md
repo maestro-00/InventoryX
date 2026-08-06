@@ -269,7 +269,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ### Implementation
 
-- [ ] T106 [US8] Dashboard query + GET /dashboard with detailUrl per figure in InventoryX.Application/Queries/.../Reports/ + InventoryX.Presentation/Controllers/v1/DashboardController.cs
+- [X] T106 [US8] Dashboard query + GET /dashboard with detailUrl per figure in InventoryX.Application/Queries/.../Reports/ + InventoryX.Presentation/Controllers/v1/DashboardController.cs
 - [ ] T107 [US8] Report queries: sales, profit (gated), stock (valuation applied), purchasing, staff/operations, Ghana tax — common filter binding (from/to/location/category/staff) in InventoryX.Application/Queries/.../Reports/ + ReportsController per contracts/reports-notifications.md
 - [ ] T108 [US8] Export pipeline: CSV/XLSX (ClosedXML) and PDF streaming; async job + poll (202) for long ranges in InventoryX.Infrastructure/Services/ReportExportService.cs
 - [ ] T109 [US8] Report schedules (daily/weekly/monthly, recipients) + ReportScheduleWorker emailing via SendGrid in InventoryX.Domain/Models/Auditing/ReportSchedule.cs + InventoryX.Infrastructure/BackgroundJobs/ReportScheduleWorker.cs
