@@ -54,10 +54,3 @@ public sealed class GetDashboardQueryHandler(IAppDbContext context) : IRequestHa
             lowStock, expiryWarnings, topSellers, profit);
     }
 }
-
-// T105 remains intentionally red until T107 implements the report suite.
-public sealed class GetTaxReportQueryHandler(IAppDbContext context) : IRequestHandler<GetTaxReportQuery, TaxReportDto>
-{
-    public Task<TaxReportDto> Handle(GetTaxReportQuery request, CancellationToken cancellationToken) =>
-        throw new NotImplementedException("Tax reporting is implemented by T107.");
-}
