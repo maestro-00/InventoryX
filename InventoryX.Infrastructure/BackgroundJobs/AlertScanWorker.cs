@@ -111,7 +111,7 @@ public sealed class AlertScanWorker(IServiceScopeFactory scopeFactory, ILogger<A
         foreach (var batch in expiringBatches.Where(b => batchesWithStockSet.Contains(b.Id)))
         {
             await notificationService.RaiseAsync(
-                NotificationType.Expiry,
+                NotificationType.ExpiringStock,
                 $"expiry:{batch.Id}",
                 "Expiring Stock",
                 $"Batch {batch.BatchNumber} of {batch.Name} expires on {batch.ExpiresAt:yyyy-MM-dd}.",

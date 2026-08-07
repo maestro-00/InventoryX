@@ -33,6 +33,8 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Role> AppRoles => Set<Role>();
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+        public DbSet<NotificationReadState> NotificationReadStates => Set<NotificationReadState>();
         public DbSet<ReportExportJob> ReportExportJobs => Set<ReportExportJob>();
         public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
         public DbSet<TaxTreatment> TaxTreatments => Set<TaxTreatment>();
@@ -96,6 +98,15 @@ namespace InventoryX.Infrastructure.Data
 
             builder.Entity<Notification>()
                 .HasIndex(n => new { n.TenantId, n.ConsolidationKey, n.Channel });
+            builder.Entity<NotificationPreference>().Property(item => item.UserId).HasMaxLength(450);
+            builder.Entity<NotificationPreference>().Property(item => item.Threshold).HasPrecision(18, 4);
+            builder.Entity<NotificationPreference>()
+                .HasIndex(item => new { item.TenantId, item.UserId, item.Type, item.Channel }).IsUnique();
+            builder.Entity<NotificationReadState>().Property(item => item.UserId).HasMaxLength(450);
+            builder.Entity<NotificationReadState>()
+                .HasIndex(item => new { item.TenantId, item.UserId, item.NotificationId }).IsUnique();
+            builder.Entity<NotificationReadState>().HasOne(item => item.Notification).WithMany()
+                .HasForeignKey(item => item.NotificationId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<ReportExportJob>().HasIndex(job => new { job.TenantId, job.Status, job.RequestedAt });
             builder.Entity<ReportSchedule>().HasIndex(schedule => new { schedule.TenantId, schedule.IsActive, schedule.NextRunAt });
 

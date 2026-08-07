@@ -4,9 +4,9 @@ namespace InventoryX.Domain.Models.Auditing
 {
     public enum NotificationType
     {
-        LowStock, OutOfStock, Expiry, PoReceived, PoOverdue, TransferAwaiting,
+        LowStock, OutOfStock, ExpiringStock, PoReceived, PoOverdue, TransferAwaitingReceipt,
         LargeDiscount, LargeRefund, TillVariance, UnusualVoids, NegativeStock,
-        BillingFailure, StockConflict, Digest,
+        BillingFailure, StockConflict, DailyDigest, WeeklyDigest,
     }
 
     public enum NotificationChannel { InApp, Email, Push, Sms }
