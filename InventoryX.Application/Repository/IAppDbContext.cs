@@ -28,6 +28,7 @@ namespace InventoryX.Application.Repository
         DbSet<Notification> Notifications { get; }
         DbSet<NotificationPreference> NotificationPreferences { get; }
         DbSet<NotificationReadState> NotificationReadStates { get; }
+        DbSet<NotificationDigestDelivery> NotificationDigestDeliveries { get; }
         DbSet<ReportExportJob> ReportExportJobs { get; }
         DbSet<ReportSchedule> ReportSchedules { get; }
         DbSet<TaxTreatment> TaxTreatments { get; }

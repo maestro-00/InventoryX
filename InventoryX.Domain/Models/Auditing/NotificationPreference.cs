@@ -19,3 +19,16 @@ public sealed class NotificationReadState : BaseModel
     public required string UserId { get; set; }
     public DateTime ReadAt { get; set; }
 }
+
+/// <summary>Idempotency record for one user's completed daily or weekly digest period.</summary>
+public sealed class NotificationDigestDelivery : BaseModel
+{
+    public required string UserId { get; set; }
+    public NotificationType DigestType { get; set; }
+    public required string PeriodKey { get; set; }
+    public DateTime PeriodStart { get; set; }
+    public DateTime PeriodEnd { get; set; }
+    public DateTime ProcessedAt { get; set; }
+    public int NotificationCount { get; set; }
+    public int OccurrenceCount { get; set; }
+}

@@ -35,6 +35,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
         public DbSet<NotificationReadState> NotificationReadStates => Set<NotificationReadState>();
+        public DbSet<NotificationDigestDelivery> NotificationDigestDeliveries => Set<NotificationDigestDelivery>();
         public DbSet<ReportExportJob> ReportExportJobs => Set<ReportExportJob>();
         public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
         public DbSet<TaxTreatment> TaxTreatments => Set<TaxTreatment>();
@@ -107,6 +108,10 @@ namespace InventoryX.Infrastructure.Data
                 .HasIndex(item => new { item.TenantId, item.UserId, item.NotificationId }).IsUnique();
             builder.Entity<NotificationReadState>().HasOne(item => item.Notification).WithMany()
                 .HasForeignKey(item => item.NotificationId).OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<NotificationDigestDelivery>().Property(item => item.UserId).HasMaxLength(450);
+            builder.Entity<NotificationDigestDelivery>().Property(item => item.PeriodKey).HasMaxLength(32);
+            builder.Entity<NotificationDigestDelivery>()
+                .HasIndex(item => new { item.TenantId, item.UserId, item.DigestType, item.PeriodKey }).IsUnique();
             builder.Entity<ReportExportJob>().HasIndex(job => new { job.TenantId, job.Status, job.RequestedAt });
             builder.Entity<ReportSchedule>().HasIndex(schedule => new { schedule.TenantId, schedule.IsActive, schedule.NextRunAt });
 

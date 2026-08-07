@@ -42,6 +42,8 @@ public static class DependencyInjection
         services.AddHostedService<BillingWorker>();
         services.AddHostedService<ReportScheduleWorker>();
         services.AddHostedService<AlertScanWorker>();
+        services.AddScoped<DigestProcessor>();
+        services.AddHostedService<DigestWorker>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
