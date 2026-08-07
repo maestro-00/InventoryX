@@ -367,3 +367,7 @@ migration present is the merge gate for every PR.
 - [ ] T121 CRITICAL Add success/failure tests for report-schedule deletion and lookup plus an integration-level weekly scheduled-email worker test per Constitution II and US8/AC3 (partial)
 - [ ] T122 CRITICAL Replace hand-written ReportSchedule DTO mapping with an AutoMapper profile used by schedule command/query handlers per Constitution IV (contradicts)
 - [ ] T123 CRITICAL Add bounded pagination to GET /reports/schedules with request/response contract tests per Technology & Security Constraints (contradicts)
+
+## Phase 14: Convergence
+
+- [ ] T124 Route scheduled-report and notification-digest email delivery through a durable claimed outbox with retry and multi-instance idempotency tests per research R9 (partial)
