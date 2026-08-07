@@ -28,4 +28,21 @@ public sealed class ReportsController(ISender sender) : ApiControllerBase
     [HttpGet("tax")]
     public Task<TaxReportDto> Tax([FromQuery] ReportFilter filter, CancellationToken ct) =>
         sender.Send(new GetTaxReportQuery(filter.From, filter.To, filter.LocationId, filter.CategoryId, filter.StaffId), ct);
+
+    [HttpGet("{reportType}/export")]
+    public async Task<IActionResult> Export(string reportType, string format, [FromQuery] ReportFilter filter, CancellationToken ct)
+    {
+        var result = await sender.Send(new ExportReportCommand(reportType, format, filter), ct);
+        if (result.Accepted) return AcceptedAtAction(nameof(PollExport), new { id = result.JobId }, new { jobId = result.JobId, status = result.Status.ToString() });
+        return File(result.Content!, result.ContentType!, result.FileName);
+    }
+
+    [HttpGet("export-jobs/{id:guid}")]
+    public async Task<IActionResult> PollExport(Guid id, CancellationToken ct)
+    {
+        var result = await sender.Send(new GetReportExportJobQuery(id), ct);
+        if (result.Status == Domain.Models.Auditing.ReportExportStatus.Pending) return Accepted(new { jobId = id, status = "Pending" });
+        if (result.Status == Domain.Models.Auditing.ReportExportStatus.Failed) return Problem(result.Error, statusCode: 500);
+        return File(result.Content!, result.ContentType!, result.FileName);
+    }
 }
