@@ -34,6 +34,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<AuditLogEntry> AuditLogEntries => Set<AuditLogEntry>();
         public DbSet<Notification> Notifications => Set<Notification>();
         public DbSet<ReportExportJob> ReportExportJobs => Set<ReportExportJob>();
+        public DbSet<ReportSchedule> ReportSchedules => Set<ReportSchedule>();
         public DbSet<TaxTreatment> TaxTreatments => Set<TaxTreatment>();
 
         public DbSet<Location> Locations => Set<Location>();
@@ -96,6 +97,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Notification>()
                 .HasIndex(n => new { n.TenantId, n.ConsolidationKey, n.Channel });
             builder.Entity<ReportExportJob>().HasIndex(job => new { job.TenantId, job.Status, job.RequestedAt });
+            builder.Entity<ReportSchedule>().HasIndex(schedule => new { schedule.TenantId, schedule.IsActive, schedule.NextRunAt });
 
             builder.Entity<TaxTreatment>().HasIndex(t => t.Code).IsUnique();
 

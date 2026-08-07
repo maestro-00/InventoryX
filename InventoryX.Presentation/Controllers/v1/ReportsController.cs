@@ -1,3 +1,4 @@
+using InventoryX.Application.Commands.Requests.Reports;
 using InventoryX.Application.Queries.Requests.Reports;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +29,20 @@ public sealed class ReportsController(ISender sender) : ApiControllerBase
     [HttpGet("tax")]
     public Task<TaxReportDto> Tax([FromQuery] ReportFilter filter, CancellationToken ct) =>
         sender.Send(new GetTaxReportQuery(filter.From, filter.To, filter.LocationId, filter.CategoryId, filter.StaffId), ct);
+
+    [HttpPost("schedules")]
+    public Task<ReportScheduleDto> CreateSchedule(CreateReportScheduleCommand command, CancellationToken ct) => sender.Send(command, ct);
+
+    [HttpGet("schedules")]
+    public Task<IReadOnlyList<ReportScheduleDto>> ListSchedules(CancellationToken ct) =>
+        sender.Send(new GetReportSchedulesQuery(), ct);
+
+    [HttpGet("schedules/{id:guid}")]
+    public async Task<ActionResult<ReportScheduleDto>> GetSchedule(Guid id, CancellationToken ct) =>
+        (await sender.Send(new GetReportSchedulesQuery(id), ct)).Single();
+
+    [HttpDelete("schedules/{id:guid}")]
+    public Task<bool> DeleteSchedule(Guid id, CancellationToken ct) => sender.Send(new DeleteReportScheduleCommand(id), ct);
 
     [HttpGet("{reportType}/export")]
     public async Task<IActionResult> Export(string reportType, string format, [FromQuery] ReportFilter filter, CancellationToken ct)

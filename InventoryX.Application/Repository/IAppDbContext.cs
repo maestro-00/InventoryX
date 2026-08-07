@@ -27,6 +27,7 @@ namespace InventoryX.Application.Repository
         DbSet<AuditLogEntry> AuditLogEntries { get; }
         DbSet<Notification> Notifications { get; }
         DbSet<ReportExportJob> ReportExportJobs { get; }
+        DbSet<ReportSchedule> ReportSchedules { get; }
         DbSet<TaxTreatment> TaxTreatments { get; }
 
         DbSet<Location> Locations { get; }
