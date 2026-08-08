@@ -43,6 +43,10 @@ public sealed class PaystackWebhookProcessor(AppDbContext context, IOptions<Pays
         if (await context.ProcessedWebhookEvents.AnyAsync(item => item.EventId == eventId, cancellationToken))
             return new PaystackWebhookResult(true, eventType, reference);
 
+        var occurredAt = GetOptionalDate(data, "paid_at") ?? GetOptionalDate(data, "created_at");
+        if (occurredAt is not null && occurredAt.Value < DateTimeOffset.UtcNow.AddMinutes(-15))
+            throw new InvalidOperationException("Paystack webhook is outside the 15-minute replay window.");
+
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         if (await context.ProcessedWebhookEvents.AnyAsync(item => item.EventId == eventId, cancellationToken))
             return new PaystackWebhookResult(true, eventType, reference);
@@ -90,4 +94,7 @@ public sealed class PaystackWebhookProcessor(AppDbContext context, IOptions<Pays
     private static string? GetAuthorizationCode(JsonElement data) =>
         data.ValueKind == JsonValueKind.Object && data.TryGetProperty("authorization", out var authorization)
             ? GetOptionalString(authorization, "authorization_code") : null;
+
+    private static DateTimeOffset? GetOptionalDate(JsonElement element, string property) =>
+        GetOptionalString(element, property) is { } value && DateTimeOffset.TryParse(value, out var parsed) ? parsed : null;
 }

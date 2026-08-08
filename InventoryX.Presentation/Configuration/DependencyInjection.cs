@@ -17,6 +17,8 @@ using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using MediatR;
 using InventoryX.Presentation.Swagger;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace InventoryX.Presentation.Configuration
 {
@@ -46,6 +48,28 @@ namespace InventoryX.Presentation.Configuration
                     });
             });
             services.AddControllers();
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.AddPolicy("auth", context => RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 10,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    }));
+                options.AddPolicy("webhook", context => RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 60,
+                        Window = TimeSpan.FromMinutes(1),
+                        QueueLimit = 0,
+                        AutoReplenishment = true,
+                    }));
+            });
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LocationScopeAuthorizationHandler<,>));
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
@@ -66,6 +90,12 @@ namespace InventoryX.Presentation.Configuration
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddApiEndpoints()
                 .AddDefaultTokenProviders();
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            });
 
             // Configure Identity's existing cookie instead of adding a new one
             services.ConfigureApplicationCookie(options =>
@@ -178,6 +208,18 @@ namespace InventoryX.Presentation.Configuration
 
             app.UseHttpsRedirection();
 
+            app.Use(async (context, next) =>
+            {
+                context.Response.Headers.XContentTypeOptions = "nosniff";
+                context.Response.Headers.XFrameOptions = "DENY";
+                context.Response.Headers.ContentSecurityPolicy = "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
+                context.Response.Headers["Referrer-Policy"] = "no-referrer";
+                context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+                await next();
+            });
+
+            app.UseRateLimiter();
+
             app.UseAuthentication();
             app.UseMiddleware<TenantResolutionMiddleware>();
             app.UseAuthorization();
@@ -185,6 +227,7 @@ namespace InventoryX.Presentation.Configuration
             app.MapControllers();
 
             app.MapGroup("/api/auth")
+                .RequireRateLimiting("auth")
                 .MapCustomIdentityApi<User>();
 
             return app;
