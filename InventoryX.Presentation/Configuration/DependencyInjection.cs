@@ -74,6 +74,7 @@ namespace InventoryX.Presentation.Configuration
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
             {
+                opt.CustomSchemaIds(type => (type.FullName ?? type.Name).Replace('+', '.'));
                 opt.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,

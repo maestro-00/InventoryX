@@ -66,6 +66,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<ReturnLine> ReturnLines => Set<ReturnLine>();
         public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
         public DbSet<Supplier> Suppliers => Set<Supplier>();
+        public DbSet<SupplierProduct> SupplierProducts => Set<SupplierProduct>();
         public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
         public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
         public DbSet<Batch> Batches => Set<Batch>();
@@ -188,6 +189,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Supplier>().HasIndex(item => new { item.TenantId, item.Name }).IsUnique();
             builder.Entity<PurchaseOrder>().HasIndex(item => new { item.TenantId, item.Status, item.RequiredBy });
             builder.Entity<PurchaseOrder>().HasOne(item => item.Supplier).WithMany().HasForeignKey(item => item.SupplierId).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<SupplierProduct>().HasIndex(item => new { item.TenantId, item.SupplierId, item.ProductId }).IsUnique();
             builder.Entity<PurchaseOrder>().HasMany(item => item.Lines).WithOne().HasForeignKey(item => item.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<Batch>().HasIndex(item => new { item.TenantId, item.ProductId, item.VariantId, item.BatchNumber }).IsUnique();
             builder.Entity<Batch>().HasIndex(item => new { item.TenantId, item.ExpiresAt });

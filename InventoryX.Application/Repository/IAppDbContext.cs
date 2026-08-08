@@ -59,6 +59,7 @@ namespace InventoryX.Application.Repository
         DbSet<ReturnLine> ReturnLines { get; }
         DbSet<ImportJob> ImportJobs { get; }
         DbSet<Supplier> Suppliers { get; }
+        DbSet<SupplierProduct> SupplierProducts { get; }
         DbSet<PurchaseOrder> PurchaseOrders { get; }
         DbSet<PurchaseOrderLine> PurchaseOrderLines { get; }
         DbSet<Batch> Batches { get; }
