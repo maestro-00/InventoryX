@@ -66,6 +66,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Inventory
                 ?? throw new NotFoundException("Location not found.");
             location.IsDeleted = true;
             location.IsActive = false;
+            location.DeletedAt = DateTime.UtcNow;
+            location.RecoveryExpiresAt = location.DeletedAt.Value.AddDays(30);
             await context.SaveChangesAsync(cancellationToken);
         }
     }

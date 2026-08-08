@@ -12,5 +12,7 @@ namespace InventoryX.Domain.Models.Inventory
         public bool IsActive { get; set; } = true;
         /// <summary>Soft delete with recovery window (FR-060).</summary>
         public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public DateTime? RecoveryExpiresAt { get; set; }
     }
 }

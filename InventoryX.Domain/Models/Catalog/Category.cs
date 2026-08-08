@@ -10,5 +10,7 @@ namespace InventoryX.Domain.Models.Catalog
         public Category? Parent { get; set; }
         /// <summary>Soft delete with recovery window (FR-060).</summary>
         public bool IsDeleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
+        public DateTime? RecoveryExpiresAt { get; set; }
     }
 }

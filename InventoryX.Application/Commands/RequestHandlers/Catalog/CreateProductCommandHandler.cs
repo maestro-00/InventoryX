@@ -211,6 +211,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Catalog
                 .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken)
                 ?? throw new NotFoundException("Category not found.");
             category.IsDeleted = true;
+            category.DeletedAt = DateTime.UtcNow;
+            category.RecoveryExpiresAt = category.DeletedAt.Value.AddDays(30);
             await context.SaveChangesAsync(cancellationToken);
             return true;
         }

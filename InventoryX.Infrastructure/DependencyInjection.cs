@@ -44,6 +44,8 @@ public static class DependencyInjection
         services.AddHostedService<AlertScanWorker>();
         services.AddScoped<DigestProcessor>();
         services.AddHostedService<DigestWorker>();
+        services.AddScoped<RetentionProcessor>();
+        services.AddHostedService<RetentionWorker>();
 
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
