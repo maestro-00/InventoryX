@@ -282,7 +282,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 
 ## Phase 11: Polish & Cross-Cutting
 
-- [ ] T112 [P] Catalogue/stock export endpoints (GET /export/products etc., FR-056) in InventoryX.Presentation/Controllers/v1/ExportController.cs
+- [X] T112 [P] Catalogue/stock export endpoints (GET /export/products etc., FR-056) in InventoryX.Presentation/Controllers/v1/ExportController.cs
 - [ ] T113 [P] History-retention enforcement per plan HistoryMonths (Free 3mo/Standard 24mo) + FR-060 recoverability: soft-delete (IsDeleted + recovery window) on catalogue aggregates and a documented backup/point-in-time-restore runbook in InventoryX.Infrastructure/BackgroundJobs/RetentionWorker.cs + docs/operations/backup-restore.md
 - [ ] T114 [P] Security hardening: auth rate limiting, account lockout, security headers, webhook replay window in InventoryX.Presentation/Program.cs + middleware
 - [ ] T115 Swagger accuracy pass against all files in specs/001-inventory-pos-platform/contracts/ (fix drift — constitution Principle III)
