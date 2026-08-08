@@ -287,7 +287,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T114 [P] Security hardening: auth rate limiting, account lockout, security headers, webhook replay window in InventoryX.Presentation/Program.cs + middleware
 - [X] T115 Swagger accuracy pass against all files in specs/001-inventory-pos-platform/contracts/ (fix drift — constitution Principle III)
 - [X] T116 [P] Update README.md and CHANGELOG.md for Cycle 1 (constitution Principle III doc rule)
-- [ ] T117 Performance validation: sale-creation path p95 < 300 ms with seeded 100k-product tenant (plan Technical Context) — test harness in tests/InventoryX.Presentation.Tests/Performance/
+- [X] T117 Performance validation: sale-creation path p95 < 300 ms with seeded 100k-product tenant (plan Technical Context) — test harness in tests/InventoryX.Presentation.Tests/Performance/
 - [ ] T118 Run all four quickstart.md scenarios (A–D) end-to-end and record results in specs/001-inventory-pos-platform/quickstart.md notes
 - [ ] T119 Verify Serilog tenant/user/trace enrichment on every request + audit-log coverage of all sensitive commands (FR-008 checklist)
 
