@@ -20,7 +20,8 @@ long ranges (`202` + job poll); schedulable.
 | GET | `/reports/staff` | Sales/discounts/refunds/voids per staff, till variances |
 | GET | `/reports/tax` | Ghana: VAT + NHIL/GETFund/COVID levy collected by rate & period, GRA-aligned format |
 | POST | `/reports/schedules` | Schedule any above: cadence Daily\|Weekly\|Monthly, format, recipients (FR-049) |
-| GET/DELETE | `/reports/schedules/{id?}` | Manage schedules |
+| GET | `/reports/schedules?page=1&pageSize=50` | Paged schedule list (`pageSize` 1-200) with `items`, `totalCount`, and navigation metadata |
+| GET/DELETE | `/reports/schedules/{id}` | Read or deactivate one schedule |
 
 ## Notifications (FR-052/53)
 

@@ -1,4 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using InventoryX.Application.Commands.Requests.Reports;
+using InventoryX.Application.DTOs.Common;
 using InventoryX.Application.Queries.Requests.Reports;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -34,12 +36,15 @@ public sealed class ReportsController(ISender sender) : ApiControllerBase
     public Task<ReportScheduleDto> CreateSchedule(CreateReportScheduleCommand command, CancellationToken ct) => sender.Send(command, ct);
 
     [HttpGet("schedules")]
-    public Task<IReadOnlyList<ReportScheduleDto>> ListSchedules(CancellationToken ct) =>
-        sender.Send(new GetReportSchedulesQuery(), ct);
+    public Task<PagedResult<ReportScheduleDto>> ListSchedules(
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, PageRequest.MaxPageSize)] int pageSize = PageRequest.DefaultPageSize,
+        CancellationToken ct = default) =>
+        sender.Send(new GetReportSchedulesQuery { Page = page, PageSize = pageSize }, ct);
 
     [HttpGet("schedules/{id:guid}")]
-    public async Task<ActionResult<ReportScheduleDto>> GetSchedule(Guid id, CancellationToken ct) =>
-        (await sender.Send(new GetReportSchedulesQuery(id), ct)).Single();
+    public Task<ReportScheduleDto> GetSchedule(Guid id, CancellationToken ct) =>
+        sender.Send(new GetReportScheduleQuery(id), ct);
 
     [HttpDelete("schedules/{id:guid}")]
     public Task<bool> DeleteSchedule(Guid id, CancellationToken ct) => sender.Send(new DeleteReportScheduleCommand(id), ct);
