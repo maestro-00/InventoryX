@@ -3,6 +3,7 @@ using InventoryX.Application.Commands.RequestHandlers.Reports;
 using InventoryX.Application.Commands.Requests.Reports;
 using InventoryX.Application.Queries.RequestHandlers.Reports;
 using InventoryX.Application.Queries.Requests.Reports;
+using InventoryX.Application.Exceptions;
 using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Auditing;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +57,59 @@ public sealed class ReportScheduleTests : IDisposable
         }, CancellationToken.None);
 
         await action.Should().ThrowAsync<FluentValidation.ValidationException>();
+    }
+
+    [Fact]
+    public async Task Get_schedule_returns_requested_schedule()
+    {
+        await using var context = _db.CreateContext();
+        var created = await new CreateReportScheduleCommandHandler(context).Handle(new CreateReportScheduleCommand
+        {
+            ReportType = "sales", Cadence = ReportCadence.Daily, Format = "csv",
+            Recipients = ["owner@example.com"],
+        }, CancellationToken.None);
+
+        var result = await new GetReportSchedulesQueryHandler(context)
+            .Handle(new GetReportSchedulesQuery(created.Id), CancellationToken.None);
+
+        result.Should().ContainSingle(schedule => schedule.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task Get_schedule_rejects_unknown_id()
+    {
+        await using var context = _db.CreateContext();
+        var action = () => new GetReportSchedulesQueryHandler(context)
+            .Handle(new GetReportSchedulesQuery(Guid.NewGuid()), CancellationToken.None);
+
+        await action.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    public async Task Delete_schedule_deactivates_existing_schedule()
+    {
+        await using var context = _db.CreateContext();
+        var created = await new CreateReportScheduleCommandHandler(context).Handle(new CreateReportScheduleCommand
+        {
+            ReportType = "stock", Cadence = ReportCadence.Monthly, Format = "pdf",
+            Recipients = ["owner@example.com"],
+        }, CancellationToken.None);
+
+        var deleted = await new DeleteReportScheduleCommandHandler(context)
+            .Handle(new DeleteReportScheduleCommand(created.Id), CancellationToken.None);
+
+        deleted.Should().BeTrue();
+        (await context.ReportSchedules.SingleAsync()).IsActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Delete_schedule_rejects_unknown_id()
+    {
+        await using var context = _db.CreateContext();
+        var action = () => new DeleteReportScheduleCommandHandler(context)
+            .Handle(new DeleteReportScheduleCommand(Guid.NewGuid()), CancellationToken.None);
+
+        await action.Should().ThrowAsync<NotFoundException>();
     }
 
     public void Dispose() => _db.Dispose();

@@ -25,7 +25,7 @@ public sealed class ReportScheduleWorker(IServiceScopeFactory scopes, ILogger<Re
         }
     }
 
-    private async Task RunDueAsync(CancellationToken cancellationToken)
+    internal async Task RunDueAsync(CancellationToken cancellationToken)
     {
         using var scope = scopes.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
