@@ -178,7 +178,8 @@ namespace InventoryX.Presentation.Configuration
         {
             app.UseMiddleware<ProblemDetailsMiddleware>();
 
-            app.UseSerilogRequestLogging();
+            app.UseSerilogRequestLogging(options =>
+                options.EnrichDiagnosticContext = RequestLogEnricher.Enrich);
 
             // Configure CORS - must come before other middleware
             app.UseCors("AllowSpecificOrigin");

@@ -289,7 +289,7 @@ stock · [US4] offline sync · [US5] subscription billing · [US6] shifts & cash
 - [X] T116 [P] Update README.md and CHANGELOG.md for Cycle 1 (constitution Principle III doc rule)
 - [X] T117 Performance validation: sale-creation path p95 < 300 ms with seeded 100k-product tenant (plan Technical Context) — test harness in tests/InventoryX.Presentation.Tests/Performance/
 - [X] T118 Run all four quickstart.md scenarios (A–D) end-to-end and record results in specs/001-inventory-pos-platform/quickstart.md notes
-- [ ] T119 Verify Serilog tenant/user/trace enrichment on every request + audit-log coverage of all sensitive commands (FR-008 checklist)
+- [X] T119 Verify Serilog tenant/user/trace enrichment on every request + audit-log coverage of all sensitive commands (FR-008 checklist)
 
 ---
 

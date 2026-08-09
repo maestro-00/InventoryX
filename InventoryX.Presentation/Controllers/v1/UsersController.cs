@@ -64,16 +64,16 @@ public sealed class UsersController(ISender sender, UserManager<User> userManage
     }
 
     [HttpPatch("{id}")]
-    public async Task<IActionResult> Update(string id, UpdateUserRequest request)
+    [Authorize(Roles = "Owner,Administrator")]
+    public async Task<IActionResult> Update(string id, UpdateUserRequest request, CancellationToken cancellationToken)
     {
-        var tenantId = TenantId ?? throw new UnauthorizedAccessException();
-        var user = await userManager.Users.SingleOrDefaultAsync(item => item.Id == id && item.TenantId == tenantId);
-        if (user is null) return NotFound();
-        if (user.IsOwner && request.Status == UserStatus.Deactivated) return Conflict("The tenant owner cannot be deactivated.");
-        user.RoleId = request.RoleId ?? user.RoleId;
-        user.LocationScope = request.LocationScope ?? user.LocationScope;
-        user.Status = request.Status ?? user.Status;
-        await userManager.UpdateAsync(user);
+        await sender.Send(new UpdateUserAccessCommand
+        {
+            UserId = id,
+            RoleId = request.RoleId,
+            LocationScope = request.LocationScope,
+            Status = request.Status,
+        }, cancellationToken);
         return NoContent();
     }
 

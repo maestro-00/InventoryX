@@ -28,7 +28,7 @@ namespace InventoryX.Application.Commands.Requests.Catalog
         public UsageMetric Metric => UsageMetric.Products;
     }
 
-    public class UpdateProductCommand : IRequest<ProductDto>, ITenantWriteCommand
+    public class UpdateProductCommand : IRequest<ProductDto>, ITenantWriteCommand, IAuditedCommand
     {
         public Guid Id { get; init; }
         public string? Name { get; init; }
@@ -43,6 +43,10 @@ namespace InventoryX.Application.Commands.Requests.Catalog
         public decimal? ReorderPoint { get; init; }
         public decimal? ReorderQuantity { get; init; }
         public int? LeadTimeDays { get; init; }
+
+        public string AuditAction => "product.update";
+        public string AuditEntityType => "Product";
+        public string AuditEntityId => Id.ToString();
     }
 
     public class VariantInputDto
