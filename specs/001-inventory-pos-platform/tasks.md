@@ -371,3 +371,9 @@ migration present is the merge gate for every PR.
 ## Phase 14: Convergence
 
 - [ ] T124 Route scheduled-report and notification-digest email delivery through a durable claimed outbox with retry and multi-instance idempotency tests per research R9 (partial)
+
+## Phase 15: Convergence
+
+- [ ] T125 CRITICAL Remove the obsolete Microsoft.AspNetCore.Http.Abstractions 2.2.0 dependency that resolves vulnerable System.Text.Encodings.Web 4.5.0, then verify restore/build/tests and the production package audit per Constitution V (partial)
+- [ ] T126 Remove unused AutoFixture infrastructure and its Fare/NETStandard.Library dependency chain so System.Net.Http 4.3.0 and System.Text.RegularExpressions 4.3.0 no longer appear in the test package audit per Constitution V (partial)
+- [ ] T127 Replace the vulnerable bundled SQLitePCLRaw.lib.e_sqlite3 test dependency with a non-vulnerable relational test provider or patched native package, preserving relational test coverage and a clean package audit per Constitution V (partial)
