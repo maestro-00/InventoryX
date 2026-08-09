@@ -75,3 +75,21 @@ Health probes: `GET /health/live`, `GET /health/ready`.
 Every scenario maps to spec acceptance criteria: A → US1/US2/US6, B → US4 (FR-044..46),
 C → US7 + FR-021 batch clauses, D → FR-010/013. All four passing plus a green
 `dotnet test` is the Cycle 1 definition of working software.
+
+## Validation notes
+
+Validated on 2026-08-09 with .NET 8 using the real application handlers and SQLite
+integration database. Scenario A additionally exercised the HTTP API through
+`WebApplicationFactory`.
+
+| Scenario | Executable coverage | Result |
+|----------|---------------------|--------|
+| A | `FirstSaleScenarioTests` | PASS (1/1) |
+| B | `SyncSnapshotTests`, `OfflineSaleIngestTests`, `StockConflictTests`, `ConflictReviewTests` | PASS |
+| C | `PurchaseOrderStateTests`, `GoodsReceiptTests`, `FefoIssueTests`, `BatchTraceTests` | PASS |
+| D | `PlanEnforcementTests`, `SubscriptionStateMachineTests` | PASS |
+
+The targeted B-D integration run completed with 38/38 tests passing. Together with
+the Scenario A HTTP test, the run verified idempotent offline replay and conflict
+review, approval-gated purchasing and FEFO batch traceability, the 301st-sale plan
+limit, and ReadOnly export/billing exemptions.
