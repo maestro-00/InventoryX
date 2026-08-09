@@ -1,3 +1,4 @@
+using AutoMapper;
 using System.Text.Json;
 using System.Net.Mail;
 using InventoryX.Application.Commands.Requests.Reports;
@@ -9,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Reports;
 
-public sealed class CreateReportScheduleCommandHandler(IAppDbContext context) : IRequestHandler<CreateReportScheduleCommand, ReportScheduleDto>
+public sealed class CreateReportScheduleCommandHandler(IAppDbContext context, IMapper mapper)
+    : IRequestHandler<CreateReportScheduleCommand, ReportScheduleDto>
 {
     private static readonly HashSet<string> SupportedReports =
         ["sales", "profit", "stock", "purchasing", "staff", "tax"];
@@ -33,11 +35,9 @@ public sealed class CreateReportScheduleCommandHandler(IAppDbContext context) : 
         };
         context.ReportSchedules.Add(schedule);
         await context.SaveChangesAsync(cancellationToken);
-        return Map(schedule);
+        return mapper.Map<ReportScheduleDto>(schedule);
     }
 
-    internal static ReportScheduleDto Map(ReportSchedule schedule) => new(schedule.Id, schedule.ReportType, schedule.Cadence, schedule.Format,
-        JsonSerializer.Deserialize<List<string>>(schedule.RecipientsJson) ?? [], schedule.NextRunAt, schedule.IsActive);
     public static DateTime CalculateNextRun(DateTime from, ReportCadence cadence) => cadence switch
     { ReportCadence.Daily => from.Date.AddDays(1), ReportCadence.Weekly => from.Date.AddDays(7), ReportCadence.Monthly => from.Date.AddMonths(1), _ => from.AddDays(1) };
 }
