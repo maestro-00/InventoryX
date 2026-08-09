@@ -360,7 +360,7 @@ migration present is the merge gate for every PR.
 
 ## Phase 12: Convergence
 
-- [ ] T120 Remediate the AutoMapper 15.0.1 high-severity vulnerability GHSA-rvv3-g6hj-g44x and verify restore/build/tests remain green per Constitution V (partial)
+- [X] T120 Remediate the AutoMapper 15.0.1 high-severity vulnerability GHSA-rvv3-g6hj-g44x and verify restore/build/tests remain green per Constitution V (partial)
 
 ## Phase 13: Convergence
 
