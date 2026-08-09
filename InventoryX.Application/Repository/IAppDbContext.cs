@@ -21,6 +21,7 @@ namespace InventoryX.Application.Repository
         DbSet<PlanDefinition> PlanDefinitions { get; }
         DbSet<Subscription> Subscriptions { get; }
         DbSet<BillingInvoice> BillingInvoices { get; }
+        DbSet<OutboxMessage> OutboxMessages { get; }
         DbSet<UsageCounter> UsageCounters { get; }
         DbSet<RegisterPin> RegisterPins { get; }
         DbSet<Role> AppRoles { get; }

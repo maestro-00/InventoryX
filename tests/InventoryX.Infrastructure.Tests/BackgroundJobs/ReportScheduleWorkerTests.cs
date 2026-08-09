@@ -7,6 +7,7 @@ using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Auditing;
 using InventoryX.Infrastructure.BackgroundJobs;
 using MediatR;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -73,8 +74,19 @@ public sealed class ReportScheduleWorkerTests : IDisposable
         export!.ReportType.Should().Be("sales");
         export.Format.Should().Be("xlsx");
         (export.Filter.To - export.Filter.From).Should().Be(TimeSpan.FromDays(7));
+        var queued = await context.OutboxMessages.ToListAsync();
+        queued.Should().HaveCount(2).And.OnlyContain(message => message.ProcessedAt == null);
+        queued.Select(message => EmailOutbox.Deserialize(message).To)
+            .Should().BeEquivalentTo("owner@example.com", "manager@example.com");
+        mailer.Recipients.Should().BeEmpty();
+
+        var processor = new EmailOutboxProcessor(context, Mock.Of<IEmailSender>(), mailer,
+            NullLogger<EmailOutboxProcessor>.Instance);
+        (await processor.ProcessBatchAsync("dispatcher-1", DateTime.UtcNow.AddSeconds(1), CancellationToken.None)).Should().Be(2);
+
         mailer.Recipients.Should().BeEquivalentTo("owner@example.com", "manager@example.com");
         mailer.FileNames.Should().OnlyContain(fileName => fileName == "sales.xlsx");
+        (await context.OutboxMessages.CountAsync(message => message.ProcessedAt != null)).Should().Be(2);
         schedule.LastRunAt.Should().NotBeNull();
         schedule.NextRunAt.Should().BeAfter(schedule.LastRunAt!.Value);
         _db.TenantContext.TenantId.Should().Be(_tenantId);
@@ -104,11 +116,23 @@ public sealed class ReportScheduleWorkerTests : IDisposable
 
         await worker.RunDueAsync(CancellationToken.None);
 
-        failed.LastRunAt.Should().BeNull();
-        failed.NextRunAt.Should().Be(dueAt);
+        failed.LastRunAt.Should().NotBeNull();
+        failed.NextRunAt.Should().BeAfter(failed.LastRunAt!.Value);
         succeeded.LastRunAt.Should().NotBeNull();
         succeeded.NextRunAt.Should().BeAfter(succeeded.LastRunAt!.Value);
+
+        var processor = new EmailOutboxProcessor(context, Mock.Of<IEmailSender>(), mailer,
+            NullLogger<EmailOutboxProcessor>.Instance);
+        (await processor.ProcessBatchAsync("dispatcher-1", DateTime.UtcNow.AddSeconds(1), CancellationToken.None)).Should().Be(2);
+
         mailer.Recipients.Should().ContainSingle().Which.Should().Be("ok@example.com");
+        var messages = await context.OutboxMessages.ToListAsync();
+        var failedMessage = messages.Single(message => EmailOutbox.Deserialize(message).To == "fail@example.com");
+        var succeededMessage = messages.Single(message => EmailOutbox.Deserialize(message).To == "ok@example.com");
+        failedMessage.AttemptCount.Should().Be(1);
+        failedMessage.ProcessedAt.Should().BeNull();
+        failedMessage.AvailableAt.Should().BeAfter(DateTime.UtcNow);
+        succeededMessage.ProcessedAt.Should().NotBeNull();
     }
 
     private ReportSchedule NewSchedule(

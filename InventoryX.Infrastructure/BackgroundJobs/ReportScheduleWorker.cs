@@ -5,7 +5,6 @@ using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Auditing;
 using MediatR;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -30,7 +29,6 @@ public sealed class ReportScheduleWorker(IServiceScopeFactory scopes, ILogger<Re
         using var scope = scopes.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
         var sender = scope.ServiceProvider.GetRequiredService<ISender>();
-        var mailer = scope.ServiceProvider.GetRequiredService<IAttachmentEmailSender>();
         var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
         var due = await context.ReportSchedules
             .IgnoreQueryFilters()
@@ -52,13 +50,19 @@ public sealed class ReportScheduleWorker(IServiceScopeFactory scopes, ILogger<Re
                 };
                 var report = await sender.Send(new ExportReportCommand(schedule.ReportType, schedule.Format,
                     new ReportFilter(from, to, schedule.LocationId, schedule.CategoryId, schedule.StaffId)), cancellationToken);
-                if (report.Content is not null)
-                {
-                    foreach (var recipient in JsonSerializer.Deserialize<List<string>>(schedule.RecipientsJson) ?? [])
-                        await mailer.SendAsync(recipient, $"InventoryX {schedule.ReportType} report",
-                            "<p>Your scheduled report is attached.</p>", report.FileName!, report.ContentType!, report.Content,
-                            cancellationToken);
-                }
+                if (report.Content is null || report.FileName is null || report.ContentType is null)
+                    throw new InvalidOperationException("Scheduled report export did not produce an attachment.");
+                foreach (var recipient in JsonSerializer.Deserialize<List<string>>(schedule.RecipientsJson) ?? [])
+                    context.OutboxMessages.Add(EmailOutbox.Attachment(
+                        schedule.TenantId,
+                        $"report:{schedule.Id}:{to:O}:{recipient.Trim().ToLowerInvariant()}",
+                        recipient,
+                        $"InventoryX {schedule.ReportType} report",
+                        "<p>Your scheduled report is attached.</p>",
+                        report.FileName,
+                        report.ContentType,
+                        report.Content,
+                        to));
                 schedule.LastRunAt = to;
                 schedule.NextRunAt = CreateReportScheduleCommandHandler.CalculateNextRun(to, schedule.Cadence);
                 await context.SaveChangesAsync(cancellationToken);

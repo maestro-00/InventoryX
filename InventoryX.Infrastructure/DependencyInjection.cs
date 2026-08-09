@@ -40,6 +40,8 @@ public static class DependencyInjection
         services.AddScoped<IReportExportService, ReportExportService>();
         services.AddScoped<ITenantExportService, TenantExportService>();
         services.AddHostedService<BillingWorker>();
+        services.AddScoped<EmailOutboxProcessor>();
+        services.AddHostedService<EmailOutboxWorker>();
         services.AddHostedService<ReportScheduleWorker>();
         services.AddHostedService<AlertScanWorker>();
         services.AddScoped<DigestProcessor>();

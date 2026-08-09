@@ -370,7 +370,7 @@ migration present is the merge gate for every PR.
 
 ## Phase 14: Convergence
 
-- [ ] T124 Route scheduled-report and notification-digest email delivery through a durable claimed outbox with retry and multi-instance idempotency tests per research R9 (partial)
+- [X] T124 Route scheduled-report and notification-digest email delivery through a durable claimed outbox with retry and multi-instance idempotency tests per research R9 (partial)
 
 ## Phase 15: Convergence
 

@@ -1,8 +1,8 @@
 using System.Net;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Auditing;
+using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -38,7 +38,6 @@ public sealed class DigestWorker(IServiceScopeFactory scopes, ILogger<DigestWork
 public sealed class DigestProcessor(
     AppDbContext context,
     ITenantContext tenantContext,
-    IEmailSender emailSender,
     ILogger<DigestProcessor> logger)
 {
     public async Task ProcessAsync(DateTime utcNow, CancellationToken cancellationToken)
@@ -103,7 +102,9 @@ public sealed class DigestProcessor(
             var lines = notifications.GroupBy(item => item.Type).Select(group =>
                 $"<li><strong>{WebUtility.HtmlEncode(group.Key.ToString())}</strong>: {group.Sum(item => item.OccurrenceCount)} occurrences across {group.Count()} alerts</li>");
             var body = $"<p>Your InventoryX {label} notification digest for {start:yyyy-MM-dd} to {end.AddTicks(-1):yyyy-MM-dd}.</p><ul>{string.Join(string.Empty, lines)}</ul>";
-            await emailSender.SendEmailAsync(email, $"InventoryX {label} notification digest", body);
+            context.OutboxMessages.Add(EmailOutbox.Html(
+                tenantId, $"digest:{tenantId}:{userId}:{periodKey}", email,
+                $"InventoryX {label} notification digest", body, utcNow));
         }
 
         context.NotificationDigestDeliveries.Add(new NotificationDigestDelivery
