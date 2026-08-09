@@ -25,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\InventoryX.Application\InventoryX.Application.csproj" />
     <ProjectReference Include="..\InventoryX.Common.Tests\InventoryX.Common.Tests.csproj" />
+    <ProjectReference Include="..\..\InventoryX.Infrastructure\InventoryX.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

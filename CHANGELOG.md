@@ -8,21 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial project setup with Clean Architecture
-- Inventory item management functionality
-- Item type categorization system
-- Purchase tracking features
-- Sales tracking features
-- Retail stock management
-- ASP.NET Identity authentication and authorization
-- RESTful API with Swagger documentation
-- CQRS pattern implementation with MediatR
-- AutoMapper for object mapping
-- Comprehensive unit tests
-- GitHub issue templates and PR template
-- Contributing guidelines and Code of Conduct
+- Cycle 1 multi-tenant inventory and POS API under `/api/v1`.
+- Tenant onboarding, fixed roles, user invitations, register PINs, audit logging, and plan enforcement.
+- Catalogue, variants, spreadsheet import, stock ledger, transfers, counts, adjustments, and exports.
+- Checkout, split payments, holds, returns, receipts, shifts, cash movements, and offline synchronization.
+- Paystack subscription billing, invoices, grace/read-only transitions, and tenant data export.
+- Purchasing, supplier catalogue links, goods receipts, landed costs, FEFO batches, and stock alerts.
+- Dashboard, standard/Ghana tax reports, CSV/XLSX/PDF export, schedules, and notification digests.
+- CI workflow, health checks, structured Serilog output, RFC 7807 middleware, and security rate limits.
 
 ### Changed
+- Evolved the legacy inventory-item/retail-stock model into product and ledger-backed stock aggregates.
+- Standardized API routes, pagination, authorization, and Swagger against the Cycle 1 contracts.
 
 ### Deprecated
 
@@ -31,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Security
+- Enforced tenant query/write isolation, account lockout, auth/webhook rate limits, security headers, and webhook replay protection.
 
 ## [1.0.0] - 2024-09-14
 
