@@ -17,7 +17,6 @@ using Serilog;
 using Swashbuckle.AspNetCore.Filters;
 using MediatR;
 using InventoryX.Presentation.Swagger;
-using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
 namespace InventoryX.Presentation.Configuration
@@ -125,9 +124,7 @@ namespace InventoryX.Presentation.Configuration
             // JWT bearer for the versioned API surface (T018): tokens carry
             // tenant_id, role and location_scope claims.
             var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
-            var signingKey = string.IsNullOrWhiteSpace(jwtOptions.SigningKey)
-                ? "inventoryx-development-signing-key-do-not-use-in-production"
-                : jwtOptions.SigningKey;
+            var signingKey = jwtOptions.ResolveSigningKey();
 
             var authBuilder = services.AddAuthentication()
                 .AddJwtBearer(options =>
@@ -162,6 +159,8 @@ namespace InventoryX.Presentation.Configuration
             }
 
             // Accept either the JWT bearer (API clients) or the Identity cookie
+            services.AddHttpContextAccessor();
+            services.AddSingleton<IAuthorizationHandler, Authorization.RegisterTokenAuthorizationHandler>();
             services.AddAuthorization(options =>
             {
                 options.DefaultPolicy = new AuthorizationPolicyBuilder(
@@ -169,6 +168,14 @@ namespace InventoryX.Presentation.Configuration
                         IdentityConstants.ApplicationScheme)
                     .RequireAuthenticatedUser()
                     .Build();
+                options.AddPolicy("RegisterTokenOrUser", policy =>
+                {
+                    policy.AddAuthenticationSchemes(
+                        JwtBearerDefaults.AuthenticationScheme,
+                        IdentityConstants.ApplicationScheme);
+                    policy.RequireAuthenticatedUser();
+                    policy.Requirements.Add(new Authorization.RegisterTokenRequirement());
+                });
             });
 
             return services;
@@ -187,9 +194,11 @@ namespace InventoryX.Presentation.Configuration
             // Forward headers for proxies (important for Azure)
             app.UseForwardedHeaders();
 
-            // Run database migrations on startup (Azure deployment)
-            using (var scope = app.Services.CreateScope())
+            // Run database migrations on startup (Azure deployment). Skip in Testing —
+            // WebApplicationFactory tests create schema via EnsureCreated on a shared Sqlite.
+            if (!app.Environment.IsEnvironment("Testing"))
             {
+                using var scope = app.Services.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 try
                 {
@@ -208,7 +217,7 @@ namespace InventoryX.Presentation.Configuration
             app.UseSwagger();
             app.UseSwaggerUI();
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
 
             app.Use(async (context, next) =>
             {

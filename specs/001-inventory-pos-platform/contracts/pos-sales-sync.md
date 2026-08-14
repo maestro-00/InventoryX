@@ -48,7 +48,13 @@
 | POST | `/sync/sales` | Batch upload of queued offline sales, each with `clientSaleId`, `occurredAt`, register/shift refs. Idempotent per sale: replays return prior results. Response per sale: `applied` \| `applied_with_conflict` (StockConflictFlag raised, notification created) \| `rejected` (validation detail). Never silently adjusts stock | Sell (register token) |
 | GET | `/sync/conflicts` | Open stock-conflict flags for review | ManageStock |
 | POST | `/sync/conflicts/{id}/resolve` | Resolution: acceptAsIs \| adjustWithReason (creates movement) | ApproveAdjustments |
+| GET | `/sync/rejected` | Open rejected offline sales for manager review | Owner/Admin/Manager |
+| POST | `/sync/rejected/{id}/resolve` | Resolution: retryRelease \| reconcileLinked (+ linked sale id) | Owner/Admin/Manager |
 
 Offline rules: endpoints above are the only ones a register token needs; everything
 else (availability at other locations, on-account, online card) is live-only and the
-contract marks it so clients can grey it out (FR-045).
+contract marks it so clients can grey it out (FR-045). Register-scoped tokens are
+restricted to `/sync/snapshot` and `/sync/sales` for their own `register_id`. Offline
+ingest accepts historical `UnitPrice` + `TaxComponentsJson` fiscal evidence.
+Snapshots include favourites, receipt template, fractional/tracking metadata,
+`bundleVersion`, and product deletion refs.

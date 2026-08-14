@@ -69,7 +69,7 @@ This document outlines the planned features and improvements for InventoryX.
   - Caching implementation (Redis)
   - Database query optimization
   - Pagination improvements
-  - Background job processing (Hangfire)
+  - Background job processing (DB-backed `BackgroundService` workers; Hangfire deferred)
   - API response compression
 
 - [ ] **Testing & Quality**

@@ -68,6 +68,7 @@ namespace InventoryX.Application.Repository
         DbSet<GoodsReceiptLine> GoodsReceiptLines { get; }
         DbSet<SupplierInvoice> SupplierInvoices { get; }
         DbSet<SupplierInvoiceLine> SupplierInvoiceLines { get; }
+        DbSet<InventoryX.Domain.Models.Sync.RejectedOfflineSale> RejectedOfflineSales { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

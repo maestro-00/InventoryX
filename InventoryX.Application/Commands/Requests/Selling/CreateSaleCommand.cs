@@ -16,6 +16,13 @@ namespace InventoryX.Application.Commands.Requests.Selling
         public decimal LineDiscount { get; init; }
         public string? DiscountAuthorizedBy { get; init; }
         public string? Note { get; init; }
+        /// <summary>
+        /// Offline fiscal evidence: Ghana tax component JSON collected at sale time.
+        /// When AcceptHistoricalFiscalSnapshot is set, reconnect must not recalculate money.
+        /// </summary>
+        public string? TaxComponentsJson { get; init; }
+        /// <summary>Optional client-side fiscal evidence hash for audit.</summary>
+        public string? FiscalEvidenceHash { get; init; }
     }
 
     public class CreateSalePaymentDto
@@ -42,6 +49,11 @@ namespace InventoryX.Application.Commands.Requests.Selling
         public bool OfflineOrigin { get; init; }
         /// <summary>Offline ingest may drive stock negative; sets the conflict flag instead of failing.</summary>
         public bool AllowNegativeStock { get; init; }
+        /// <summary>
+        /// When true, UnitPrice + TaxComponentsJson on lines are accepted as authoritative
+        /// historical fiscal evidence (readiness item 2).
+        /// </summary>
+        public bool AcceptHistoricalFiscalSnapshot { get; init; }
 
         public UsageMetric Metric => UsageMetric.SalesThisMonth;
         public string AuditAction => "sale.create";

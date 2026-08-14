@@ -4,6 +4,8 @@ namespace InventoryX.Application.Options
     public class JwtOptions
     {
         public const string SectionName = "Jwt";
+        public const string DevelopmentSigningKey =
+            "inventoryx-development-signing-key-do-not-use-in-production";
 
         public string Issuer { get; set; } = "InventoryX";
         public string Audience { get; set; } = "InventoryX.Api";
@@ -12,5 +14,15 @@ namespace InventoryX.Application.Options
         public int RefreshTokenDays { get; set; } = 14;
         /// <summary>Lifetime of register-scoped PIN-exchange tokens (research R3).</summary>
         public int RegisterTokenMinutes { get; set; } = 720;
+
+        /// <summary>
+        /// Empty or template placeholder keys fall back to the development key so
+        /// token issuance and bearer validation never diverge.
+        /// </summary>
+        public string ResolveSigningKey() =>
+            string.IsNullOrWhiteSpace(SigningKey) ||
+            SigningKey.Contains("Your Signing Key", StringComparison.OrdinalIgnoreCase)
+                ? DevelopmentSigningKey
+                : SigningKey;
     }
 }

@@ -76,13 +76,27 @@ public sealed class OfflineSaleIngestTests : IDisposable
                 new CreateSaleCommand
                 {
                     ClientSaleId = validId, RegisterId = register.Id, ShiftId = shift.Id, OccurredAt = occurredAt,
-                    Lines = [new CreateSaleLineDto { ProductId = product.Id, Qty = 2m }],
-                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
+                    Lines =
+                    [
+                        new CreateSaleLineDto
+                        {
+                            ProductId = product.Id, Qty = 2m, UnitPrice = 10m,
+                            TaxComponentsJson = """[{"code":"GET","amount":0.30},{"code":"NHIL","amount":0.50},{"code":"VAT","amount":1.49}]""",
+                        },
+                    ],
+                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 22.29m }],
                 },
                 new CreateSaleCommand
                 {
                     RegisterId = register.Id, ShiftId = shift.Id,
-                    Lines = [new CreateSaleLineDto { ProductId = Guid.NewGuid(), Qty = 1m }],
+                    Lines =
+                    [
+                        new CreateSaleLineDto
+                        {
+                            ProductId = Guid.NewGuid(), Qty = 1m, UnitPrice = 10m,
+                            TaxComponentsJson = "[]",
+                        },
+                    ],
                     Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 10m }],
                 },
             ],
@@ -91,6 +105,8 @@ public sealed class OfflineSaleIngestTests : IDisposable
         results.Should().ContainSingle(r => r.ClientSaleId == validId && r.Status == "applied_with_conflict");
         results.Should().ContainSingle(r => r.Status == "rejected" && r.Error != null);
         (await context.Sales.SingleAsync(s => s.ClientSaleId == validId)).OccurredAt.Should().Be(occurredAt);
+        (await context.RejectedOfflineSales.CountAsync(r => r.Status == Domain.Models.Sync.RejectedOfflineSaleStatus.Open))
+            .Should().Be(1);
 
         var replay = await handler.Handle(new IngestOfflineSalesCommand
         {
@@ -99,8 +115,15 @@ public sealed class OfflineSaleIngestTests : IDisposable
                 new CreateSaleCommand
                 {
                     ClientSaleId = validId, RegisterId = register.Id, ShiftId = shift.Id, OccurredAt = occurredAt,
-                    Lines = [new CreateSaleLineDto { ProductId = product.Id, Qty = 2m }],
-                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
+                    Lines =
+                    [
+                        new CreateSaleLineDto
+                        {
+                            ProductId = product.Id, Qty = 2m, UnitPrice = 10m,
+                            TaxComponentsJson = """[{"code":"GET","amount":0.30},{"code":"NHIL","amount":0.50},{"code":"VAT","amount":1.49}]""",
+                        },
+                    ],
+                    Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 22.29m }],
                 },
             ],
         }, CancellationToken.None);

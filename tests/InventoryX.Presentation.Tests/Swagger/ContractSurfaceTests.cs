@@ -45,6 +45,7 @@ public sealed class ContractSurfaceTests
         ("get", "/batches/{id}/trace"), ("post", "/transfers"), ("post", "/counts"), ("get", "/alerts"),
         ("get", "/registers"), ("post", "/registers/{registerId}/shifts"), ("post", "/shifts/{shiftId}/close"),
         ("post", "/sales"), ("post", "/returns"), ("get", "/sync/snapshot"), ("post", "/sync/sales"),
+        ("get", "/sync/rejected"), ("post", "/sync/rejected/{rejectedSaleId}/resolve"),
         ("get", "/suppliers"), ("get", "/suppliers/{id}/products"), ("get", "/suppliers/{id}/orders"),
         ("get", "/purchase-orders"), ("post", "/purchase-orders"), ("post", "/supplier-invoices"),
         ("get", "/dashboard"), ("get", "/reports/sales"), ("get", "/reports/schedules"), ("post", "/reports/schedules"),
