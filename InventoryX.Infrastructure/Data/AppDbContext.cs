@@ -9,6 +9,7 @@ using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Domain.Models.Purchasing;
+using InventoryX.Domain.Models.Sync;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -74,6 +75,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
         public DbSet<SupplierInvoice> SupplierInvoices => Set<SupplierInvoice>();
         public DbSet<SupplierInvoiceLine> SupplierInvoiceLines => Set<SupplierInvoiceLine>();
+        public DbSet<RejectedOfflineSale> RejectedOfflineSales => Set<RejectedOfflineSale>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -204,6 +206,8 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<SupplierInvoice>().HasOne(item => item.PurchaseOrder).WithMany().HasForeignKey(item => item.PurchaseOrderId).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<SupplierInvoice>().HasMany(item => item.Lines).WithOne().HasForeignKey(item => item.SupplierInvoiceId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<SupplierInvoice>().Ignore(item => item.TotalAmount);
+            builder.Entity<RejectedOfflineSale>()
+                .HasIndex(item => new { item.TenantId, item.ClientSaleId, item.Status });
 
             ApplyTenantQueryFilters(builder);
         }

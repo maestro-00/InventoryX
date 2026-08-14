@@ -41,8 +41,15 @@ public sealed class ConflictReviewTests : IDisposable
             Sales = [new InventoryX.Application.Commands.Requests.Selling.CreateSaleCommand
             {
                 RegisterId = register.Id, ShiftId = shift.Id,
-                Lines = [new InventoryX.Application.Commands.Requests.Selling.CreateSaleLineDto { ProductId = product.Id, Qty = 2m }],
-                Payments = [new InventoryX.Application.Commands.Requests.Selling.CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
+                Lines =
+                [
+                    new InventoryX.Application.Commands.Requests.Selling.CreateSaleLineDto
+                    {
+                        ProductId = product.Id, Qty = 2m, UnitPrice = 10m,
+                        TaxComponentsJson = """[{"code":"VAT","amount":2.98}]""",
+                    },
+                ],
+                Payments = [new InventoryX.Application.Commands.Requests.Selling.CreateSalePaymentDto { Tender = "Cash", Amount = 22.98m }],
             }],
         }, CancellationToken.None);
         var saleId = ingested.Single().SaleId!.Value;

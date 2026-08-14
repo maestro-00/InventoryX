@@ -117,7 +117,7 @@ SPA → POST /api/auth/login → Cookie Set → Authenticated
 ## Next Steps
 
 1. **Set up Google credentials** (see GOOGLE_OAUTH_SETUP.md)
-2. **Implement SPA integration** (see SPA_AUTH_EXAMPLE.tsx)
+2. **Wire your client** to `/api/auth/external-login` (and `/api/v1/auth` for JWT tenant login)
 3. **Test the flow** with your frontend
 4. **Deploy to production** with proper HTTPS and credentials
 
@@ -149,4 +149,4 @@ SPA → POST /api/auth/login → Cookie Set → Authenticated
 
 For detailed documentation, see:
 - `GOOGLE_OAUTH_SETUP.md` - Complete setup guide
-- `SPA_AUTH_EXAMPLE.tsx` - React integration examples
+- `specs/001-inventory-pos-platform/contracts/auth-tenancy.md` - Cycle 1 auth contract

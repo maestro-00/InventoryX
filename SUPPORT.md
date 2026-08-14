@@ -81,9 +81,9 @@ dotnet ef database update
 #### API Usage
 
 **Q: How do I authenticate with the API?**
-- Register via `/api/auth/register`
-- Login via `/api/auth/login`
-- Use the returned authentication cookie for subsequent requests
+- Register a tenant via `POST /api/v1/auth/register`
+- Login via `POST /api/v1/auth/login` and send the JWT on subsequent requests
+- Google OAuth and cookie Identity helpers remain under `/api/auth/*` (callback: `/api/auth/google-callback`)
 
 **Q: Where can I find API documentation?**
 - Run the application and navigate to `/swagger`

@@ -63,8 +63,4 @@ public sealed class ProductsController(ISender sender) : ApiControllerBase
     [HttpPost("{id:guid}/variants")]
     public async Task<ActionResult<ProductDto>> AddVariants(Guid id, AddProductVariantsCommand command, CancellationToken cancellationToken) =>
         Ok(await sender.Send(new AddProductVariantsCommand { ProductId = id, Variants = command.Variants }, cancellationToken));
-
-    [HttpGet("tax-treatments")]
-    public async Task<ActionResult<List<TaxTreatmentDto>>> TaxTreatments(CancellationToken cancellationToken) =>
-        Ok(await sender.Send(new GetTaxTreatmentsQuery(), cancellationToken));
 }

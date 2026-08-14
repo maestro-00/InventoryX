@@ -29,7 +29,7 @@ public sealed class SyncSnapshotTests : IDisposable
             new StockMovementRequest(MovementType.Adjustment, product.Id, other.Id, 9m),
         ]);
         await context.SaveChangesAsync();
-        var handler = new GetSyncSnapshotQueryHandler(context);
+        var handler = new GetSyncSnapshotQueryHandler(context, _db.TenantContext);
 
         var first = await handler.Handle(new GetSyncSnapshotQuery(register.Id), CancellationToken.None);
         first.Products.Should().ContainSingle(p => p.Id == product.Id);

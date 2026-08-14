@@ -152,10 +152,10 @@ InventoryX.Presentation/    # Controllers, API configuration
 Example test naming:
 ```csharp
 [Fact]
-public async Task Handle_ValidCommand_ShouldCreateInventoryItem()
+public async Task Handle_ValidCommand_ShouldCreateProduct()
 {
     // Arrange
-    var command = new CreateInventoryItemCommand { ... };
+    var command = new CreateProductCommand { ... };
     
     // Act
     var result = await _handler.Handle(command, CancellationToken.None);
@@ -293,10 +293,10 @@ fix(scope): resolve bug
 ### Naming Conventions
 
 - **Interfaces**: Prefix with `I` (e.g., `IInventoryService`)
-- **DTOs**: Suffix with `Dto` (e.g., `InventoryItemDto`)
-- **Commands**: Suffix with `Command` (e.g., `CreateInventoryItemCommand`)
-- **Queries**: Suffix with `Query` (e.g., `GetInventoryItemQuery`)
-- **Handlers**: Suffix with `Handler` (e.g., `CreateInventoryItemCommandHandler`)
+- **DTOs**: Suffix with `Dto` (e.g., `ProductDto`)
+- **Commands**: Suffix with `Command` (e.g., `CreateProductCommand`)
+- **Queries**: Suffix with `Query` (e.g., `GetProductQuery`)
+- **Handlers**: Suffix with `Handler` (e.g., `CreateProductCommandHandler`)
 
 ### Async/Await
 

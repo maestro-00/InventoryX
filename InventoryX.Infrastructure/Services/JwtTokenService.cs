@@ -62,7 +62,7 @@ namespace InventoryX.Infrastructure.Services
 
         private string CreateToken(IEnumerable<Claim> claims, DateTime expires)
         {
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.ResolveSigningKey()));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(
                 issuer: _options.Issuer,

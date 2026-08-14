@@ -123,6 +123,12 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                         ?? throw new NotFoundException($"Variant {lineRequest.VariantId} not found.");
 
                 var unitPrice = lineRequest.UnitPrice ?? variant?.SellingPrice ?? product.SellingPrice;
+                var useHistoricalFiscal = request.AcceptHistoricalFiscalSnapshot
+                    && !string.IsNullOrWhiteSpace(lineRequest.TaxComponentsJson)
+                    && lineRequest.UnitPrice is not null;
+                if (request.AcceptHistoricalFiscalSnapshot && !useHistoricalFiscal)
+                    throw new FluentValidation.ValidationException(
+                        "Offline sales require UnitPrice and TaxComponentsJson fiscal evidence per line.");
                 var grossLineAmount = lineRequest.Qty * unitPrice;
                 var discountAuthorizedBy = DiscountPolicyValidator.ResolveAuthorizer(
                     grossLineAmount,
@@ -146,6 +152,28 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
 
                 decimal allocatedTax = 0;
                 decimal allocatedDiscount = 0;
+                decimal? historicalLineTax = null;
+                if (useHistoricalFiscal)
+                {
+                    try
+                    {
+                        using var document = JsonDocument.Parse(lineRequest.TaxComponentsJson!);
+                        if (document.RootElement.ValueKind != JsonValueKind.Array)
+                            throw new FormatException();
+                        historicalLineTax = document.RootElement.EnumerateArray()
+                            .Sum(element => element.TryGetProperty("amount", out var amount)
+                                ? amount.GetDecimal()
+                                : element.TryGetProperty("Amount", out var amountPascal)
+                                    ? amountPascal.GetDecimal()
+                                    : 0m);
+                    }
+                    catch (Exception)
+                    {
+                        throw new FluentValidation.ValidationException(
+                            "TaxComponentsJson must be a JSON array of tax components with amount.");
+                    }
+                }
+
                 for (var allocationIndex = 0; allocationIndex < allocations.Count; allocationIndex++)
                 {
                     var allocation = allocations[allocationIndex];
@@ -155,8 +183,21 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                         : Math.Round(lineRequest.LineDiscount * ratio, 4);
                     allocatedDiscount += allocationDiscount;
                     var allocationNet = Math.Round(allocation.Quantity * unitPrice - allocationDiscount, 4);
-                    var components = taxCalculator.Calculate(allocationNet, product.TaxTreatment?.ComponentsJson ?? "[]");
-                    var allocationTax = Math.Round(components.Sum(component => component.Amount), 2);
+                    string taxComponentsJson;
+                    decimal allocationTax;
+                    if (useHistoricalFiscal)
+                    {
+                        taxComponentsJson = lineRequest.TaxComponentsJson!;
+                        allocationTax = allocationIndex == allocations.Count - 1
+                            ? historicalLineTax!.Value - allocatedTax
+                            : Math.Round(historicalLineTax!.Value * ratio, 2);
+                    }
+                    else
+                    {
+                        var components = taxCalculator.Calculate(allocationNet, product.TaxTreatment?.ComponentsJson ?? "[]");
+                        taxComponentsJson = JsonSerializer.Serialize(components, SerializerOptions);
+                        allocationTax = Math.Round(components.Sum(component => component.Amount), 2);
+                    }
                     allocatedTax += allocationTax;
                     sale.Lines.Add(new SaleLine
                     {
@@ -164,7 +205,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                         ProductName = variant is null ? product.Name : $"{product.Name} ({variant.Sku ?? "variant"})",
                         Qty = allocation.Quantity, UnitPrice = unitPrice, PriceOverridden = lineRequest.UnitPrice is not null,
                         LineDiscount = allocationDiscount, DiscountAuthorizedBy = discountAuthorizedBy,
-                        TaxComponents = JsonSerializer.Serialize(components, SerializerOptions), TaxAmount = allocationTax,
+                        TaxComponents = taxComponentsJson, TaxAmount = allocationTax,
                         LineTotal = Math.Round(allocationNet + allocationTax, 2), Note = lineRequest.Note,
                     });
                 }
