@@ -19,5 +19,8 @@ namespace InventoryX.Application.Services.IServices
 
         /// <summary>Validates a refresh token and returns the user id it was issued to, or null.</summary>
         string? ValidateRefreshToken(string refreshToken);
+
+        /// <summary>Invalidates a refresh token so it cannot be reused after rotation or sign-out.</summary>
+        void RevokeRefreshToken(string refreshToken);
     }
 }

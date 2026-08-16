@@ -44,6 +44,9 @@ namespace InventoryX.Infrastructure.Services
         public string? ValidateRefreshToken(string refreshToken) =>
             refreshTokenStore.TryGetValue($"refresh:{refreshToken}", out string? userId) ? userId : null;
 
+        public void RevokeRefreshToken(string refreshToken) =>
+            refreshTokenStore.Remove($"refresh:{refreshToken}");
+
         private static List<Claim> BuildClaims(User user, Role? role)
         {
             var claims = new List<Claim>
