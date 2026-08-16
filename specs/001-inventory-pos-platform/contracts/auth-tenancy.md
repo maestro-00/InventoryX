@@ -4,10 +4,11 @@
 
 | Method | Path | Purpose | Notes |
 |--------|------|---------|-------|
-| POST | `/auth/register` `[anon]` | Create tenant + owner (FR-001) | Body: email, password, businessName, country, currency, businessType. Creates Trialing subscription (Professional, 14d). 201 → tenant summary + tokens |
-| POST | `/auth/login` `[anon]` | Email/password login | 200 → `{ accessToken, refreshToken, expiresIn }`; 401 on bad creds; 423 if 2FA required → complete via `/auth/2fa/verify` |
-| POST | `/auth/google` `[anon]` | Google OAuth code exchange | Existing flow retained |
-| POST | `/auth/refresh` `[anon]` | Rotate tokens | |
+| POST | `/auth/register` `[anon]` | Create tenant + owner (FR-001) | Body: email, password, businessName, country, currency, businessType. Creates Trialing subscription (Professional, 14d). 201 → tenant summary + tokens. Sets `inventoryx_refresh` (HttpOnly; Secure; SameSite=Lax; Path=/api/v1/auth) and readable `inventoryx_session=1` (same lifetime) |
+| POST | `/auth/login` `[anon]` | Email/password login | 200 → `{ accessToken, refreshToken, expiresIn }`; 401 on bad creds; 423 if 2FA required → complete via `/auth/2fa/verify`. Sets the same session cookies as register when tokens are issued |
+| GET/POST | `/auth/google` `[anon]` | Google OAuth challenge | Callback sets session cookies and redirects to `returnUrl` with `accessToken`, `refreshToken`, `accessTokenExpiresAt` query params |
+| POST | `/auth/refresh` `[anon]` | Rotate tokens | Body `{ refreshToken }` optional when the httpOnly refresh cookie is present. Rotates cookies on success; clears both cookies on 400/401/403. Cold loads without `inventoryx_session` stay anonymous by design (SPA skips this call) |
+| POST | `/auth/logout` `[anon]` | End SPA session cookies | Clears `inventoryx_refresh` and `inventoryx_session` |
 | POST | `/auth/2fa/enroll` / `verify` | TOTP setup & challenge (FR-006) | |
 | POST | `/auth/pin/exchange` | Register PIN → register-scoped token (FR-007) | Requires device token; body: userId, pin, registerId. 200 → short-lived scoped JWT |
 

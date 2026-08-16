@@ -18,7 +18,10 @@ namespace InventoryX.Application.Commands.Requests.Auth
 
     public class RefreshTokenCommand : IRequest<LoginResult>
     {
-        public required string RefreshToken { get; init; }
+        /// <summary>
+        /// Optional when the httpOnly <c>inventoryx_refresh</c> cookie is present (silent SPA restore).
+        /// </summary>
+        public string? RefreshToken { get; init; }
     }
 
     public record TwoFactorEnrollResult(string SharedKey, string AuthenticatorUri);

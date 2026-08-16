@@ -46,10 +46,15 @@ namespace InventoryX.Application.Commands.RequestHandlers.Auth
     {
         public async Task<LoginResult> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(request.RefreshToken))
+                throw new CustomException("Invalid or expired refresh token.", 401);
+
             var userId = tokenService.ValidateRefreshToken(request.RefreshToken)
                 ?? throw new CustomException("Invalid or expired refresh token.", 401);
             var user = await userManager.FindByIdAsync(userId)
                 ?? throw new CustomException("Invalid refresh token.", 401);
+
+            tokenService.RevokeRefreshToken(request.RefreshToken);
 
             var role = user.RoleId is null
                 ? null

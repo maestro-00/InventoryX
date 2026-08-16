@@ -126,7 +126,11 @@ namespace InventoryX.Presentation.Configuration
             var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
             var signingKey = jwtOptions.ResolveSigningKey();
 
-            var authBuilder = services.AddAuthentication()
+            var authBuilder = services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters

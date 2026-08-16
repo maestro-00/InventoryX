@@ -36,6 +36,7 @@ public sealed class ContractSurfaceTests
     private static readonly (string Method, string Path)[] Expected =
     [
         ("post", "/auth/register"), ("post", "/auth/login"), ("post", "/auth/google"),
+        ("post", "/auth/refresh"), ("post", "/auth/logout"),
         ("get", "/tenant"), ("patch", "/tenant"), ("post", "/tenant/export"), ("get", "/tenant/export/{jobId}"),
         ("get", "/users"), ("post", "/users/invitations"), ("post", "/users/invitations/{id}/accept"), ("patch", "/users/{id}"),
         ("get", "/roles"), ("get", "/audit-log"), ("get", "/billing/plans"), ("get", "/billing/subscription"),
