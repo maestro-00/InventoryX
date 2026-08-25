@@ -30,7 +30,7 @@
 | GET | `/users` | List users (paged) | ManageUsers |
 | POST | `/users/invitations` | Invite by email with role + location scope (FR-004) | ManageUsers |
 | POST | `/users/invitations/{id}/accept` `[anon+inviteToken]` | Accept, set password | — |
-| PATCH | `/users/{id}` | Change role, locations, deactivate | ManageUsers; 409 if target is Owner (FR-003) |
+| PATCH | `/users/{id}` | Change role, locations, deactivate; send `If-Match` (Identity `ConcurrencyStamp` ETag) | ManageUsers; 409 if target is Owner (FR-003) |
 | PUT | `/users/{id}/pin` | Set/replace register PIN | Self or ManageUsers |
 | GET | `/roles` | List roles + permission atoms (fixed set in Cycle 1) | any |
 | GET | `/audit-log` | Paged sensitive-action log (FR-008) | Owner/Admin |

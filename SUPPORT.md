@@ -87,7 +87,7 @@ dotnet ef database update
 
 **Q: Where can I find API documentation?**
 - Run the application and navigate to `/swagger`
-- Interactive documentation with all endpoints and models
+- Interactive OpenAPI for `/api/v1` only (Bearer JWT). Legacy `/api/auth/*` cookie/OAuth helpers are excluded from Swagger but remain available for browser flows.
 
 ## 🔍 Troubleshooting
 

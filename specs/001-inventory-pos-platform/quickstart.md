@@ -37,6 +37,7 @@ Health probes: `GET /health/live`, `GET /health/ready`.
 4. Opening stock via `/api/v1/import/opening-stock` flow (or an adjustment with reason
    Correction): qty 10 @ cost 6.00.
 5. `POST /api/v1/registers/{id}/shifts` — open with float 100.00.
+   `GET /api/v1/registers/{id}/shifts?status=Open` (or `GET /api/v1/shifts?status=Open`) resumes that shift after a POS restart.
 6. `POST /api/v1/sales` — qty 2, cash 25.00. Expect grandTotal 24.38 and changeDue
    0.62: base 20.00 + levies 6% (NHIL 2.5 + GETFund 2.5 + COVID 1) = 21.20, then VAT
    15% on the levy-inclusive amount = 24.38 per [research R11](./research.md); receipt
