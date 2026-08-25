@@ -1,5 +1,6 @@
 using InventoryX.Application.Queries.Requests.Billing;
 using InventoryX.Application.Commands.Requests.Billing;
+using InventoryX.Application.DTOs.Common;
 using MediatR;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +10,7 @@ namespace InventoryX.Presentation.Controllers.v1;
 
 [Route("api/v1/billing")]
 [Authorize]
+[Tags("Billing")]
 public sealed class BillingController(ISender sender) : ApiControllerBase
 {
     [HttpGet("plans")]
@@ -50,8 +52,11 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
 
     [HttpGet("invoices")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<List<BillingInvoiceDto>>> Invoices(CancellationToken cancellationToken) =>
-        Ok(await sender.Send(new GetBillingInvoicesQuery(), cancellationToken));
+    [ProducesResponseType(typeof(PagedResult<BillingInvoiceDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResult<BillingInvoiceDto>>> Invoices(
+        [FromQuery] GetBillingInvoicesQuery query,
+        CancellationToken cancellationToken) =>
+        Ok(await sender.Send(query, cancellationToken));
 
     [HttpGet("invoices/{id:guid}/pdf")]
     [Authorize(Roles = "Owner")]
