@@ -20,6 +20,7 @@ namespace InventoryX.Application.Queries.Requests.Tenancy
         public string? BillingEmail { get; init; }
         public string? Address { get; init; }
         public string? Phone { get; init; }
+        public byte[]? RowVersion { get; init; }
     }
 
     public class GetTenantQuery : IRequest<TenantDto>;

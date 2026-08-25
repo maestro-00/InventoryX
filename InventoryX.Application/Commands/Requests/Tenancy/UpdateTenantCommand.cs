@@ -19,6 +19,7 @@ namespace InventoryX.Application.Commands.Requests.Tenancy
         public decimal? ReturnAuthorizationThreshold { get; init; }
         public bool? RequireExpiryOnBatchReceipt { get; init; }
         public string? OnboardingChecklist { get; init; }
+        public byte[]? ExpectedRowVersion { get; init; }
 
         public string AuditAction => "tenant.update";
         public string AuditEntityType => "Tenant";

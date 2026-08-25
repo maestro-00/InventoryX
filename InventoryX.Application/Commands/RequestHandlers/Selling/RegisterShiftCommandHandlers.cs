@@ -2,6 +2,7 @@ using InventoryX.Application.Commands.Requests.Selling;
 using InventoryX.Application.DTOs.Selling;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Selling;
 using MediatR;
@@ -19,10 +20,35 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
             var register = new Register { LocationId = request.LocationId, Name = request.Name };
             context.Registers.Add(register);
             await context.SaveChangesAsync(cancellationToken);
-            return new RegisterDto
-            {
-                Id = register.Id, LocationId = register.LocationId, Name = register.Name, IsActive = register.IsActive,
-            };
+            return Map(register);
+        }
+
+        internal static RegisterDto Map(Register register) => new()
+        {
+            Id = register.Id,
+            LocationId = register.LocationId,
+            Name = register.Name,
+            IsActive = register.IsActive,
+            RowVersion = register.RowVersion,
+        };
+    }
+
+    public sealed class UpdateRegisterCommandHandler(IAppDbContext context)
+        : IRequestHandler<UpdateRegisterCommand, RegisterDto>
+    {
+        public async Task<RegisterDto> Handle(UpdateRegisterCommand request, CancellationToken cancellationToken)
+        {
+            var register = await context.Registers
+                .FirstOrDefaultAsync(item => item.Id == request.Id, cancellationToken)
+                ?? throw new NotFoundException("Register not found.");
+
+            RowVersionGuard.EnsureMatch(register.RowVersion, request.ExpectedRowVersion);
+
+            if (request.Name is not null) register.Name = request.Name;
+            if (request.IsActive is not null) register.IsActive = request.IsActive.Value;
+
+            await context.SaveChangesAsync(cancellationToken);
+            return CreateRegisterCommandHandler.Map(register);
         }
     }
 

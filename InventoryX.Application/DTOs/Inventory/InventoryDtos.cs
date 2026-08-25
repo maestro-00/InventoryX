@@ -7,6 +7,7 @@ namespace InventoryX.Application.DTOs.Inventory
         public string? Address { get; init; }
         public string Kind { get; init; } = "Shop";
         public bool IsActive { get; init; }
+        public byte[]? RowVersion { get; init; }
     }
 
     public class StockLevelDto

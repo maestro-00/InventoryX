@@ -6,6 +6,7 @@ namespace InventoryX.Application.DTOs.Selling
         public Guid LocationId { get; init; }
         public string Name { get; init; } = string.Empty;
         public bool IsActive { get; init; }
+        public byte[]? RowVersion { get; init; }
     }
 
     public class ShiftDto
@@ -18,5 +19,11 @@ namespace InventoryX.Application.DTOs.Selling
         public string Status { get; init; } = "Open";
     }
 
-    public sealed class CashMovementDto { public Guid Id { get; init; } public decimal Amount { get; init; } public string Type { get; init; } = string.Empty; public string Reason { get; init; } = string.Empty; }
+    public sealed class CashMovementDto
+    {
+        public Guid Id { get; init; }
+        public decimal Amount { get; init; }
+        public string Type { get; init; } = string.Empty;
+        public string Reason { get; init; } = string.Empty;
+    }
 }

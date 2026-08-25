@@ -31,6 +31,7 @@ namespace InventoryX.Application.DTOs.Catalog
         public int? LeadTimeDays { get; init; }
         public List<string> VariantAttributes { get; init; } = [];
         public List<ProductVariantDto> Variants { get; init; } = [];
+        public byte[]? RowVersion { get; init; }
     }
 
     public class CategoryDto
