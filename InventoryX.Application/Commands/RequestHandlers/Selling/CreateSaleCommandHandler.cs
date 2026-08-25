@@ -62,6 +62,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
         ITaxCalculator taxCalculator,
         ITenantContext tenantContext,
         IPlanEnforcer planEnforcer,
+        IPosAccess posAccess,
         IReceiptBuilder? receiptBuilder = null) : IRequestHandler<CreateSaleCommand, SaleDto>
     {
         private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -84,6 +85,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                 s => s.Id == request.ShiftId && s.RegisterId == register.Id && s.Status == ShiftStatus.Open,
                 cancellationToken)
                 ?? throw new ConflictException("Sales require an open shift on this register.");
+            await posAccess.EnsureCanOperateShiftAsync(shift, cancellationToken);
 
             var productIds = request.Lines.Select(l => l.ProductId).Distinct().ToList();
             var products = await context.Products

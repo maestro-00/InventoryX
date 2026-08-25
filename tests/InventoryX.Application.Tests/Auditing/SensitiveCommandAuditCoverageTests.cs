@@ -4,7 +4,9 @@ using InventoryX.Application.Commands.Requests.Auth;
 using InventoryX.Application.Commands.Requests.Catalog;
 using InventoryX.Application.Commands.Requests.Inventory;
 using InventoryX.Application.Commands.Requests.Selling;
+using InventoryX.Application.DTOs.Users;
 using InventoryX.Application.Services.IServices;
+using InventoryX.Domain.Models;
 
 namespace InventoryX.Application.Tests.Auditing;
 
@@ -55,15 +57,15 @@ public sealed class SensitiveCommandAuditCoverageTests
     public async Task Successful_sensitive_command_is_written_to_the_audit_log()
     {
         var writer = new RecordingAuditLogWriter();
-        var behavior = new AuditBehavior<UpdateUserAccessCommand, bool>(writer);
+        var behavior = new AuditBehavior<UpdateUserAccessCommand, UserListItemDto>(writer);
         var command = new UpdateUserAccessCommand { UserId = "user-1" };
 
         var result = await behavior.Handle(
             command,
-            _ => Task.FromResult(true),
+            _ => Task.FromResult(new UserListItemDto("user-1", "a@b.c", null, null, null, UserStatus.Active, false, "stamp")),
             CancellationToken.None);
 
-        result.Should().BeTrue();
+        result.Id.Should().Be("user-1");
         writer.Action.Should().Be("user.permissions.update");
         writer.EntityType.Should().Be("User");
         writer.EntityId.Should().Be("user-1");

@@ -48,8 +48,13 @@ public sealed class FefoIssueTests : IDisposable
         (await context.StockLevels.SingleAsync(level => level.BatchId == setup.LaterBatchId)).QtyOnHand.Should().Be(4m);
     }
 
-    private CreateSaleCommandHandler CreateHandler(Infrastructure.Data.AppDbContext context) => new(
-        context, new StockLedger(context), new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+    private CreateSaleCommandHandler CreateHandler(Infrastructure.Data.AppDbContext context)
+    {
+        TestPosAccess.Cashier(context, _db.TenantContext);
+        return new(
+            context, new StockLedger(context), new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(),
+            new PosAccess(context, _db.TenantContext));
+    }
 
     private static CreateSaleCommand NewSale(Setup setup, decimal qty, Guid? batchId = null) => new()
     {

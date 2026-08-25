@@ -30,9 +30,9 @@ window.location.href = 'http://localhost:5000/api/auth/external-login?provider=G
 ```
 
 **Or test with Swagger:**
-1. Navigate to `http://localhost:5000/swagger`
-2. Find `/api/auth/external-login` endpoint
-3. Execute with: `{"provider": "Google", "returnUrl": "http://localhost:5173"}`
+1. Navigate to `http://localhost:5000/swagger` (documents `/api/v1` only)
+2. For Google OAuth from the SPA, use `/api/auth/external-login` (excluded from Swagger; see SUPPORT.md)
+3. For tenant JWT login, use `POST /api/v1/auth/login` in Swagger
 
 ## Available Endpoints
 

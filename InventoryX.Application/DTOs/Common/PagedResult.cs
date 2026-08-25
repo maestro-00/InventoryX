@@ -21,21 +21,24 @@ namespace InventoryX.Application.DTOs.Common
         public const int DefaultPageSize = 50;
         public const int MaxPageSize = 200;
 
-        private readonly int _page = 1;
-        private readonly int _pageSize = DefaultPageSize;
+        private int _page = 1;
+        private int _pageSize = DefaultPageSize;
 
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = "page")]
         public int Page
         {
             get => _page;
             init => _page = value < 1 ? 1 : value;
         }
 
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = "pageSize")]
         public int PageSize
         {
             get => _pageSize;
             init => _pageSize = value < 1 ? DefaultPageSize : Math.Min(value, MaxPageSize);
         }
 
+        [Microsoft.AspNetCore.Mvc.ModelBinding.BindNever]
         public int Skip => (Page - 1) * PageSize;
     }
 }

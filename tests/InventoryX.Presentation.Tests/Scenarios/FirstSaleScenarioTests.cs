@@ -90,6 +90,12 @@ public sealed class FirstSaleScenarioTests : IAsyncLifetime
         shiftResponse.StatusCode.Should().Be(HttpStatusCode.Created, await shiftResponse.Content.ReadAsStringAsync());
         var shiftId = (await ReadJson(shiftResponse)).GetProperty("id").GetGuid();
 
+        var resumeResponse = await _client.GetAsync($"/api/v1/registers/{registerId}/shifts?status=Open");
+        resumeResponse.StatusCode.Should().Be(HttpStatusCode.OK, await resumeResponse.Content.ReadAsStringAsync());
+        var openShifts = await ReadJson(resumeResponse);
+        openShifts.GetArrayLength().Should().Be(1);
+        openShifts[0].GetProperty("id").GetGuid().Should().Be(shiftId);
+
         // 6. Sell 2 units cash 25.00 → grandTotal 24.38, change 0.62
         var saleResponse = await _client.PostAsJsonAsync("/api/v1/sales", new
         {

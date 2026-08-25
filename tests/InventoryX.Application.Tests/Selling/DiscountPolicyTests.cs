@@ -62,7 +62,8 @@ public sealed class DiscountPolicyTests : IDisposable
                 ledger,
                 new TaxCalculator(),
                 _db.TenantContext,
-                _planEnforcer.Object),
+                _planEnforcer.Object,
+                new PosAccess(context, _db.TenantContext)),
             product.Id,
             register.Id,
             shift.Id);

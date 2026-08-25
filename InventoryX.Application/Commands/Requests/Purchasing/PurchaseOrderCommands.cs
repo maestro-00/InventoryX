@@ -7,7 +7,7 @@ namespace InventoryX.Application.Commands.Requests.Purchasing;
 
 public sealed record PurchaseOrderLineInput(Guid ProductId, Guid? VariantId, string Description, decimal OrderedQty, decimal UnitCost);
 public sealed record PurchaseOrderLineDto(Guid Id, Guid ProductId, Guid? VariantId, string Description, decimal OrderedQty, decimal ReceivedQty, decimal DamagedQty, decimal UnitCost);
-public sealed record PurchaseOrderDto(Guid Id, Guid SupplierId, Guid DeliverToLocationId, PurchaseOrderStatus Status, PurchaseOrderOrigin Origin, Guid? OriginReferenceId, DateTime? RequiredBy, string? Notes, decimal Total, IReadOnlyList<PurchaseOrderLineDto> Lines);
+public sealed record PurchaseOrderDto(Guid Id, Guid SupplierId, Guid DeliverToLocationId, PurchaseOrderStatus Status, PurchaseOrderOrigin Origin, Guid? OriginReferenceId, DateTime? RequiredBy, string? Notes, decimal Total, IReadOnlyList<PurchaseOrderLineDto> Lines, byte[]? RowVersion = null);
 
 public sealed class CreatePurchaseOrderCommand : IRequest<PurchaseOrderDto>, IFeatureGatedCommand
 {
@@ -28,6 +28,7 @@ public sealed class UpdatePurchaseOrderCommand : IRequest<PurchaseOrderDto>, ITe
     public DateTime? RequiredBy { get; init; }
     public string? Notes { get; init; }
     public List<PurchaseOrderLineInput> Lines { get; init; } = [];
+    public byte[]? ExpectedRowVersion { get; init; }
 }
 
 public sealed record SubmitPurchaseOrderCommand(Guid Id) : IRequest<PurchaseOrderDto>, ITenantWriteCommand;

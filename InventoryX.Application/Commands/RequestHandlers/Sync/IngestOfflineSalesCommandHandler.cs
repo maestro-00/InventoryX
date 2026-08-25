@@ -15,13 +15,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Commands.RequestHandlers.Sync;
 
-public sealed class IngestOfflineSalesCommandHandler(
-    IAppDbContext context,
-    IStockLedger stockLedger,
-    ITaxCalculator taxCalculator,
-    ITenantContext tenantContext,
-    IPlanEnforcer planEnforcer,
-    IReceiptBuilder? receiptBuilder = null,
+    public sealed class IngestOfflineSalesCommandHandler(
+        IAppDbContext context,
+        IStockLedger stockLedger,
+        ITaxCalculator taxCalculator,
+        ITenantContext tenantContext,
+        IPlanEnforcer planEnforcer,
+        IPosAccess posAccess,
+        IReceiptBuilder? receiptBuilder = null,
     INotificationService? notificationService = null,
     IHttpContextAccessor? httpContextAccessor = null) : IRequestHandler<IngestOfflineSalesCommand, List<OfflineSaleIngestResult>>
 {
@@ -39,7 +40,7 @@ public sealed class IngestOfflineSalesCommandHandler(
                 throw new CustomException("Register token may only ingest sales for its own register.", 403);
         }
 
-        var processor = new CreateSaleCommandHandler(context, stockLedger, taxCalculator, tenantContext, planEnforcer, receiptBuilder);
+        var processor = new CreateSaleCommandHandler(context, stockLedger, taxCalculator, tenantContext, planEnforcer, posAccess, receiptBuilder);
         var results = new List<OfflineSaleIngestResult>(request.Sales.Count);
         foreach (var input in request.Sales)
         {

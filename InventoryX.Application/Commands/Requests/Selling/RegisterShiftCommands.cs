@@ -13,6 +13,15 @@ namespace InventoryX.Application.Commands.Requests.Selling
         public UsageMetric Metric => UsageMetric.Registers;
     }
 
+    public sealed class UpdateRegisterCommand : IRequest<RegisterDto>, ITenantWriteCommand
+    {
+        public Guid Id { get; init; }
+        public string? Name { get; init; }
+        public bool? IsActive { get; init; }
+        /// <summary>Optional optimistic-concurrency token from If-Match.</summary>
+        public byte[]? ExpectedRowVersion { get; init; }
+    }
+
     /// <summary>Opens a shift with a counted opening float; one open shift per register (T041).</summary>
     public class OpenShiftCommand : IRequest<ShiftDto>, ITenantWriteCommand
     {

@@ -2,6 +2,7 @@ using InventoryX.Application.Commands.Requests.Inventory;
 using InventoryX.Application.DTOs.Inventory;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Domain.Models.Inventory;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Inventory
             Address = location.Address,
             Kind = location.Kind.ToString(),
             IsActive = location.IsActive,
+            RowVersion = location.RowVersion,
         };
     }
 
@@ -46,6 +48,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Inventory
             var location = await context.Locations
                 .FirstOrDefaultAsync(l => l.Id == request.Id && !l.IsDeleted, cancellationToken)
                 ?? throw new NotFoundException("Location not found.");
+
+            RowVersionGuard.EnsureMatch(location.RowVersion, request.ExpectedRowVersion);
 
             location.Name = request.Name ?? location.Name;
             location.Address = request.Address ?? location.Address;

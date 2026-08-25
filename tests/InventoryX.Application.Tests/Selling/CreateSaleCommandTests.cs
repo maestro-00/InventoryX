@@ -8,6 +8,7 @@ using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
+using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
 using InventoryX.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,13 @@ public sealed class CreateSaleCommandTests : IDisposable
         var context = _db.CreateContext();
         var tax = new TaxTreatment { Code = "GH-STD", Name = "Ghana Standard", ComponentsJson = GhStdComponents };
         context.TaxTreatments.Add(tax);
+        _db.TenantContext.Role = "Cashier";
+        context.AppRoles.Add(new Role
+        {
+            Name = "Cashier",
+            Permissions = Permission.Sell,
+            IsSystem = true,
+        });
         var location = new Location { Name = "Main Shop" };
         var product = new Product { Name = "Sugar 1kg", SellingPrice = 10m, CostPrice = 6m, TaxTreatment = tax };
         context.Locations.Add(location);
@@ -63,7 +71,8 @@ public sealed class CreateSaleCommandTests : IDisposable
         }
 
         var handler = new CreateSaleCommandHandler(
-            context, new StockLedger(context), new TaxCalculator(), _db.TenantContext, _planEnforcer.Object);
+            context, new StockLedger(context), new TaxCalculator(), _db.TenantContext, _planEnforcer.Object,
+            new PosAccess(context, _db.TenantContext));
         return (context, handler, product.Id, register.Id, shift?.Id ?? Guid.Empty, location.Id);
     }
 

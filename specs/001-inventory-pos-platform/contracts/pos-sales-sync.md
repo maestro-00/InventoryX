@@ -5,8 +5,11 @@
 | Method | Path | Purpose | Permission |
 |--------|------|---------|-----------|
 | GET | `/registers` | Registers per location (plan-capped) | Sell |
-| POST/PATCH | `/registers/{id?}` | Manage registers; 402 over plan limit | Owner/Admin |
+| POST | `/registers` | Create register; 402 over plan limit | Owner/Admin |
+| PATCH | `/registers/{id}` | Update name/active flag; send `If-Match` ETag | Owner/Admin |
 | GET/PUT | `/registers/{id}/favourites` | Configurable POS favourites grid layout (pages/categories of product buttons, FR-038); included in sync snapshot | Sell (GET) / Manager (PUT) |
+| GET | `/shifts` | List shifts; filters: `registerId`, `status` (Open\|Closed). Use `status=Open` to resume a POS session after restart. Cashiers see only shifts they opened; Sell+ViewReports (manager/admin/owner) see all and may continue another cashier’s still-open shift (takeover is implicit: new sales stamp `cashierId` as the acting user; `openedBy` is unchanged) | Sell (own) / Sell+ViewReports (all) |
+| GET | `/registers/{id}/shifts` | List shifts for this register; same `status` filter and own-vs-manager rule. Empty list means no matching shift (prompt to open) | Sell (own) / Sell+ViewReports (all) |
 | POST | `/registers/{id}/shifts` | Open shift; body: openingFloat (counted). 409 if a shift is already open on this register | Sell |
 | POST | `/shifts/{id}/cash-movements` | Cash in/out with reason (PettyCash\|Banking\|ChangeOrder\|Other) | Sell |
 | POST | `/shifts/{id}/close` | Body: closingCounted (required — 400 without it). Computes expected cash, variance; flags manager when \|variance\| > threshold | Sell |
@@ -17,11 +20,11 @@
 | Method | Path | Purpose | Permission |
 |--------|------|---------|-----------|
 | POST | `/sales` *(idempotent-by-key `clientSaleId`)* | Create Completed or Held sale. Lines: productId/variantId, qty (fractional allowed per UoM), unitPrice override flag, lineDiscount, note. Batch lines auto-FEFO unless batchId given. Payments: array of tenders summing to grandTotal (split allowed) — Cycle 1 tenders: Cash, Card, MobileMoney, BankTransfer, Cheque (StoreCredit/GiftCard/LoyaltyPoints/OnAccount deferred per spec Assumptions); cash → changeDue returned. Server snapshots prices + Ghana tax components per line. 402 over monthly sale cap; 409 shift not open | Sell |
-| GET | `/sales` | Paged; filters: date, location, register, cashier, status | Sell (own) / ViewReports |
-| GET | `/sales/{id}` | Detail incl. payments, receipt ref | Sell |
+| GET | `/sales` | Paged; filters: date, location, register, cashier, status. Cashiers are limited to their own `cashierId`; ViewReports sees all | Sell (own) / ViewReports |
+| GET | `/sales/{id}` | Detail incl. payments, receipt ref. Cashiers receive 404 for another cashier’s sale | Sell (own) / ViewReports |
 | POST | `/sales/{id}/void` | Void (audit-logged; permission-gated) | per role |
-| GET | `/sales/held` | Held sales for recall (multi-hold, FR-038) | Sell |
-| POST | `/sales/{id}/complete` | Complete a Held sale (stock applies now) | Sell |
+| GET | `/sales/held` | Held sales for recall (multi-hold, FR-038). Same own-vs-ViewReports rule as GET `/sales` | Sell (own) / ViewReports |
+| POST | `/sales/{id}/complete` | Complete a Held sale (stock applies now). Same own-vs-manager shift rule as POST `/sales` | Sell |
 | GET | `/products/{id}/availability?locationId=` | Live stock at this + other locations for POS (FR-038); marked live-only for offline clients | Sell |
 
 ## Receipts (FR-040)

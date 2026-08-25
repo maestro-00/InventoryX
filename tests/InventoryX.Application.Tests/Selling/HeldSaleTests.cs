@@ -23,6 +23,7 @@ public sealed class HeldSaleTests : IDisposable
     public async Task Held_sale_only_decrements_stock_when_completed()
     {
         await using var context = _db.CreateContext();
+        TestPosAccess.Cashier(context, _db.TenantContext);
         var location = new Location { Name = "Main" };
         var product = new Product { Name = "Sugar", SellingPrice = 10m };
         var register = new Register { Name = "R1", LocationId = location.Id };
@@ -37,7 +38,8 @@ public sealed class HeldSaleTests : IDisposable
         await context.SaveChangesAsync();
 
         var create = new CreateSaleCommandHandler(
-            context, ledger, new TaxCalculator(), _db.TenantContext, _planEnforcer.Object);
+            context, ledger, new TaxCalculator(), _db.TenantContext, _planEnforcer.Object,
+            new PosAccess(context, _db.TenantContext));
         var held = await create.Handle(new CreateSaleCommand
         {
             RegisterId = register.Id,
@@ -48,7 +50,7 @@ public sealed class HeldSaleTests : IDisposable
 
         (await context.StockLevels.SingleAsync()).QtyOnHand.Should().Be(10m);
 
-        var complete = new CompleteHeldSaleCommandHandler(context, ledger, _planEnforcer.Object);
+        var complete = new CompleteHeldSaleCommandHandler(context, ledger, _planEnforcer.Object, new PosAccess(context, _db.TenantContext));
         var completed = await complete.Handle(new CompleteHeldSaleCommand
         {
             SaleId = held.Id,

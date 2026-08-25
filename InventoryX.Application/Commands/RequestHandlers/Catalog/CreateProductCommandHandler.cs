@@ -3,6 +3,7 @@ using InventoryX.Application.Commands.Requests.Catalog;
 using InventoryX.Application.DTOs.Catalog;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Domain.Models.Catalog;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Catalog
                 SellingPrice = v.SellingPrice,
                 CostPrice = includeCost ? v.CostPrice : null,
             }).ToList(),
+            RowVersion = product.RowVersion,
         };
     }
 
@@ -95,6 +97,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Catalog
                 .Include(p => p.TaxTreatment).Include(p => p.Variants)
                 .FirstOrDefaultAsync(p => p.Id == request.Id && !p.IsDeleted, cancellationToken)
                 ?? throw new NotFoundException("Product not found.");
+
+            RowVersionGuard.EnsureMatch(product.RowVersion, request.ExpectedRowVersion);
 
             if (request.Sku is not null && request.Sku != product.Sku &&
                 await context.Products.AnyAsync(p => p.Sku == request.Sku && p.Id != product.Id && !p.IsDeleted, cancellationToken))

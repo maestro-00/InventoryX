@@ -21,6 +21,7 @@ namespace InventoryX.Application.Commands.Requests.Inventory
         public string? Address { get; init; }
         public string? Kind { get; init; }
         public bool? IsActive { get; init; }
+        public byte[]? ExpectedRowVersion { get; init; }
     }
 
     public class DeleteLocationCommand : IRequest, ITenantWriteCommand

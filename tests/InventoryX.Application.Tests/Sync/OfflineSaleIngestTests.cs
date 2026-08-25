@@ -32,7 +32,8 @@ public sealed class OfflineSaleIngestTests : IDisposable
         var ledger = new StockLedger(context);
         await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, product.Id, location.Id, 10m)]);
         await context.SaveChangesAsync();
-        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+        TestPosAccess.Cashier(context, _db.TenantContext);
+        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(), new PosAccess(context, _db.TenantContext));
         var clientSaleId = Guid.NewGuid();
         var command = new CreateSaleCommand
         {
@@ -66,8 +67,10 @@ public sealed class OfflineSaleIngestTests : IDisposable
         await context.SaveChangesAsync();
         var occurredAt = DateTime.UtcNow.AddHours(-2);
         var validId = Guid.NewGuid();
+        TestPosAccess.Cashier(context, _db.TenantContext);
         var handler = new IngestOfflineSalesCommandHandler(
-            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(),
+            new PosAccess(context, _db.TenantContext));
 
         var results = await handler.Handle(new IngestOfflineSalesCommand
         {

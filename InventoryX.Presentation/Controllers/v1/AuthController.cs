@@ -1,5 +1,6 @@
 using InventoryX.Application.Commands.Requests.Auth;
 using InventoryX.Application.Commands.Requests.Tenancy;
+using InventoryX.Application.DTOs.Users;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Options;
 using InventoryX.Presentation.Authentication;
@@ -16,23 +17,50 @@ namespace InventoryX.Presentation.Controllers.v1;
 
 [Route("api/v1/auth")]
 [Authorize]
-public sealed class AuthController(ISender sender, IOptions<JwtOptions> jwtOptions) : ApiControllerBase
+[Tags("Auth")]
+public sealed class AuthController(ISender sender, IOptions<JwtOptions> jwtOptions, IConfiguration configuration) : ApiControllerBase
 {
+    public sealed record RegisterTenantRequest(
+        string Email,
+        string Password,
+        string BusinessName,
+        string Country,
+        string Currency,
+        string BusinessType);
+
+    public sealed record LoginRequest(string Email, string Password, string? TwoFactorCode);
+    public sealed record VerifyTwoFactorRequest(string Code);
+
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(RegisterTenantResult), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Register(RegisterTenantCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult<RegisterTenantResult>> Register(
+        RegisterTenantRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(new RegisterTenantCommand
+        {
+            Email = request.Email,
+            Password = request.Password,
+            BusinessName = request.BusinessName,
+            Country = string.IsNullOrWhiteSpace(request.Country) ? "GH" : request.Country,
+            Currency = string.IsNullOrWhiteSpace(request.Currency) ? "GHS" : request.Currency,
+            BusinessType = string.IsNullOrWhiteSpace(request.BusinessType) ? "Retail" : request.BusinessType,
+        }, cancellationToken);
         AuthSessionCookies.Set(Response, result.RefreshToken, jwtOptions);
         return Created("/api/v1/tenant", result);
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login(LoginCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> Login(LoginRequest request, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(new LoginCommand
+        {
+            Email = request.Email,
+            Password = request.Password,
+            TwoFactorCode = request.TwoFactorCode,
+        }, cancellationToken);
         if (result.RequiresTwoFactor)
         {
             return StatusCode(StatusCodes.Status423Locked, new { type = "two_factor_required", detail = "Complete login with a TOTP code." });
@@ -102,8 +130,9 @@ public sealed class AuthController(ISender sender, IOptions<JwtOptions> jwtOptio
     [AllowAnonymous]
     public IActionResult Google([FromQuery] string? returnUrl = null)
     {
+        var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? [];
         var properties = new AuthenticationProperties();
-        properties.Items["returnUrl"] = string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl;
+        properties.Items["returnUrl"] = SafeReturnUrl.Normalize(returnUrl, allowedOrigins);
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
 
@@ -112,9 +141,12 @@ public sealed class AuthController(ISender sender, IOptions<JwtOptions> jwtOptio
         Ok(await sender.Send(new EnrollTwoFactorCommand(), cancellationToken));
 
     [HttpPost("2fa/verify")]
-    public async Task<IActionResult> VerifyTwoFactor(VerifyTwoFactorCommand command, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(TwoFactorVerifyResultDto), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TwoFactorVerifyResultDto>> VerifyTwoFactor(
+        VerifyTwoFactorRequest request,
+        CancellationToken cancellationToken)
     {
-        await sender.Send(command, cancellationToken);
-        return Ok(new { enabled = true });
+        await sender.Send(new VerifyTwoFactorCommand { Code = request.Code }, cancellationToken);
+        return Ok(new TwoFactorVerifyResultDto(true));
     }
 }

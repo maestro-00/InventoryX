@@ -43,6 +43,7 @@ namespace InventoryX.Application.Commands.Requests.Catalog
         public decimal? ReorderPoint { get; init; }
         public decimal? ReorderQuantity { get; init; }
         public int? LeadTimeDays { get; init; }
+        public byte[]? ExpectedRowVersion { get; init; }
 
         public string AuditAction => "product.update";
         public string AuditEntityType => "Product";

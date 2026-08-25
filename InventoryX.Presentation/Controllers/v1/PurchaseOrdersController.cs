@@ -9,8 +9,24 @@ namespace InventoryX.Presentation.Controllers.v1;
 
 [Route("api/v1/purchase-orders")]
 [Authorize]
+[Tags("PurchaseOrders")]
 public sealed class PurchaseOrdersController(ISender sender) : ApiControllerBase
 {
+    public sealed record CreatePurchaseOrderRequest(
+        Guid SupplierId,
+        Guid DeliverToLocationId,
+        PurchaseOrderOrigin Origin,
+        Guid? OriginReferenceId,
+        DateTime? RequiredBy,
+        string? Notes,
+        List<PurchaseOrderLineInput> Lines);
+
+    public sealed record UpdatePurchaseOrderRequest(
+        Guid DeliverToLocationId,
+        DateTime? RequiredBy,
+        string? Notes,
+        List<PurchaseOrderLineInput> Lines);
+
     [HttpGet]
     public Task<Application.DTOs.Common.PagedResult<PurchaseOrderDto>> List(PurchaseOrderStatus? status, Guid? supplierId, bool overdue = false, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default) =>
         sender.Send(new GetPurchaseOrdersQuery(status, supplierId, overdue, page, pageSize), cancellationToken);
@@ -18,15 +34,39 @@ public sealed class PurchaseOrdersController(ISender sender) : ApiControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(PurchaseOrderDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status402PaymentRequired)]
-    public async Task<ActionResult<PurchaseOrderDto>> Create(CreatePurchaseOrderCommand command, CancellationToken cancellationToken)
+    public async Task<ActionResult<PurchaseOrderDto>> Create(CreatePurchaseOrderRequest request, CancellationToken cancellationToken)
     {
-        var result = await sender.Send(command, cancellationToken);
+        var result = await sender.Send(new CreatePurchaseOrderCommand
+        {
+            SupplierId = request.SupplierId,
+            DeliverToLocationId = request.DeliverToLocationId,
+            Origin = request.Origin,
+            OriginReferenceId = request.OriginReferenceId,
+            RequiredBy = request.RequiredBy,
+            Notes = request.Notes,
+            Lines = request.Lines ?? [],
+        }, cancellationToken);
+        SetETag(result.RowVersion);
         return CreatedAtAction(nameof(List), new { id = result.Id }, result);
     }
 
     [HttpPatch("{id:guid}")]
-    public Task<PurchaseOrderDto> Update(Guid id, UpdatePurchaseOrderCommand command, CancellationToken cancellationToken) =>
-        sender.Send(new UpdatePurchaseOrderCommand { Id = id, DeliverToLocationId = command.DeliverToLocationId, RequiredBy = command.RequiredBy, Notes = command.Notes, Lines = command.Lines }, cancellationToken);
+    [ProducesResponseType(typeof(PurchaseOrderDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<PurchaseOrderDto>> Update(Guid id, UpdatePurchaseOrderRequest request, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new UpdatePurchaseOrderCommand
+        {
+            Id = id,
+            DeliverToLocationId = request.DeliverToLocationId,
+            RequiredBy = request.RequiredBy,
+            Notes = request.Notes,
+            Lines = request.Lines ?? [],
+            ExpectedRowVersion = ParseIfMatchRowVersion(),
+        }, cancellationToken);
+        SetETag(result.RowVersion);
+        return Ok(result);
+    }
 
     [HttpPost("{id:guid}/submit")]
     [ProducesResponseType(StatusCodes.Status423Locked)]

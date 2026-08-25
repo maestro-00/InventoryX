@@ -7,6 +7,7 @@ using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
+using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Services;
 using Moq;
 
@@ -21,6 +22,8 @@ public sealed class SalePaymentTests : IDisposable
     private async Task<(CreateSaleCommandHandler Handler, Guid ProductId, Guid RegisterId, Guid ShiftId)> SetupAsync()
     {
         var context = _db.CreateContext();
+        _db.TenantContext.Role = "Cashier";
+        context.AppRoles.Add(new Role { Name = "Cashier", Permissions = Permission.Sell, IsSystem = true });
         var location = new Location { Name = "Main Shop" };
         var product = new Product { Name = "Sugar", SellingPrice = 10m };
         var register = new Register { Name = "R1", LocationId = location.Id };
@@ -49,7 +52,8 @@ public sealed class SalePaymentTests : IDisposable
                 ledger,
                 new TaxCalculator(),
                 _db.TenantContext,
-                _planEnforcer.Object),
+                _planEnforcer.Object,
+                new PosAccess(context, _db.TenantContext)),
             product.Id,
             register.Id,
             shift.Id);

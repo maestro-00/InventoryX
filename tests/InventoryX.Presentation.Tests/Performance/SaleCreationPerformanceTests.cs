@@ -43,7 +43,8 @@ public sealed class SaleCreationPerformanceTests
         var ledger = new StockLedger(context);
         await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, target.Id, location.Id, 100m, UnitCost: 5m, ReasonCode: "Performance seed")]);
         await context.SaveChangesAsync();
-        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), database.TenantContext, new Mock<IPlanEnforcer>().Object);
+        TestPosAccess.Cashier(context, database.TenantContext);
+        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), database.TenantContext, new Mock<IPlanEnforcer>().Object, new PosAccess(context, database.TenantContext));
 
         await handler.Handle(Command(target.Id, register.Id, shift.Id), CancellationToken.None);
         var elapsed = new List<double>(MeasuredSales);

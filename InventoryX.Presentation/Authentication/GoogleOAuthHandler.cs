@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace InventoryX.Presentation.Authentication;
@@ -20,19 +21,21 @@ public static class GoogleOAuthHandler
         var tokenService = context.HttpContext.RequestServices.GetRequiredService<ITokenService>();
         var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
         var jwtOptions = context.HttpContext.RequestServices.GetRequiredService<IOptions<JwtOptions>>();
+        var configuration = context.HttpContext.RequestServices.GetRequiredService<IConfiguration>();
         var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
         var logger = loggerFactory.CreateLogger("InventoryX.Presentation.Authentication.GoogleOAuthHandler");
 
+        var allowedOrigins = configuration.GetSection("Frontend:AllowedOrigins").Get<string[]>() ?? [];
         var returnUrl = "/";
         if (context.Properties?.Items != null &&
             context.Properties.Items.TryGetValue("returnUrl", out var url) &&
             !string.IsNullOrWhiteSpace(url))
         {
-            returnUrl = url;
+            returnUrl = SafeReturnUrl.Normalize(url, allowedOrigins);
         }
         else if (!string.IsNullOrWhiteSpace(context.Properties?.RedirectUri))
         {
-            returnUrl = context.Properties.RedirectUri;
+            returnUrl = SafeReturnUrl.Normalize(context.Properties.RedirectUri, allowedOrigins);
         }
 
         var email = context.Principal?.FindFirstValue(ClaimTypes.Email);

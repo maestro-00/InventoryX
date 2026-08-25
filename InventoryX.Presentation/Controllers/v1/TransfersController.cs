@@ -1,4 +1,6 @@
 using InventoryX.Application.Commands.Requests.Inventory;
+using InventoryX.Application.DTOs.Common;
+using InventoryX.Application.Queries.Requests.Inventory;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,8 +9,16 @@ namespace InventoryX.Presentation.Controllers.v1;
 
 [Route("api/v1/transfers")]
 [Authorize]
+[Tags("Transfers")]
 public sealed class TransfersController(ISender sender) : ApiControllerBase
 {
+    [HttpGet]
+    [ProducesResponseType(typeof(PagedResult<StockTransferDto>), StatusCodes.Status200OK)]
+    public Task<PagedResult<StockTransferDto>> List(
+        [FromQuery] GetTransfersQuery query,
+        CancellationToken cancellationToken) =>
+        sender.Send(query, cancellationToken);
+
     [HttpPost]
     public async Task<ActionResult<StockTransferResult>> Create(CreateStockTransferCommand command, CancellationToken cancellationToken)
     {

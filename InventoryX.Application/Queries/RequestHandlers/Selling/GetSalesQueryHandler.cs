@@ -4,16 +4,19 @@ using InventoryX.Application.DTOs.Selling;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Queries.Requests.Selling;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Selling;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Queries.RequestHandlers.Selling
 {
-    public class GetSalesQueryHandler(IAppDbContext context) : IRequestHandler<GetSalesQuery, PagedResult<SaleDto>>
+    public class GetSalesQueryHandler(IAppDbContext context, IPosAccess posAccess)
+        : IRequestHandler<GetSalesQuery, PagedResult<SaleDto>>
     {
         public async Task<PagedResult<SaleDto>> Handle(GetSalesQuery request, CancellationToken cancellationToken)
         {
+            await posAccess.EnsureCanViewSalesAsync(cancellationToken);
             var query = context.Sales
                 .Include(s => s.Lines).Include(s => s.Payments)
                 .AsQueryable();
@@ -22,7 +25,10 @@ namespace InventoryX.Application.Queries.RequestHandlers.Selling
             if (request.To is not null) query = query.Where(s => s.OccurredAt <= request.To);
             if (request.LocationId is not null) query = query.Where(s => s.LocationId == request.LocationId);
             if (request.RegisterId is not null) query = query.Where(s => s.RegisterId == request.RegisterId);
-            if (request.CashierId is not null) query = query.Where(s => s.CashierId == request.CashierId);
+            if (!await posAccess.CanViewOthersAsync(cancellationToken))
+                query = query.Where(s => s.CashierId == posAccess.UserId);
+            else if (request.CashierId is not null)
+                query = query.Where(s => s.CashierId == request.CashierId);
             if (!string.IsNullOrEmpty(request.Status) && Enum.TryParse<SaleStatus>(request.Status, true, out var status))
                 query = query.Where(s => s.Status == status);
 
@@ -37,14 +43,18 @@ namespace InventoryX.Application.Queries.RequestHandlers.Selling
         }
     }
 
-    public class GetSaleQueryHandler(IAppDbContext context) : IRequestHandler<GetSaleQuery, SaleDto>
+    public class GetSaleQueryHandler(IAppDbContext context, IPosAccess posAccess) : IRequestHandler<GetSaleQuery, SaleDto>
     {
         public async Task<SaleDto> Handle(GetSaleQuery request, CancellationToken cancellationToken)
         {
+            await posAccess.EnsureCanViewSalesAsync(cancellationToken);
             var sale = await context.Sales
                 .Include(s => s.Lines).Include(s => s.Payments)
                 .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken)
                 ?? throw new NotFoundException("Sale not found.");
+            if (!await posAccess.CanViewOthersAsync(cancellationToken)
+                && !string.Equals(sale.CashierId, posAccess.UserId, StringComparison.Ordinal))
+                throw new NotFoundException("Sale not found.");
             return SaleMapping.ToDto(sale);
         }
     }

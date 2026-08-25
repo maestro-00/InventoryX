@@ -5,7 +5,8 @@
 | Method | Path | Purpose | Permission |
 |--------|------|---------|-----------|
 | GET | `/suppliers` | Paged list with performance summary (on-time rate, achieved lead time) | ManagePurchasing |
-| POST/PATCH | `/suppliers/{id?}` | Manage supplier, terms, lead time, currency | ManagePurchasing |
+| POST | `/suppliers` | Create supplier | ManagePurchasing |
+| PATCH | `/suppliers/{id}` | Update supplier terms; send `If-Match` ETag | ManagePurchasing |
 | GET | `/suppliers/{id}/products` | Supplied products with supplier codes & price history | ManagePurchasing |
 | PUT | `/suppliers/{id}/products` | Link products + supplier codes/prices | ManagePurchasing |
 | GET | `/suppliers/{id}/orders` | Order history | ManagePurchasing |

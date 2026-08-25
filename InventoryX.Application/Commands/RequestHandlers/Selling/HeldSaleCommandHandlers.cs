@@ -16,6 +16,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
         IAppDbContext context,
         IStockLedger stockLedger,
         IPlanEnforcer planEnforcer,
+        IPosAccess posAccess,
         IReceiptBuilder? receiptBuilder = null) : IRequestHandler<CompleteHeldSaleCommand, SaleDto>
     {
         public async Task<SaleDto> Handle(CompleteHeldSaleCommand request, CancellationToken cancellationToken)
@@ -27,11 +28,15 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                 ?? throw new NotFoundException("Held sale not found.");
             if (sale.Status != SaleStatus.Held)
                 throw new ConflictException("Only held sales can be completed.");
+            if (!await posAccess.CanViewOthersAsync(cancellationToken)
+                && !string.Equals(sale.CashierId, posAccess.UserId, StringComparison.Ordinal))
+                throw new NotFoundException("Held sale not found.");
 
-            var shiftOpen = await context.Shifts.AnyAsync(
+            var shift = await context.Shifts.FirstOrDefaultAsync(
                 s => s.Id == sale.ShiftId && s.RegisterId == sale.RegisterId && s.Status == ShiftStatus.Open,
-                cancellationToken);
-            if (!shiftOpen) throw new ConflictException("Completing a held sale requires its shift to remain open.");
+                cancellationToken)
+                ?? throw new ConflictException("Completing a held sale requires its shift to remain open.");
+            await posAccess.EnsureCanOperateShiftAsync(shift, cancellationToken);
 
             decimal tendered = 0;
             foreach (var payment in request.Payments)

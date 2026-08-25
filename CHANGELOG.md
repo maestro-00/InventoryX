@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `GET /api/v1/shifts` and `GET /api/v1/registers/{id}/shifts` so a POS can list and resume an open shift.
+- `GET /api/v1/transfers` (paged), `PATCH /api/v1/registers/{id}`, and `PATCH /api/v1/suppliers/{id}` to match Cycle 1 contracts.
+- Paged list envelopes for `GET /users`, `GET /suppliers`, and `GET /billing/invoices`.
+- OpenAPI hardening: `InventoryX API` info block, HTTP Bearer security scheme, controller tags, XML comments.
+- Public request DTOs for sale/product/location/PO/auth create flows (offline-only sale flags excluded from Swagger).
+- ETag/`If-Match` on products, locations, tenant, purchase orders (draft), registers, and suppliers; users use Identity `ConcurrencyStamp`.
+- Typed list DTOs for users, roles, product batches, and alerts.
+- Cashiers resume only their own open shift and see only their own sales; managers (Sell + ViewReports) can see and continue others’ still-open shifts. Takeover is implicit (`Sale.CashierId` is the acting user).
 - Cycle 1 multi-tenant inventory and POS API under `/api/v1`.
 - Tenant onboarding, fixed roles, user invitations, register PINs, audit logging, and plan enforcement.
 - Catalogue, variants, spreadsheet import, stock ledger, transfers, counts, adjustments, and exports.
@@ -20,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Evolved the legacy inventory-item/retail-stock model into product and ledger-backed stock aggregates.
 - Standardized API routes, pagination, authorization, and Swagger against the Cycle 1 contracts.
+- Swagger now documents `/api/v1` only; legacy Identity helpers under `/api/auth/*` remain for cookie/OAuth but are excluded from OpenAPI.
 
 ### Deprecated
 

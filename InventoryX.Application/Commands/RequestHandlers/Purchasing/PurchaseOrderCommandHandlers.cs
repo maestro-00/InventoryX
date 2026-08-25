@@ -1,6 +1,7 @@
 using InventoryX.Application.Commands.Requests.Purchasing;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Purchasing;
 using MediatR;
@@ -33,6 +34,7 @@ public sealed class PurchaseOrderCommandHandler(IAppDbContext context)
         ValidateLines(request.Lines);
         var order = await LoadAsync(context, request.Id, cancellationToken);
         if (order.Status != PurchaseOrderStatus.Draft) throw new ConflictException("Only draft purchase orders can be edited.");
+        RowVersionGuard.EnsureMatch(order.RowVersion, request.ExpectedRowVersion);
         context.PurchaseOrderLines.RemoveRange(order.Lines);
         order.Lines = MapLines(request.Lines);
         order.RequiredBy = request.RequiredBy;
@@ -49,7 +51,8 @@ public sealed class PurchaseOrderCommandHandler(IAppDbContext context)
     internal static PurchaseOrderDto Map(PurchaseOrder order) => new(order.Id, order.SupplierId, order.DeliverToLocationId, order.Status, order.Origin,
         order.OriginReferenceId, order.RequiredBy, order.Notes, order.Total,
         order.Lines.Select(line => new PurchaseOrderLineDto(line.Id, line.ProductId, line.VariantId, line.Description,
-            line.OrderedQty, line.ReceivedQty, line.DamagedQty, line.UnitCost)).ToList());
+            line.OrderedQty, line.ReceivedQty, line.DamagedQty, line.UnitCost)).ToList(),
+        order.RowVersion);
 
     private static List<PurchaseOrderLine> MapLines(IEnumerable<PurchaseOrderLineInput> lines) => lines.Select(line => new PurchaseOrderLine
     { ProductId = line.ProductId, VariantId = line.VariantId, Description = line.Description.Trim(), OrderedQty = line.OrderedQty, UnitCost = line.UnitCost }).ToList();

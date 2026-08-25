@@ -2,6 +2,7 @@ using InventoryX.Application.Commands.Requests.Tenancy;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Queries.Requests.Tenancy;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Tenancy;
@@ -30,6 +31,7 @@ namespace InventoryX.Application.Commands.RequestHandlers.Tenancy
             BillingEmail = tenant.BillingEmail,
             Address = tenant.Address,
             Phone = tenant.Phone,
+            RowVersion = tenant.RowVersion,
         };
 
         public static async Task<Tenant> CurrentAsync(IAppDbContext context, ITenantContext tenantContext, CancellationToken ct) =>
@@ -50,6 +52,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Tenancy
         public async Task<TenantDto> Handle(UpdateTenantCommand request, CancellationToken cancellationToken)
         {
             var tenant = await TenantMapping.CurrentAsync(context, tenantContext, cancellationToken);
+
+            RowVersionGuard.EnsureMatch(tenant.RowVersion, request.ExpectedRowVersion);
 
             tenant.Name = request.Name ?? tenant.Name;
             tenant.Address = request.Address ?? tenant.Address;

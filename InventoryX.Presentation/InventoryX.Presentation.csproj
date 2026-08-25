@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>false</InvariantGlobalization>
     <UserSecretsId>aeaa7cf3-4b4a-45e9-bf11-6db06c0a2cd1</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,5 +27,14 @@
     <ProjectReference Include="..\InventoryX.Domain\InventoryX.Domain.csproj" />
     <ProjectReference Include="..\InventoryX.Infrastructure\InventoryX.Infrastructure.csproj" />
   </ItemGroup>
+
+  <!-- Copy Application XML docs so Swagger IncludeXmlComments can find them at runtime. -->
+  <Target Name="CopyApplicationXmlDocs" AfterTargets="Build">
+    <Copy
+      SourceFiles="$(ProjectDir)..\InventoryX.Application\bin\$(Configuration)\$(TargetFramework)\InventoryX.Application.xml"
+      DestinationFolder="$(OutputPath)"
+      SkipUnchangedFiles="true"
+      Condition="Exists('$(ProjectDir)..\InventoryX.Application\bin\$(Configuration)\$(TargetFramework)\InventoryX.Application.xml')" />
+  </Target>
 
 </Project>

@@ -14,7 +14,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using Swashbuckle.AspNetCore.Filters;
 using MediatR;
 using InventoryX.Presentation.Swagger;
 using System.Threading.RateLimiting;
@@ -73,17 +72,37 @@ namespace InventoryX.Presentation.Configuration
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(opt =>
             {
-                opt.CustomSchemaIds(type => (type.FullName ?? type.Name).Replace('+', '.'));
-                opt.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                opt.SwaggerDoc("v1", new OpenApiInfo
                 {
+                    Title = "InventoryX API",
+                    Version = "v1",
+                    Description =
+                        "Cycle 1 multi-tenant inventory and POS API. Contracts live in " +
+                        "specs/001-inventory-pos-platform/contracts/. Authenticate with " +
+                        "Authorization: Bearer <JWT> unless an operation is anonymous.",
+                });
+                opt.AddServer(new OpenApiServer { Url = "/" });
+                opt.CustomSchemaIds(type => (type.FullName ?? type.Name).Replace('+', '.'));
+                opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
                     In = ParameterLocation.Header,
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
+                    Description = "JWT access token from POST /api/v1/auth/login or /auth/register.",
                 });
-                opt.OperationFilter<SecurityRequirementsOperationFilter>();
+                opt.OperationFilter<BearerSecurityRequirementsOperationFilter>();
+                opt.OperationFilter<ControllerTagsOperationFilter>();
                 opt.OperationFilter<LiveOnlyOperationFilter>();
-            }
-            );
+
+                var presentationXml = Path.Combine(AppContext.BaseDirectory, "InventoryX.Presentation.xml");
+                if (File.Exists(presentationXml))
+                    opt.IncludeXmlComments(presentationXml, includeControllerXmlComments: true);
+                var applicationXml = Path.Combine(AppContext.BaseDirectory, "InventoryX.Application.xml");
+                if (File.Exists(applicationXml))
+                    opt.IncludeXmlComments(applicationXml);
+            });
 
            // This ensures Identity properly configures the authentication schemes
             services.AddIdentity<User, IdentityRole>()
@@ -243,6 +262,7 @@ namespace InventoryX.Presentation.Configuration
 
             app.MapGroup("/api/auth")
                 .RequireRateLimiting("auth")
+                .ExcludeFromDescription()
                 .MapCustomIdentityApi<User>();
 
             return app;

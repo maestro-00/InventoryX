@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
 
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPosAccess, PosAccess>();
         services.AddScoped<ITaxCalculator, TaxCalculator>();
         services.AddTransient<IEmailSender, EmailSender>();
         services.AddTransient<IAttachmentEmailSender, EmailSender>();

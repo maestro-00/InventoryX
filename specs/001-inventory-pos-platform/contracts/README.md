@@ -23,7 +23,8 @@ blocker. Files: [auth-tenancy.md](./auth-tenancy.md), [billing.md](./billing.md)
 - **Pagination**: `?page=1&pageSize=50` (max 200) → envelope
   `{ "items": [], "page", "pageSize", "totalCount" }`.
 - **Concurrency**: mutable aggregates return `ETag` (rowversion); mutations send
-  `If-Match`; mismatch → `409`.
+  `If-Match`; mismatch → `409`. User records use Identity `ConcurrencyStamp` as the
+  weak ETag (not SQL rowversion).
 - **Idempotency**: endpoints marked *idempotent-by-key* dedupe on a client-supplied
   UUID; replays return the original result with `200` instead of `201`.
 - **Money/quantities**: decimal strings in tenant currency; quantities up to 3 dp.

@@ -34,8 +34,10 @@ public sealed class ConflictReviewTests : IDisposable
         await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, product.Id, location.Id, 1m)]);
         await context.SaveChangesAsync();
         var notifications = new NotificationService(context);
+        TestPosAccess.Cashier(context, _db.TenantContext);
         var ingest = new IngestOfflineSalesCommandHandler(
-            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(), null, notifications);
+            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(),
+            new PosAccess(context, _db.TenantContext), null, notifications);
         var ingested = await ingest.Handle(new IngestOfflineSalesCommand
         {
             Sales = [new InventoryX.Application.Commands.Requests.Selling.CreateSaleCommand

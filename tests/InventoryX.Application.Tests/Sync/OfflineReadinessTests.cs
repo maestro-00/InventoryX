@@ -36,8 +36,10 @@ public sealed class OfflineFiscalSnapshotTests : IDisposable
         await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, product.Id, location.Id, 10m)]);
         await context.SaveChangesAsync();
 
+        TestPosAccess.Cashier(context, _db.TenantContext);
         var handler = new IngestOfflineSalesCommandHandler(
-            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+            context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(),
+            new PosAccess(context, _db.TenantContext));
         var clientSaleId = Guid.NewGuid();
         var results = await handler.Handle(new IngestOfflineSalesCommand
         {

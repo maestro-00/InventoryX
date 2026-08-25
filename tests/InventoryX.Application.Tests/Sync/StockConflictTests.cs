@@ -31,7 +31,8 @@ public sealed class StockConflictTests : IDisposable
         await ledger.AppendAsync([new StockMovementRequest(MovementType.Adjustment, product.Id, location.Id, 1m)]);
         await context.SaveChangesAsync();
 
-        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>());
+        TestPosAccess.Cashier(context, _db.TenantContext);
+        var handler = new CreateSaleCommandHandler(context, ledger, new TaxCalculator(), _db.TenantContext, Mock.Of<IPlanEnforcer>(), new PosAccess(context, _db.TenantContext));
         var result = await handler.Handle(new CreateSaleCommand
         {
             RegisterId = register.Id, ShiftId = shift.Id, OfflineOrigin = true, AllowNegativeStock = true,
