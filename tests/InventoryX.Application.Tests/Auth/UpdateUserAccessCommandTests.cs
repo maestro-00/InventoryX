@@ -4,6 +4,7 @@ using InventoryX.Application.Commands.Requests.Auth;
 using InventoryX.Application.Exceptions;
 using InventoryX.Common.Tests;
 using InventoryX.Domain.Models;
+using InventoryX.Domain.Models.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
 namespace InventoryX.Application.Tests.Auth;
@@ -33,7 +34,8 @@ public sealed class UpdateUserAccessCommandTests : IDisposable
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        var handler = new UpdateUserAccessCommandHandler(context);
+        var handler = new UpdateUserAccessCommandHandler(
+            context, _db.TenantContext, TestPosAccess.For(context, _db.TenantContext, "Admin", Permission.ManageUsers));
         await handler.Handle(new UpdateUserAccessCommand
         {
             UserId = user.Id,
@@ -62,7 +64,8 @@ public sealed class UpdateUserAccessCommandTests : IDisposable
         });
         await context.SaveChangesAsync();
 
-        var handler = new UpdateUserAccessCommandHandler(context);
+        var handler = new UpdateUserAccessCommandHandler(
+            context, _db.TenantContext, TestPosAccess.For(context, _db.TenantContext, "Admin", Permission.ManageUsers));
         var act = () => handler.Handle(new UpdateUserAccessCommand
         {
             UserId = "owner-1",
@@ -70,6 +73,31 @@ public sealed class UpdateUserAccessCommandTests : IDisposable
         }, CancellationToken.None);
 
         await act.Should().ThrowAsync<ConflictException>();
+    }
+
+    [Fact]
+    public async Task Rejects_cross_tenant_user_update()
+    {
+        var otherTenantId = Guid.NewGuid();
+        await using var context = _db.CreateContext();
+        context.Users.Add(new User
+        {
+            Id = "other-tenant-user",
+            TenantId = otherTenantId,
+            UserName = "other@example.com",
+            Email = "other@example.com",
+        });
+        await context.SaveChangesAsync();
+
+        var handler = new UpdateUserAccessCommandHandler(
+            context, _db.TenantContext, TestPosAccess.For(context, _db.TenantContext, "Admin", Permission.ManageUsers));
+        var act = () => handler.Handle(new UpdateUserAccessCommand
+        {
+            UserId = "other-tenant-user",
+            Status = UserStatus.Deactivated,
+        }, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotFoundException>();
     }
 
     public void Dispose() => _db.Dispose();
