@@ -24,6 +24,7 @@
 | GET | `/sales/{id}` | Detail incl. payments, receipt ref. Cashiers receive 404 for another cashier’s sale | Sell (own) / ViewReports |
 | POST | `/sales/{id}/void` | Void (audit-logged; permission-gated) | per role |
 | GET | `/sales/held` | Held sales for recall (multi-hold, FR-038). Same own-vs-ViewReports rule as GET `/sales` | Sell (own) / ViewReports |
+| GET | `/sales/held/{id}` | Recall a single held sale for completion | Sell (own) / ViewReports |
 | POST | `/sales/{id}/complete` | Complete a Held sale (stock applies now). Same own-vs-manager shift rule as POST `/sales` | Sell |
 | GET | `/products/{id}/availability?locationId=` | Live stock at this + other locations for POS (FR-038); marked live-only for offline clients | Sell |
 
@@ -33,7 +34,7 @@
 |--------|------|---------|-----------|
 | GET | `/sales/{id}/receipt` | Structured receipt payload (fiscal fields, Ghana levy lines) for client rendering | Sell |
 | POST | `/sales/{id}/receipt/deliver` | Body: channel Email\|Sms\|Qr + destination; logs delivery | Sell |
-| GET/PATCH | `/tenant/receipt-template` | Logo, business details, tax registration, footer, return policy | Owner/Admin |
+| GET/PUT | `/tenant/receipt-template` | Logo, business details, tax registration, footer, return policy; PUT replaces the full template JSON (not a partial patch) | Owner/Admin |
 
 ## Returns & exchanges (FR-041)
 

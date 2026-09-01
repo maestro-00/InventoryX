@@ -17,12 +17,16 @@ namespace InventoryX.Application.Options
 
         /// <summary>
         /// Empty or template placeholder keys fall back to the development key so
-        /// token issuance and bearer validation never diverge.
+        /// token issuance and bearer validation never diverge in non-production.
         /// </summary>
         public string ResolveSigningKey() =>
+            UsesDevelopmentSigningKey() ? DevelopmentSigningKey : SigningKey;
+
+        public bool UsesDevelopmentSigningKey() =>
             string.IsNullOrWhiteSpace(SigningKey) ||
-            SigningKey.Contains("Your Signing Key", StringComparison.OrdinalIgnoreCase)
-                ? DevelopmentSigningKey
-                : SigningKey;
+            SigningKey.Contains("Your Signing Key", StringComparison.OrdinalIgnoreCase) ||
+            SigningKey.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase) ||
+            SigningKey.Contains("===", StringComparison.OrdinalIgnoreCase) ||
+            SigningKey == DevelopmentSigningKey;
     }
 }

@@ -6,6 +6,7 @@
 |--------|------|---------|-----------|
 | GET | `/locations` | List (plan-capped) | any |
 | POST/PATCH | `/locations/{id?}` | Manage; 402 over plan limit | Owner/Admin |
+| DELETE | `/locations/{id}` | Soft-delete location (30-day recovery window per data-model); sets `IsActive=false` | Owner/Admin |
 | GET | `/stock` | Paged stock levels; filters: locationId, productId, categoryId, `belowReorder`, `expiringWithinDays`; business-wide rollup with `groupBy=product` (FR-022) | ManageStock or Sell (availability only) |
 | GET | `/stock/movements` | Paged append-only ledger; filters: product, location, type, date range, user (FR-024) | ManageStock |
 | GET | `/products/{id}/batches` | Batches with remaining qty, expiry, FEFO order (FR-021) | ManageStock |
@@ -19,6 +20,7 @@
 | POST | `/stock/adjustments/{id}/approve` \| `/reject` | Approver ≠ requester → else 409 | ApproveAdjustments |
 | POST | `/stock/consumption` | Internal use write-off | ManageStock |
 | GET | `/stock/adjustment-reasons` | Seeded + tenant reasons | any |
+| POST | `/stock/movements/{id}/correct` | Append-only correction: original movement preserved, delta applied as new entry (spec US3 scenario 4) | ManageStock |
 
 ## Transfers (two-state, FR-023)
 

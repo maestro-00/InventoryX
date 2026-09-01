@@ -10,7 +10,7 @@ CSV/XLSX/PDF exports.
 
 - `InventoryX.Domain` — tenant-owned entities and domain state machines.
 - `InventoryX.Application` — CQRS requests, validation, authorization, audit, and service contracts.
-- `InventoryX.Infrastructure` — EF Core/SQL Server, Paystack, SendGrid, exports, and background workers.
+- `InventoryX.Infrastructure` — EF Core/PostgreSQL, Paystack, SendGrid, exports, and background workers.
 - `InventoryX.Presentation` — versioned `/api/v1` controllers, middleware, Swagger, and health checks.
 - `tests/` — common fixtures plus application, infrastructure, and presentation tests.
 
@@ -27,8 +27,24 @@ CSV/XLSX/PDF exports.
 ## Requirements
 
 - .NET 8 SDK
-- SQL Server
+- PostgreSQL 16+ (Supabase, Docker, or local install)
 - `dotnet-ef` 9.x for migration commands
+
+## Deploy to Render + Supabase (portfolio demo)
+
+See **[docs/deploy/render.md](docs/deploy/render.md)** for the full guide.
+
+Quick summary:
+
+1. Create a Supabase project and copy the **session mode** Postgres connection string.
+2. Deploy to Render using the root [`render.yaml`](render.yaml) (Docker runtime, free tier).
+3. Set `ConnectionStrings__DefaultConnection`, `Jwt__SigningKey`, and `Frontend__AllowedOrigins__0` in Render.
+4. Set `DEMO_MODE=true` to pre-seed a demo tenant (`demo@inventoryx.dev` / `Demo123!`).
+5. Open `https://<your-service>.onrender.com/swagger`.
+
+**Free-tier note**: Render spins down after ~15 minutes of inactivity. The first request after idle may take 30–60 seconds (cold start).
+
+Environment variable template: [docs/deploy/env.example](docs/deploy/env.example).
 
 ## Configuration
 
@@ -45,7 +61,17 @@ Never commit real credentials.
 
 ## Run Locally
 
+With Docker Postgres:
+
 ```bash
+docker run -d --name inventoryx-pg \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=InventoryX \
+  -p 5433:5432 postgres:16
+
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5433;Database=InventoryX;Username=postgres;Password=postgres"
+export DEMO_MODE=true
+
 dotnet restore InventoryX.sln
 dotnet ef database update \
   --project InventoryX.Infrastructure/InventoryX.Infrastructure.csproj \

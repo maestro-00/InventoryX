@@ -6,10 +6,10 @@
 ## Prerequisites
 
 - .NET 8.0 SDK
-- SQL Server (LocalDB, or container):
-  `docker run -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='<YourStrong!Pass>' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest`
-- Environment (never committed — constitution Principle V): `ConnectionStrings__Default`,
-  `Jwt__Key`, `Paystack__SecretKey` (test key), `SendGrid__ApiKey` (optional locally)
+- PostgreSQL 16+ (local Docker, Supabase, or managed instance):
+  `docker run -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=InventoryX -p 5433:5432 -d postgres:16`
+- Environment (never committed — constitution Principle V): `ConnectionStrings__DefaultConnection`,
+  `Jwt__SigningKey`, `Paystack__SecretKey` (test key), `SendGridKey` (optional locally)
 
 ## Build & test (the constitution gate)
 

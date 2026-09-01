@@ -1,0 +1,38 @@
+# Optional Render deploy trigger when Git auto-deploy is unavailable (e.g. GitLab-only origin).
+# Primary path: connect the repo in Render and use render.yaml (auto-deploy on push to main).
+#
+# Setup: Render Dashboard → inventoryx-api → Settings → Deploy Hook → copy URL to
+# GitHub secret RENDER_DEPLOY_HOOK, then uncomment the push trigger below if desired.
+
+name: Deploy to Render
+
+on:
+  workflow_dispatch:
+  # Uncomment after RENDER_DEPLOY_HOOK is set in GitHub secrets:
+  # push:
+  #   branches:
+  #     - main
+  #   paths-ignore:
+  #     - '**.md'
+  #     - 'docs/**'
+  #     - 'specs/**'
+  #     - '.specify/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "${RENDER_DEPLOY_HOOK}" ]; then
+            echo "::error::RENDER_DEPLOY_HOOK secret is not set. Add it from Render → inventoryx-api → Settings → Deploy Hook."
+            exit 1
+          fi
+          set -euo pipefail
+          response="$(curl -sS -w "\n%{http_code}" -X POST "$RENDER_DEPLOY_HOOK")"
+          http_code="${response##*$'\n'}"
+          body="${response%$'\n'*}"
+          echo "$body"
+          test "$http_code" -ge 200 && test "$http_code" -lt 300

@@ -26,7 +26,7 @@ If you've found a bug or issue:
 - Clear description of the issue
 - Steps to reproduce
 - Expected vs actual behavior
-- Environment details (.NET version, OS, SQL Server version)
+- Environment details (.NET version, OS, PostgreSQL version)
 - Error messages or logs
 - Screenshots (if applicable)
 
@@ -44,9 +44,10 @@ For questions, ideas, and general discussions:
 #### Setup and Installation
 
 **Q: I'm getting database connection errors**
-- Verify your connection string in `appsettings.json`
-- Ensure SQL Server is running
+- Verify your connection string (`ConnectionStrings__DefaultConnection` via env or user secrets)
+- Ensure PostgreSQL is running (local Docker: `docker run -p 5433:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=InventoryX -d postgres:16`)
 - Check that the database exists (run `dotnet ef database update`)
+- For portfolio demos, see [docs/deploy/render.md](docs/deploy/render.md) (Render + Supabase)
 
 **Q: How do I run the project?**
 - See the [Getting Started](README.md#-getting-started) section in the README

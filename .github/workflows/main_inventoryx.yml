@@ -1,7 +1,12 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
+#
+# InventoryX uses PostgreSQL (Npgsql). The build job provisions a Postgres 16
+# service container for integration tests and future migration verification.
+# Presentation tests currently use Sqlite in-memory; the Postgres connection
+# string is available for any job that needs a live database.
 
-name: Build and deploy ASP.Net Core app to Azure Web App - InventoryX
+name: Build and test ASP.NET Core app (PostgreSQL) — deploy to Azure
 
 on:
   push:
@@ -15,6 +20,24 @@ jobs:
     permissions:
       contents: read #This is required for actions/checkout
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: InventoryX
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=InventoryX;Username=postgres;Password=postgres
+
     steps:
       - uses: actions/checkout@v6
       - name: Set up .NET Core
@@ -23,7 +46,10 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Build with dotnet
-        run: dotnet build InventoryX.Presentation/InventoryX.Presentation.csproj --configuration Release
+        run: dotnet build InventoryX.sln --configuration Release
+
+      - name: Run tests
+        run: dotnet test InventoryX.sln -c Release --no-build
 
       - name: dotnet publish
         run: dotnet publish InventoryX.Presentation/InventoryX.Presentation.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp --no-build
@@ -54,6 +80,8 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_40D55244F9B04245A6B842FE555004D4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_93C375D2C4664ECA8BB26FD633EADC8F }}
 
+      # The deployed app requires a PostgreSQL connection string
+      # (ConnectionStrings__DefaultConnection) configured in Azure App Service.
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -61,4 +89,3 @@ jobs:
           app-name: 'InventoryX'
           slot-name: 'Production'
           package: .
-          
