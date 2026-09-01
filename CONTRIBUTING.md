@@ -27,7 +27,7 @@ Before creating bug reports, please check the existing issues to avoid duplicate
 - **Describe the exact steps to reproduce the problem**
 - **Provide specific examples** (code snippets, screenshots, etc.)
 - **Describe the behavior you observed and what you expected**
-- **Include your environment details** (.NET version, OS, SQL Server version)
+- **Include your environment details** (.NET version, OS, PostgreSQL version)
 
 ### Suggesting Enhancements
 
@@ -51,7 +51,7 @@ Unsure where to begin? Look for issues labeled:
 ### Prerequisites
 
 - .NET 8.0 SDK or later
-- SQL Server (LocalDB, Express, or full version)
+- PostgreSQL 16+ (Docker, local install, or [Supabase](https://supabase.com) for demo deployments)
 - Visual Studio 2022 / JetBrains Rider / VS Code
 - Git
 

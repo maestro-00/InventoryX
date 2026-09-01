@@ -24,8 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Purchasing, supplier catalogue links, goods receipts, landed costs, FEFO batches, and stock alerts.
 - Dashboard, standard/Ghana tax reports, CSV/XLSX/PDF export, schedules, and notification digests.
 - CI workflow, health checks, structured Serilog output, RFC 7807 middleware, and security rate limits.
+- Render deployment: `Dockerfile`, `render.yaml`, `docs/deploy/render.md`, and `DEMO_MODE` demo seeder (`demo@inventoryx.dev`).
+- Npgsql health check on `/health/ready`; `/health/live` remains a lightweight liveness probe.
 
 ### Changed
+- Database provider switched from SQL Server to PostgreSQL (Npgsql) for portfolio/demo deployments on Render + Supabase.
+- Squashed EF migrations into `InitialPostgres`; local dev and CI tests continue using Sqlite in-memory.
+- Cycle 1 contract docs aligned with implemented API: documented `DELETE /locations/{id}`, `POST /stock/movements/{id}/correct`, `GET /export/stock`, `GET /suppliers/{id}/performance`, `GET /purchase-orders/{id}/pdf`, `GET /sales/held/{id}`, report export routes, and corrected `/tenant/receipt-template` to `GET/PUT`.
 - Evolved the legacy inventory-item/retail-stock model into product and ledger-backed stock aggregates.
 - Standardized API routes, pagination, authorization, and Swagger against the Cycle 1 contracts.
 - Swagger now documents `/api/v1` only; legacy Identity helpers under `/api/auth/*` remain for cookie/OAuth but are excluded from OpenAPI.

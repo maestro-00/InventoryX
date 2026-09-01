@@ -22,7 +22,9 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"),
+                npgsql => npgsql.EnableRetryOnFailure(maxRetryCount: 3));
             options.AddInterceptors(serviceProvider.GetRequiredService<TenantSaveChangesInterceptor>());
         });
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());

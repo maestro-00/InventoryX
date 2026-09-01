@@ -8,8 +8,11 @@
 
 ## Standard reports (FR-049) — Cycle 1 "essential" set
 
-All accept `?from&to&locationId&categoryId&staffId&format=json|csv|xlsx|pdf`; async for
-long ranges (`202` + job poll); schedulable.
+On-screen JSON reports accept `?from&to&locationId&categoryId&staffId`. File export uses
+dedicated routes: `GET /reports/{reportType}/export?format=json|csv|xlsx|pdf&from&to&...`
+returns the file inline for ranges ≤ 31 days, or `202 Accepted` + `{ jobId }` for longer
+ranges; poll with `GET /reports/export-jobs/{id}` (`200` file or `202 Pending`). All
+report types are schedulable by email.
 
 | Method | Path | Report |
 |--------|------|--------|
@@ -19,6 +22,8 @@ long ranges (`202` + job poll); schedulable.
 | GET | `/reports/purchasing` | Orders outstanding, supplier performance, price changes |
 | GET | `/reports/staff` | Sales/discounts/refunds/voids per staff, till variances |
 | GET | `/reports/tax` | Ghana: VAT + NHIL/GETFund/COVID levy collected by rate & period, GRA-aligned format |
+| GET | `/reports/{reportType}/export` | Export report to file (ViewReports); short ranges stream inline, long ranges async |
+| GET | `/reports/export-jobs/{id}` | Poll/download async export job (ViewReports) |
 | POST | `/reports/schedules` | Schedule any above: cadence Daily\|Weekly\|Monthly, format, recipients (FR-049) |
 | GET | `/reports/schedules?page=1&pageSize=50` | Paged schedule list (`pageSize` 1-200) with `items`, `totalCount`, and navigation metadata |
 | GET/DELETE | `/reports/schedules/{id}` | Read or deactivate one schedule |

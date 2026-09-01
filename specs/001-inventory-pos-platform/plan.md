@@ -15,7 +15,7 @@ suppliers, and batch/expiry tracking. Backend API only; Ghana-first configuratio
 
 Evolve the existing InventoryX Clean Architecture API from a single-business inventory
 tracker into a multi-tenant SaaS backend combining inventory management and POS. The
-technical approach keeps the proven stack (.NET 8, EF Core + SQL Server, MediatR CQRS,
+technical approach keeps the proven stack (.NET 8, EF Core + PostgreSQL, MediatR CQRS,
 AutoMapper, ASP.NET Identity + JWT, Swashbuckle, xUnit) and layers on: tenant isolation
 via a `TenantId` discriminator with EF global query filters; a subscription/plan engine
 with usage enforcement; a reworked catalogue (Product/Variant replacing InventoryItem);
@@ -29,13 +29,15 @@ in Complexity Tracking.
 
 **Language/Version**: C# 12 / .NET 8.0 (LTS), ASP.NET Core Web API
 
-**Primary Dependencies**: EF Core 9 (SqlServer provider), MediatR 13, AutoMapper 15,
+**Primary Dependencies**: EF Core 9 (Npgsql/PostgreSQL for deployment; Sqlite for tests), MediatR 13, AutoMapper 15,
 ASP.NET Identity + JWT Bearer + Google OAuth, Swashbuckle (OpenAPI), SendGrid (email),
 FluentValidation (new), Serilog (new), Paystack REST API (new — subscription billing,
 cards + mobile money for Ghana)
 
-**Storage**: SQL Server (single database, shared schema, `TenantId` row isolation with
-EF Core global query filters); EF Core migrations only
+**Storage**: PostgreSQL (Npgsql provider) for deployed/demo environments; EF Core migrations
+in `InventoryX.Infrastructure/Data/Migrations/`. Local development and CI tests use Sqlite
+in-memory. Portfolio demo target: Supabase (Postgres) + Render — see `docs/deploy/render.md`.
+Single database, shared schema, `TenantId` row isolation with EF Core global query filters.
 
 **Testing**: xUnit + Moq + FluentAssertions + AutoFixture (existing shared test kit in
 `tests/InventoryX.Common.Tests`), coverlet for coverage; TDD per constitution

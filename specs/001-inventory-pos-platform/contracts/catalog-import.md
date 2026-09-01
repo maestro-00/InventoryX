@@ -25,6 +25,7 @@
 | DELETE | `/import/products/{jobId}` | Abandon job | ManageStock |
 | POST | `/import/opening-stock` (+ same mapping/commit flow) | Opening quantities & costs per location (FR-017 step 4) | ManageStock |
 | GET | `/export/products` | Stream CSV/XLSX of catalogue (FR-056) | any |
+| GET | `/export/stock` | Stream CSV/XLSX of stock levels by location (FR-056); cost columns omitted without ViewProfit | ManageStock |
 
 Validation highlights: sku unique per tenant (row-level error on import, not batch
 abort); variant attribute values must match parent's attribute schema; barcode

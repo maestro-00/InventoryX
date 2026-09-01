@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+.git/
+.github/
+.specify/
+tests/
+**/*.md
+!README.md
+docs/
+.cursor/
+*.user
+*.suo

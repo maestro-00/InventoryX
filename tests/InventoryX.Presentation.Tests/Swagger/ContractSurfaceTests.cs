@@ -108,5 +108,14 @@ public sealed class ContractSurfaceTests
         ("get", "/dashboard"), ("get", "/reports/sales"), ("get", "/reports/schedules"), ("post", "/reports/schedules"),
         ("get", "/notifications"), ("get", "/notification-preferences"),
         ("get", "/billing/invoices"),
+        ("delete", "/locations/{id}"),
+        ("get", "/export/stock"),
+        ("post", "/stock/movements/{id}/correct"),
+        ("get", "/suppliers/{id}/performance"),
+        ("get", "/purchase-orders/{id}/pdf"),
+        ("get", "/reports/{reportType}/export"),
+        ("get", "/reports/export-jobs/{id}"),
+        ("get", "/sales/held/{id}"),
+        ("put", "/tenant/receipt-template"),
     ];
 }

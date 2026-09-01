@@ -9,8 +9,8 @@ namespace InventoryX.Infrastructure.Data
         public AppDbContext CreateDbContext(string[] args)
         {
             var options = new DbContextOptionsBuilder<AppDbContext>()
-                .UseSqlServer(Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                              ?? "Server=localhost;Database=InventoryX;TrustServerCertificate=True;Integrated Security=false;User Id=sa;Password=design-time-only")
+                .UseNpgsql(Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                           ?? "Host=localhost;Port=5432;Database=InventoryX;Username=postgres;Password=postgres")
                 .Options;
             return new AppDbContext(options);
         }

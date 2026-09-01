@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: inventoryx-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    autoDeployTrigger: commit
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Jwt__SigningKey
+        generateValue: true
+      - key: Jwt__Issuer
+        value: InventoryX
+      - key: Jwt__Audience
+        value: InventoryX.Api
+      - key: DEMO_MODE
+        value: "true"
+      - key: SWAGGER_ENABLED
+        value: "true"
+      - key: Frontend__AllowedOrigins__0
+        sync: false

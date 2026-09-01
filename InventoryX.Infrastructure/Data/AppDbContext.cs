@@ -90,10 +90,10 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Subscription>().HasIndex(s => new { s.TenantId, s.Status });
             builder.Entity<ProcessedWebhookEvent>().HasIndex(item => item.EventId).IsUnique();
             builder.Entity<BillingInvoice>().HasIndex(item => new { item.TenantId, item.Number }).IsUnique();
-            builder.Entity<BillingInvoice>().HasIndex(item => item.PaymentReference).IsUnique().HasFilter("[PaymentReference] IS NOT NULL");
+            builder.Entity<BillingInvoice>().HasIndex(item => item.PaymentReference).IsUnique().HasFilter("\"PaymentReference\" IS NOT NULL");
             builder.Entity<OutboxMessage>().HasIndex(item => new { item.ProcessedAt, item.AvailableAt, item.ClaimExpiresAt });
             builder.Entity<OutboxMessage>().HasIndex(item => new { item.TenantId, item.IdempotencyKey })
-                .IsUnique().HasFilter("[IdempotencyKey] IS NOT NULL");
+                .IsUnique().HasFilter("\"IdempotencyKey\" IS NOT NULL");
             builder.Entity<OutboxMessage>().Property(item => item.IdempotencyKey).HasMaxLength(450);
 
             builder.Entity<UsageCounter>()
@@ -132,7 +132,7 @@ namespace InventoryX.Infrastructure.Data
                 .HasOne(c => c.Parent).WithMany().HasForeignKey(c => c.ParentId).OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<Product>()
-                .HasIndex(p => new { p.TenantId, p.Sku }).IsUnique().HasFilter("[Sku] IS NOT NULL");
+                .HasIndex(p => new { p.TenantId, p.Sku }).IsUnique().HasFilter("\"Sku\" IS NOT NULL");
             builder.Entity<Product>().HasIndex(p => new { p.TenantId, p.Barcode });
             builder.Entity<Product>()
                 .HasOne(p => p.Category).WithMany().HasForeignKey(p => p.CategoryId).OnDelete(DeleteBehavior.SetNull);
@@ -142,7 +142,7 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<ProductVariant>()
                 .HasOne(v => v.Product).WithMany(p => p.Variants).HasForeignKey(v => v.ProductId).OnDelete(DeleteBehavior.Cascade);
             builder.Entity<ProductVariant>()
-                .HasIndex(v => new { v.TenantId, v.Sku }).IsUnique().HasFilter("[Sku] IS NOT NULL");
+                .HasIndex(v => new { v.TenantId, v.Sku }).IsUnique().HasFilter("\"Sku\" IS NOT NULL");
 
             builder.Entity<StockLevel>()
                 .HasIndex(s => new { s.TenantId, s.ProductId, s.VariantId, s.LocationId, s.BatchId }).IsUnique();
@@ -210,6 +210,22 @@ namespace InventoryX.Infrastructure.Data
                 .HasIndex(item => new { item.TenantId, item.ClientSaleId, item.Status });
 
             ApplyTenantQueryFilters(builder);
+            ConfigureRowVersionColumns(builder);
+        }
+
+        private static void ConfigureRowVersionColumns(ModelBuilder builder)
+        {
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                if (entityType.FindProperty("RowVersion") is null)
+                    continue;
+
+                builder.Entity(entityType.ClrType)
+                    .Property("RowVersion")
+                    .HasColumnType("bytea")
+                    .IsConcurrencyToken()
+                    .ValueGeneratedOnAddOrUpdate();
+            }
         }
 
         /// <summary>

@@ -16,6 +16,7 @@ using Microsoft.OpenApi.Models;
 using Serilog;
 using MediatR;
 using InventoryX.Presentation.Swagger;
+using InventoryX.Presentation.Health;
 using System.Threading.RateLimiting;
 
 namespace InventoryX.Presentation.Configuration
@@ -223,22 +224,26 @@ namespace InventoryX.Presentation.Configuration
             {
                 using var scope = app.Services.CreateScope();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
                 try
                 {
                     dbContext.Database.Migrate();
-                    DataSeeder.SeedAsync(dbContext).GetAwaiter().GetResult();
+                    DataSeeder.SeedAsync(dbContext, app.Configuration, userManager).GetAwaiter().GetResult();
                     app.Logger.LogInformation("Database migrations and seeds applied successfully");
                 }
                 catch (Exception ex)
                 {
                     app.Logger.LogError(ex, "An error occurred while migrating the database");
-                    // Don't throw - let app start so we can see detailed errors in Azure logs
+                    if (app.Environment.IsProduction())
+                        DatabaseStartupHealth.IsHealthy = false;
                 }
             }
 
-            // Enable Swagger in all environments for Azure testing
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            if (IsSwaggerEnabled(app.Configuration, app.Environment))
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
 
             // app.UseHttpsRedirection();
 
@@ -266,6 +271,18 @@ namespace InventoryX.Presentation.Configuration
                 .MapCustomIdentityApi<User>();
 
             return app;
+        }
+
+        private static bool IsSwaggerEnabled(IConfiguration configuration, IHostEnvironment environment)
+        {
+            if (configuration.GetValue<bool?>("Swagger:Enabled") is bool configEnabled)
+                return configEnabled;
+
+            var envFlag = Environment.GetEnvironmentVariable("SWAGGER_ENABLED");
+            if (!string.IsNullOrWhiteSpace(envFlag) && bool.TryParse(envFlag, out var fromEnv))
+                return fromEnv;
+
+            return environment.IsDevelopment() || environment.IsEnvironment("Testing");
         }
     }
 }

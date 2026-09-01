@@ -399,3 +399,7 @@ FodyWeavers.xsd
 .idea/
 **/.idea/
 *.DotSettings.user
+
+# Local secrets (use docs/deploy/env.example as template)
+.env
+.env.local
