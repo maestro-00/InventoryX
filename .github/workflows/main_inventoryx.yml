@@ -39,7 +39,7 @@ jobs:
       ConnectionStrings__DefaultConnection: Host=localhost;Port=5432;Database=InventoryX;Username=postgres;Password=postgres
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Set up .NET Core
         uses: actions/setup-dotnet@v5
         with:
