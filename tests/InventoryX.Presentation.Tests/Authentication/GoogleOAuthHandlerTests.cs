@@ -134,4 +134,57 @@ public sealed class GoogleOAuthHandlerTests
         ticketContext.ReturnUri.Should().Contain("accessToken=");
         ticketContext.ReturnUri.Should().Contain("refreshToken=");
     }
+
+    [Fact]
+    public async Task OnTicketReceived_Provisions_Tenant_For_Existing_User_Without_Tenant()
+    {
+        var (sp, db, connection) = CreateServices();
+        using var _ = connection;
+        var httpContext = new DefaultHttpContext { RequestServices = sp };
+        sp.GetRequiredService<IHttpContextAccessor>().HttpContext = httpContext;
+
+        var userManager = sp.GetRequiredService<UserManager<User>>();
+        var existing = new User
+        {
+            UserName = "orphaned-oauth@example.com",
+            Email = "orphaned-oauth@example.com",
+            EmailConfirmed = true,
+            Name = "Orphan OAuth",
+            LocationScope = "*",
+            Status = UserStatus.Active,
+        };
+        (await userManager.CreateAsync(existing)).Succeeded.Should().BeTrue();
+
+        var identity = new ClaimsIdentity("Google");
+        identity.AddClaim(new Claim(ClaimTypes.Email, existing.Email!));
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, "google-sub-orphaned"));
+        identity.AddClaim(new Claim(ClaimTypes.Name, "Orphan OAuth"));
+        var principal = new ClaimsPrincipal(identity);
+
+        var authProperties = new AuthenticationProperties();
+        authProperties.Items["returnUrl"] = "http://localhost:5173/auth/google-callback";
+
+        var scheme = new AuthenticationScheme("Google", "Google", typeof(IAuthenticationHandler));
+        var ticket = new AuthenticationTicket(principal, authProperties, "Google");
+        var ticketContext = new TicketReceivedContext(httpContext, scheme, new RemoteAuthenticationOptions(), ticket)
+        {
+            Properties = authProperties,
+            Principal = principal,
+        };
+
+        await GoogleOAuthHandler.OnTicketReceived(ticketContext);
+
+        var stored = await userManager.FindByEmailAsync(existing.Email!);
+        stored.Should().NotBeNull();
+        stored!.TenantId.Should().NotBeNull();
+        stored.IsOwner.Should().BeTrue();
+        stored.RoleId.Should().NotBeNull();
+
+        var tenant = await db.Tenants.FirstOrDefaultAsync(t => t.Id == stored.TenantId);
+        tenant.Should().NotBeNull();
+        tenant!.Name.Should().Be("Orphan OAuth's Organization");
+
+        ticketContext.ReturnUri.Should().Contain("accessToken=");
+        ticketContext.ReturnUri.Should().Contain("refreshToken=");
+    }
 }
