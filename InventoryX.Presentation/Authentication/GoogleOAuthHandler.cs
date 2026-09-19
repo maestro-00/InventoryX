@@ -51,64 +51,18 @@ public static class GoogleOAuthHandler
             return;
         }
 
+        var registration = ReadRegistrationDetails(context, email);
         var user = await userManager.FindByEmailAsync(email);
 
         if (user == null)
         {
             logger.LogInformation("Creating new user and tenant for email: {Email}", email);
 
-            string? inputBusinessName = null;
-            string? inputCountry = null;
-            string? inputCurrency = null;
-            string? inputBusinessType = null;
-
-            if (context.Properties?.Items != null)
-            {
-                context.Properties.Items.TryGetValue("businessName", out inputBusinessName);
-                context.Properties.Items.TryGetValue("country", out inputCountry);
-                context.Properties.Items.TryGetValue("currency", out inputCurrency);
-                context.Properties.Items.TryGetValue("businessType", out inputBusinessType);
-            }
-
-            var googleName = context.Principal?.FindFirstValue(ClaimTypes.Name);
-            var businessName = !string.IsNullOrWhiteSpace(inputBusinessName)
-                ? inputBusinessName
-                : !string.IsNullOrWhiteSpace(googleName)
-                    ? $"{googleName}'s Organization"
-                    : $"{email}'s Workspace";
-
-            var country = !string.IsNullOrWhiteSpace(inputCountry) ? inputCountry.ToUpperInvariant() : "GH";
-            var currency = !string.IsNullOrWhiteSpace(inputCurrency) ? inputCurrency.ToUpperInvariant() : "GHS";
-
-            if (!Enum.TryParse<BusinessType>(inputBusinessType, ignoreCase: true, out var businessType))
-                businessType = BusinessType.Retail;
-
-            const string initialChecklist =
-                """{"createLocation":false,"addProducts":false,"openingStock":false,"inviteUsers":false,"firstSale":false}""";
-
-            var tenant = new Tenant
-            {
-                Name = businessName,
-                Country = country,
-                Currency = currency,
-                BusinessType = businessType,
-                OnboardingChecklist = initialChecklist,
-                RequireExpiryOnBatchReceipt = businessType is BusinessType.Food or BusinessType.Pharmacy,
-                BillingEmail = email,
-            };
-
-            db.Tenants.Add(tenant);
-            await db.SaveChangesAsync();
-
-            var ownerRole = await db.AppRoles.FirstOrDefaultAsync(r => r.Name == "Owner");
-
             user = new User
             {
-                TenantId = tenant.Id,
-                IsOwner = true,
-                RoleId = ownerRole?.Id,
-                LocationScope = "*",
-                Name = !string.IsNullOrWhiteSpace(googleName) ? googleName : businessName,
+                Name = !string.IsNullOrWhiteSpace(registration.GoogleName)
+                    ? registration.GoogleName
+                    : registration.BusinessName,
             };
 
             await userManager.SetUserNameAsync(user, email);
@@ -128,21 +82,17 @@ public static class GoogleOAuthHandler
             var loginInfo = new UserLoginInfo(context.Scheme.Name, nameIdentifier, context.Scheme.DisplayName);
             await userManager.AddLoginAsync(user, loginInfo);
 
-            var professionalPlan = await db.PlanDefinitions
-                .FirstOrDefaultAsync(p => p.Tier == PlanTier.Professional && p.IsActive);
-            if (professionalPlan != null)
+            var tenant = await ProvisionTenantForUserAsync(
+                db,
+                user,
+                userManager,
+                registration,
+                logger,
+                cancellationToken: default);
+            if (tenant is null)
             {
-                var now = DateTime.UtcNow;
-                db.Subscriptions.Add(new Subscription
-                {
-                    TenantId = tenant.Id,
-                    PlanDefinitionId = professionalPlan.Id,
-                    Status = SubscriptionStatus.Trialing,
-                    TrialEndsAt = now.AddDays(14),
-                    CurrentPeriodStart = now,
-                    CurrentPeriodEnd = now.AddDays(14),
-                });
-                await db.SaveChangesAsync();
+                context.ReturnUri = returnUrl;
+                return;
             }
 
             logger.LogInformation("User and tenant created successfully: {Email}, TenantId: {TenantId}", email, tenant.Id);
@@ -157,6 +107,28 @@ public static class GoogleOAuthHandler
                 var loginInfo = new UserLoginInfo(context.Scheme.Name, nameIdentifier, context.Scheme.DisplayName);
                 await userManager.AddLoginAsync(user, loginInfo);
                 logger.LogInformation("External login linked to existing user: {Email}", email);
+            }
+
+            if (user.TenantId is null)
+            {
+                logger.LogInformation("Provisioning tenant for existing user without tenant: {Email}", email);
+                var tenant = await ProvisionTenantForUserAsync(
+                    db,
+                    user,
+                    userManager,
+                    registration,
+                    logger,
+                    cancellationToken: default);
+                if (tenant is null)
+                {
+                    context.ReturnUri = returnUrl;
+                    return;
+                }
+
+                logger.LogInformation(
+                    "Tenant provisioned for existing user: {Email}, TenantId: {TenantId}",
+                    email,
+                    tenant.Id);
             }
         }
 
@@ -177,5 +149,113 @@ public static class GoogleOAuthHandler
         context.ReturnUri = QueryHelpers.AddQueryString(returnUrl, redirectParams);
 
         logger.LogInformation("User signed in successfully: {Email}", email);
+    }
+
+    private sealed record OAuthRegistrationDetails(
+        string BusinessName,
+        string Country,
+        string Currency,
+        BusinessType BusinessType,
+        string? GoogleName);
+
+    private static OAuthRegistrationDetails ReadRegistrationDetails(
+        TicketReceivedContext context,
+        string email)
+    {
+        string? inputBusinessName = null;
+        string? inputCountry = null;
+        string? inputCurrency = null;
+        string? inputBusinessType = null;
+
+        if (context.Properties?.Items != null)
+        {
+            context.Properties.Items.TryGetValue("businessName", out inputBusinessName);
+            context.Properties.Items.TryGetValue("country", out inputCountry);
+            context.Properties.Items.TryGetValue("currency", out inputCurrency);
+            context.Properties.Items.TryGetValue("businessType", out inputBusinessType);
+        }
+
+        var googleName = context.Principal?.FindFirstValue(ClaimTypes.Name);
+        var businessName = !string.IsNullOrWhiteSpace(inputBusinessName)
+            ? inputBusinessName
+            : !string.IsNullOrWhiteSpace(googleName)
+                ? $"{googleName}'s Organization"
+                : $"{email}'s Workspace";
+
+        var country = !string.IsNullOrWhiteSpace(inputCountry) ? inputCountry.ToUpperInvariant() : "GH";
+        var currency = !string.IsNullOrWhiteSpace(inputCurrency) ? inputCurrency.ToUpperInvariant() : "GHS";
+
+        if (!Enum.TryParse<BusinessType>(inputBusinessType, ignoreCase: true, out var businessType))
+            businessType = BusinessType.Retail;
+
+        return new OAuthRegistrationDetails(businessName, country, currency, businessType, googleName);
+    }
+
+    private static async Task<Tenant?> ProvisionTenantForUserAsync(
+        AppDbContext db,
+        User user,
+        UserManager<User> userManager,
+        OAuthRegistrationDetails registration,
+        ILogger logger,
+        CancellationToken cancellationToken)
+    {
+        const string initialChecklist =
+            """{"createLocation":false,"addProducts":false,"openingStock":false,"inviteUsers":false,"firstSale":false}""";
+
+        var tenant = new Tenant
+        {
+            Name = registration.BusinessName,
+            Country = registration.Country,
+            Currency = registration.Currency,
+            BusinessType = registration.BusinessType,
+            OnboardingChecklist = initialChecklist,
+            RequireExpiryOnBatchReceipt = registration.BusinessType is BusinessType.Food or BusinessType.Pharmacy,
+            BillingEmail = user.Email ?? user.UserName,
+        };
+
+        db.Tenants.Add(tenant);
+        await db.SaveChangesAsync(cancellationToken);
+
+        var ownerRole = await db.AppRoles.FirstOrDefaultAsync(r => r.Name == "Owner", cancellationToken);
+
+        user.TenantId = tenant.Id;
+        user.IsOwner = true;
+        user.RoleId = ownerRole?.Id;
+        user.LocationScope = "*";
+        user.Status = UserStatus.Active;
+        if (string.IsNullOrWhiteSpace(user.Name))
+        {
+            user.Name = !string.IsNullOrWhiteSpace(registration.GoogleName)
+                ? registration.GoogleName
+                : registration.BusinessName;
+        }
+
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            logger.LogError(
+                "Failed to attach tenant to user: {Errors}",
+                string.Join(", ", updateResult.Errors.Select(e => e.Description)));
+            return null;
+        }
+
+        var professionalPlan = await db.PlanDefinitions
+            .FirstOrDefaultAsync(p => p.Tier == PlanTier.Professional && p.IsActive, cancellationToken);
+        if (professionalPlan != null)
+        {
+            var now = DateTime.UtcNow;
+            db.Subscriptions.Add(new Subscription
+            {
+                TenantId = tenant.Id,
+                PlanDefinitionId = professionalPlan.Id,
+                Status = SubscriptionStatus.Trialing,
+                TrialEndsAt = now.AddDays(14),
+                CurrentPeriodStart = now,
+                CurrentPeriodEnd = now.AddDays(14),
+            });
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        return tenant;
     }
 }
