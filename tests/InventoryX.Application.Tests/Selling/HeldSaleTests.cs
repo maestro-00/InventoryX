@@ -50,14 +50,19 @@ public sealed class HeldSaleTests : IDisposable
 
         (await context.StockLevels.SingleAsync()).QtyOnHand.Should().Be(10m);
 
-        var complete = new CompleteHeldSaleCommandHandler(context, ledger, _planEnforcer.Object, new PosAccess(context, _db.TenantContext));
+        var complete = new CompleteHeldSaleCommandHandler(context, ledger, _planEnforcer.Object,
+            new PosAccess(context, _db.TenantContext), new TaxCalculator(), _db.TenantContext);
         var completed = await complete.Handle(new CompleteHeldSaleCommand
         {
             SaleId = held.Id,
+            Lines = [new CompleteHeldSaleLineDto(held.Lines.Single().Id, 2m, 5m, "Discounted", "manager-1")],
             Payments = [new CreateSalePaymentDto { Tender = "Cash", Amount = 20m }],
         }, CancellationToken.None);
 
         completed.Status.Should().Be("Completed");
+        completed.GrandTotal.Should().Be(15m);
+        completed.ChangeDue.Should().Be(5m);
+        completed.Lines.Single().LineDiscount.Should().Be(5m);
         (await context.StockLevels.SingleAsync()).QtyOnHand.Should().Be(8m);
     }
 

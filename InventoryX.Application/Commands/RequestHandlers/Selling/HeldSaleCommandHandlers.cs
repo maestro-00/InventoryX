@@ -4,6 +4,7 @@ using InventoryX.Application.DTOs.Selling;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Repository;
 using InventoryX.Application.Services.IServices;
+using InventoryX.Application.Validators.Selling;
 using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
@@ -17,6 +18,8 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
         IStockLedger stockLedger,
         IPlanEnforcer planEnforcer,
         IPosAccess posAccess,
+        ITaxCalculator taxCalculator,
+        ITenantContext tenantContext,
         IReceiptBuilder? receiptBuilder = null) : IRequestHandler<CompleteHeldSaleCommand, SaleDto>
     {
         public async Task<SaleDto> Handle(CompleteHeldSaleCommand request, CancellationToken cancellationToken)
@@ -38,7 +41,49 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                 ?? throw new ConflictException("Completing a held sale requires its shift to remain open.");
             await posAccess.EnsureCanOperateShiftAsync(shift, cancellationToken);
 
+            if (request.Lines is not null)
+            {
+                if (request.Lines.Count != sale.Lines.Count ||
+                    request.Lines.Select(line => line.Id).Distinct().Count() != request.Lines.Count)
+                    throw new FluentValidation.ValidationException("Edited held sale lines must match the saved sale lines.");
+
+                var linesById = sale.Lines.ToDictionary(line => line.Id);
+                var productIds = sale.Lines.Select(line => line.ProductId).Distinct().ToList();
+                var products = await context.Products.Include(product => product.TaxTreatment)
+                    .Where(product => productIds.Contains(product.Id))
+                    .ToDictionaryAsync(product => product.Id, cancellationToken);
+                var role = string.IsNullOrWhiteSpace(tenantContext.Role)
+                    ? null
+                    : await context.AppRoles.FirstOrDefaultAsync(role => role.Name == tenantContext.Role, cancellationToken);
+
+                foreach (var edited in request.Lines)
+                {
+                    if (!linesById.TryGetValue(edited.Id, out var line) ||
+                        !products.TryGetValue(line.ProductId, out var product))
+                        throw new FluentValidation.ValidationException("Edited held sale line was not found.");
+                    if (edited.Qty <= 0 || (!product.AllowFractional && edited.Qty % 1 != 0))
+                        throw new FluentValidation.ValidationException("Enter a valid quantity for the held sale line.");
+                    var gross = Math.Round(edited.Qty * line.UnitPrice, 2);
+                    line.DiscountAuthorizedBy = DiscountPolicyValidator.ResolveAuthorizer(
+                        gross, edited.LineDiscount, role, tenantContext.UserId, edited.DiscountAuthorizedBy);
+                    var net = Math.Round(gross - edited.LineDiscount, 4);
+                    var components = taxCalculator.Calculate(net, product.TaxTreatment?.ComponentsJson ?? "[]");
+                    line.Qty = edited.Qty;
+                    line.LineDiscount = edited.LineDiscount;
+                    line.Note = edited.Note;
+                    line.TaxComponents = JsonSerializer.Serialize(components, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                    line.TaxAmount = Math.Round(components.Sum(component => component.Amount), 2);
+                    line.LineTotal = Math.Round(net + line.TaxAmount, 2);
+                }
+
+                sale.Subtotal = Math.Round(sale.Lines.Sum(line => line.Qty * line.UnitPrice), 2);
+                sale.DiscountTotal = sale.Lines.Sum(line => line.LineDiscount);
+                sale.TaxTotal = sale.Lines.Sum(line => line.TaxAmount);
+                sale.GrandTotal = Math.Round(sale.Subtotal - sale.DiscountTotal + sale.TaxTotal, 2);
+            }
+
             decimal tendered = 0;
+            decimal cashTendered = 0;
             foreach (var payment in request.Payments)
             {
                 if (!Enum.TryParse<TenderType>(payment.Tender, true, out var tender))
@@ -56,13 +101,13 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
                     Reference = payment.Reference,
                 });
                 tendered += payment.Amount;
+                if (tender == TenderType.Cash) cashTendered += payment.Amount;
             }
 
             if (tendered < sale.GrandTotal)
                 throw new FluentValidation.ValidationException(
                     $"Payments ({tendered}) do not cover the grand total ({sale.GrandTotal}).");
             var overpay = Math.Round(tendered - sale.GrandTotal, 2);
-            var cashTendered = sale.Payments.Where(p => p.Tender == TenderType.Cash).Sum(p => p.Amount);
             if (overpay > cashTendered)
                 throw new FluentValidation.ValidationException("Change cannot exceed the cash portion of the payment.");
 

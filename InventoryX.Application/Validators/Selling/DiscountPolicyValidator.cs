@@ -18,10 +18,10 @@ public static class DiscountPolicyValidator
             throw new FluentValidation.ValidationException("Line discount cannot exceed the line amount.");
 
         var discountPercent = discountAmount / grossLineAmount * 100m;
-        var cap = role?.MaxDiscountPercent ?? 0m;
-        if (discountPercent > cap && string.IsNullOrWhiteSpace(managerAuthorizer))
+        var cap = role is null ? 0m : role.MaxDiscountPercent;
+        if (cap is not null && discountPercent > cap.Value && string.IsNullOrWhiteSpace(managerAuthorizer))
             throw new FluentValidation.ValidationException(
-                $"The {discountPercent:0.##}% discount exceeds the {cap:0.##}% role cap and requires manager authorization.");
+                $"The {discountPercent:0.##}% discount exceeds the {cap.Value:0.##}% role cap and requires manager authorization.");
 
         return string.IsNullOrWhiteSpace(managerAuthorizer) ? cashierId ?? "unknown" : managerAuthorizer;
     }

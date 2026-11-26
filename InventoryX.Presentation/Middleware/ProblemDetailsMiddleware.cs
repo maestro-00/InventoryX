@@ -40,6 +40,7 @@ namespace InventoryX.Presentation.Middleware
                     Type = "https://inventoryx.app/problems/validation",
                     Title = "One or more validation errors occurred.",
                     Status = StatusCodes.Status400BadRequest,
+                    Detail = validation.Errors.Any() ? null : validation.Message,
                 },
                 PlanLimitException planLimit => new ProblemDetails
                 {
