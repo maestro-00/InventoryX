@@ -66,8 +66,14 @@ public sealed class PaystackGateway(HttpClient httpClient, IOptions<PaystackOpti
         var response = await SendAsync(HttpMethod.Get, $"transaction/verify/{Uri.EscapeDataString(reference)}", null, cancellationToken);
         var data = response.GetProperty("data");
         string? authorizationCode = null;
-        if (data.TryGetProperty("authorization", out var authorization) &&
-            authorization.TryGetProperty("authorization_code", out var code)) authorizationCode = code.GetString();
+        if (string.Equals(data.GetProperty("status").GetString(), "success", StringComparison.OrdinalIgnoreCase) &&
+            data.TryGetProperty("authorization", out var authorization) &&
+            authorization.ValueKind == JsonValueKind.Object &&
+            authorization.TryGetProperty("channel", out var verifiedChannel) &&
+            string.Equals(verifiedChannel.GetString(), "card", StringComparison.OrdinalIgnoreCase) &&
+            authorization.TryGetProperty("reusable", out var reusable) && reusable.ValueKind == JsonValueKind.True &&
+            authorization.TryGetProperty("authorization_code", out var code))
+            authorizationCode = code.GetString();
         DateTime? paidAt = data.TryGetProperty("paid_at", out var paid) && paid.ValueKind == JsonValueKind.String
             ? paid.GetDateTime() : null;
         return new PaymentVerificationResult(
@@ -110,7 +116,7 @@ public sealed class PaystackGateway(HttpClient httpClient, IOptions<PaystackOpti
     {
         "mtn" => "mtn",
         "telecel" or "vodafone" or "vod" => "vod",
-        "at" or "airteltigo" or "tgo" => "tgo",
+        "at" or "airteltigo" or "atl" or "tgo" => "atl",
         _ => throw new FluentValidation.ValidationException("Mobile money provider must be mtn, telecel, or at."),
     };
 }
