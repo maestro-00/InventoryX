@@ -70,6 +70,13 @@ the existing v1 billing routes are not controlled by them yet. Do not enable
 live collection until v1 mutations return the documented migration response,
 period-keyed reconciliation is deployed, and the provider smoke checks pass.
 
+The v1 subscription upgrade, downgrade, cancellation, reactivation, and
+payment-method write routes now return `410 Gone` with
+`code=billing_api_upgrade_required` and `migrationUrl=/api/v2/billing`.
+V1 plan/subscription/invoice reads and billing-contact updates remain available.
+The v2 payment journey is being implemented on this feature branch; keep new
+collection disabled until that journey and its client have passed release checks.
+
 ## Run Locally
 
 With Docker Postgres:

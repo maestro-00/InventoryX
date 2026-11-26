@@ -25,30 +25,28 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
 
     [HttpPost("subscription/upgrade")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<BillingSubscriptionDto>> Upgrade(UpgradeSubscriptionCommand command, CancellationToken cancellationToken) =>
-        Ok(await sender.Send(command, cancellationToken));
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public IActionResult Upgrade() => BillingUpgradeRequired();
 
     [HttpPost("subscription/downgrade")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<BillingSubscriptionDto>> Downgrade(DowngradeSubscriptionCommand command, CancellationToken cancellationToken) =>
-        Ok(await sender.Send(command, cancellationToken));
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public IActionResult Downgrade() => BillingUpgradeRequired();
 
     [HttpPost("subscription/cancel")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<BillingSubscriptionDto>> Cancel(CancellationToken cancellationToken) =>
-        Ok(await sender.Send(new CancelSubscriptionCommand(), cancellationToken));
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public IActionResult Cancel() => BillingUpgradeRequired();
 
     [HttpPost("subscription/reactivate")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<BillingSubscriptionDto>> Reactivate(CancellationToken cancellationToken) =>
-        Ok(await sender.Send(new ReactivateSubscriptionCommand(), cancellationToken));
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public IActionResult Reactivate() => BillingUpgradeRequired();
 
     [HttpPost("payment-method")]
     [Authorize(Roles = "Owner")]
-    public async Task<ActionResult<InventoryX.Application.Services.IServices.PaymentInitializationResult>> PaymentMethod(
-        InitializePaymentMethodCommand command,
-        CancellationToken cancellationToken) =>
-        Ok(await sender.Send(command, cancellationToken));
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public IActionResult PaymentMethod() => BillingUpgradeRequired();
 
     [HttpGet("invoices")]
     [Authorize(Roles = "Owner")]
@@ -68,9 +66,29 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
 
     [HttpPatch("contact")]
     [Authorize(Roles = "Owner")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Contact(UpdateBillingContactCommand command, CancellationToken cancellationToken)
     {
         await sender.Send(command, cancellationToken);
         return NoContent();
+    }
+
+    private IActionResult BillingUpgradeRequired()
+    {
+        var details = new ProblemDetails
+        {
+            Status = StatusCodes.Status410Gone,
+            Title = "Billing API upgrade required",
+            Detail = "Update the billing client to use the v2 payment flow.",
+            Type = "https://httpstatuses.com/410",
+            Instance = HttpContext?.Request.Path.Value,
+        };
+        details.Extensions["code"] = "billing_api_upgrade_required";
+        details.Extensions["migrationUrl"] = "/api/v2/billing";
+        return new ObjectResult(details)
+        {
+            StatusCode = StatusCodes.Status410Gone,
+            ContentTypes = { "application/problem+json" },
+        };
     }
 }

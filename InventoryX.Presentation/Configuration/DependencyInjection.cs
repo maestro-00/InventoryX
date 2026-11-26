@@ -82,6 +82,14 @@ namespace InventoryX.Presentation.Configuration
                         "specs/001-inventory-pos-platform/contracts/. Authenticate with " +
                         "Authorization: Bearer <JWT> unless an operation is anonymous.",
                 });
+                opt.SwaggerDoc("v2", new OpenApiInfo
+                {
+                    Title = "InventoryX Billing API",
+                    Version = "v2",
+                    Description = "Owner billing and payment flows.",
+                });
+                opt.DocInclusionPredicate((version, api) =>
+                    api.RelativePath?.StartsWith($"api/{version}/", StringComparison.OrdinalIgnoreCase) == true);
                 opt.AddServer(new OpenApiServer { Url = "/" });
                 opt.CustomSchemaIds(type => (type.FullName ?? type.Name).Replace('+', '.'));
                 opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

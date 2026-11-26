@@ -24,6 +24,7 @@ public static class DependencyInjection
         // Pipeline order: validation → plan enforcement → audit → handler
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(PlanEnforcementBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(BillingIdempotencyBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
 
         services.AddScoped<IAuthService, AuthService>();

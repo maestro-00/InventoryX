@@ -65,4 +65,103 @@ public sealed class BillingLedgerTests
         var action = () => period.MarkPaid(DateTime.UtcNow);
         action.Should().Throw<InvalidOperationException>();
     }
+
+    [Fact]
+    public void Verified_renewal_settles_once_and_advances_to_the_anchored_period()
+    {
+        var tenantId = Guid.NewGuid();
+        var subscription = new Subscription { TenantId = tenantId, Status = SubscriptionStatus.PastDue };
+        var start = new DateTime(2026, 2, 28, 10, 0, 0, DateTimeKind.Utc);
+        var period = new BillingPeriod
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, StartAt = start,
+            EndAt = new DateTime(2026, 3, 31, 10, 0, 0, DateTimeKind.Utc),
+            Cycle = BillingCycle.Monthly, TotalAmount = 50m, Currency = "GHS",
+        };
+        var intent = new PaymentIntent
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, BillingPeriodId = period.Id,
+            Purpose = PaymentIntentPurpose.Renewal, TotalAmount = 50m, Currency = "GHS",
+        };
+        intent.MarkFailed();
+        var attempt = new PaymentAttempt
+        {
+            TenantId = tenantId, PaymentIntentId = intent.Id, Reference = "renewal-reference",
+            Amount = 50m, Currency = "GHS", Status = PaymentAttemptStatus.Unknown,
+        };
+        var confirmedAt = start.AddDays(2);
+        SubscriptionStateMachine.SettleVerifiedPayment(subscription, period, intent, attempt, 50m, "GHS", confirmedAt)
+            .Should().BeTrue();
+        SubscriptionStateMachine.SettleVerifiedPayment(subscription, period, intent, attempt, 50m, "GHS", confirmedAt.AddMinutes(1))
+            .Should().BeFalse();
+        intent.SettledAt.Should().Be(confirmedAt);
+        period.PaidAt.Should().Be(confirmedAt);
+        subscription.CurrentPeriodStart.Should().Be(start);
+        subscription.CurrentPeriodEnd.Should().Be(period.EndAt);
+        subscription.Status.Should().Be(SubscriptionStatus.Active);
+    }
+
+    [Fact]
+    public void Mismatched_provider_amount_never_changes_entitlements()
+    {
+        var tenantId = Guid.NewGuid();
+        var subscription = new Subscription { TenantId = tenantId, Status = SubscriptionStatus.PastDue };
+        var period = new BillingPeriod
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id,
+            StartAt = DateTime.UtcNow, EndAt = DateTime.UtcNow.AddMonths(1), TotalAmount = 50m,
+        };
+        var intent = new PaymentIntent
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, BillingPeriodId = period.Id,
+            Purpose = PaymentIntentPurpose.Renewal, TotalAmount = 50m,
+        };
+        var attempt = new PaymentAttempt
+        {
+            TenantId = tenantId, PaymentIntentId = intent.Id, Reference = "wrong-amount", Amount = 50m,
+        };
+        FluentActions.Invoking(() => SubscriptionStateMachine.SettleVerifiedPayment(
+                subscription, period, intent, attempt, 49m, "GHS", DateTime.UtcNow))
+            .Should().Throw<InvalidOperationException>();
+        intent.Status.Should().Be(PaymentIntentStatus.Pending);
+        period.Status.Should().Be(BillingPeriodStatus.Pending);
+        subscription.Status.Should().Be(SubscriptionStatus.PastDue);
+    }
+
+    [Fact]
+    public void Paid_upgrade_preserves_existing_period_and_original_anchor()
+    {
+        var tenantId = Guid.NewGuid();
+        var priorPlan = Guid.NewGuid();
+        var upgradedPlan = Guid.NewGuid();
+        var start = new DateTime(2026, 1, 31, 10, 0, 0, DateTimeKind.Utc);
+        var end = new DateTime(2026, 2, 28, 10, 0, 0, DateTimeKind.Utc);
+        var subscription = new Subscription
+        {
+            TenantId = tenantId, PlanDefinitionId = priorPlan, BillingAnchor = start,
+            CurrentPeriodStart = start, CurrentPeriodEnd = end, Status = SubscriptionStatus.Active,
+        };
+        var period = new BillingPeriod
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, StartAt = start,
+            EndAt = end, TotalAmount = 50m,
+        };
+        period.MarkPaid(start);
+        var intent = new PaymentIntent
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, BillingPeriodId = period.Id,
+            Purpose = PaymentIntentPurpose.Upgrade, TotalAmount = 20m,
+            TargetPlanDefinitionId = upgradedPlan,
+        };
+        var attempt = new PaymentAttempt
+        {
+            TenantId = tenantId, PaymentIntentId = intent.Id, Reference = "upgrade-reference", Amount = 20m,
+        };
+        SubscriptionStateMachine.SettleVerifiedPayment(subscription, period, intent, attempt, 20m, "GHS", start.AddDays(15))
+            .Should().BeTrue();
+        subscription.PlanDefinitionId.Should().Be(upgradedPlan);
+        subscription.BillingAnchor.Should().Be(start);
+        subscription.CurrentPeriodEnd.Should().Be(end);
+        period.PaidAt.Should().Be(start);
+    }
 }

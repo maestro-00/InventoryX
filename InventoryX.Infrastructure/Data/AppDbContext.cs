@@ -28,6 +28,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
         public DbSet<BillingPeriod> BillingPeriods => Set<BillingPeriod>();
         public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
+        public DbSet<BillingIdempotencyRecord> BillingIdempotencyRecords => Set<BillingIdempotencyRecord>();
         public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
         public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
         public DbSet<ScheduledSubscriptionChange> ScheduledSubscriptionChanges => Set<ScheduledSubscriptionChange>();
@@ -122,6 +123,9 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<BillingPeriod>().Property(p => p.TaxAmount).HasPrecision(18, 4);
             builder.Entity<BillingPeriod>().Property(p => p.TotalAmount).HasPrecision(18, 4);
             builder.Entity<PaymentIntent>().HasIndex(i => new { i.TenantId, i.IdempotencyKey }).IsUnique();
+            builder.Entity<BillingIdempotencyRecord>().HasIndex(i => new { i.TenantId, i.Key }).IsUnique();
+            builder.Entity<BillingIdempotencyRecord>().Property(i => i.Key).HasMaxLength(200);
+            builder.Entity<BillingIdempotencyRecord>().Property(i => i.RequestHash).HasMaxLength(64);
             builder.Entity<PaymentIntent>().HasIndex(i => new { i.BillingPeriodId, i.Purpose })
                 .IsUnique().HasFilter("\"BillingPeriodId\" IS NOT NULL AND \"Purpose\" = 1");
             builder.Entity<PaymentIntent>().Property(i => i.BaseAmount).HasPrecision(18, 4);

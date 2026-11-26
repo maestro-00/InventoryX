@@ -4,11 +4,32 @@ using InventoryX.Application.DTOs.Common;
 using InventoryX.Presentation.Tests.Scenarios;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Mvc;
 
 namespace InventoryX.Presentation.Tests.Swagger;
 
 public sealed class ContractSurfaceTests
 {
+    [Theory]
+    [InlineData("Upgrade")]
+    [InlineData("Downgrade")]
+    [InlineData("Cancel")]
+    [InlineData("Reactivate")]
+    [InlineData("PaymentMethod")]
+    public void Legacy_billing_mutations_return_migration_problem(string action)
+    {
+        var controller = new InventoryX.Presentation.Controllers.v1.BillingController(null!);
+        var method = controller.GetType().GetMethod(action)!;
+        method.GetParameters().Should().BeEmpty();
+        var result = method.Invoke(controller, []) as ObjectResult;
+        result.Should().NotBeNull();
+        result!.StatusCode.Should().Be(410);
+        result.ContentTypes.Should().Contain("application/problem+json");
+        var problem = result.Value.Should().BeOfType<ProblemDetails>().Subject;
+        problem.Extensions["code"].Should().Be("billing_api_upgrade_required");
+        problem.Extensions["migrationUrl"].Should().Be("/api/v2/billing");
+    }
+
     [Fact]
     public void Existing_billing_authorization_and_webhook_boundary_are_recorded()
     {
@@ -84,6 +105,16 @@ public sealed class ContractSurfaceTests
             .GetProperty("responses").GetProperty("200").GetProperty("content")
             .EnumerateObject().First().Value.GetProperty("schema").ToString();
         subscriptionResponse.Should().Contain("BillingSubscriptionDto");
+        foreach (var path in new[]
+        {
+            "/api/v1/billing/subscription/upgrade", "/api/v1/billing/subscription/downgrade",
+            "/api/v1/billing/subscription/cancel", "/api/v1/billing/subscription/reactivate",
+            "/api/v1/billing/payment-method",
+        })
+            paths.GetProperty(path).GetProperty("post").GetProperty("responses")
+                .TryGetProperty("410", out _).Should().BeTrue($"{path} must publish the migration response");
+        paths.GetProperty("/api/v1/billing/contact").GetProperty("patch").GetProperty("responses")
+            .TryGetProperty("204", out _).Should().BeTrue();
         AssertPagedList(paths, "/api/v1/transfers");
 
         var listSchedules = paths.GetProperty("/api/v1/reports/schedules").GetProperty("get");
