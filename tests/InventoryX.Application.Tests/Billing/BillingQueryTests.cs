@@ -2,6 +2,10 @@ using FluentAssertions;
 using InventoryX.Application.Queries.RequestHandlers.Billing;
 using InventoryX.Application.Queries.Requests.Billing;
 using InventoryX.Common.Tests;
+using InventoryX.Domain.Models;
+using InventoryX.Domain.Models.Catalog;
+using InventoryX.Domain.Models.Inventory;
+using InventoryX.Domain.Models.Selling;
 using InventoryX.Domain.Models.Tenancy;
 
 namespace InventoryX.Application.Tests.Billing;
@@ -40,6 +44,33 @@ public sealed class BillingQueryTests : IDisposable
             .Handle(new GetCurrentBillingSubscriptionQuery(), CancellationToken.None);
         subscription.Plan.Should().Be("Standard");
         subscription.Usage.Should().ContainSingle(item => item.Metric == "salesThisMonth" && item.Current == 12 && item.Limit == 3000);
+    }
+
+    [Fact]
+    public async Task Subscription_counts_existing_resources_when_usage_counters_are_missing()
+    {
+        await using var context = _db.CreateContext();
+        var plan = new PlanDefinition { Name = "Free", Tier = PlanTier.Free };
+        context.PlanDefinitions.Add(plan);
+        context.Subscriptions.Add(new Subscription
+        {
+            PlanDefinitionId = plan.Id, Status = SubscriptionStatus.Active,
+            CurrentPeriodStart = DateTime.UtcNow, CurrentPeriodEnd = DateTime.UtcNow.AddMonths(1),
+        });
+        var location = new Location { Name = "Main Shop" };
+        context.Locations.Add(location);
+        context.Products.AddRange(new Product { Name = "Soap" }, new Product { Name = "Milk" });
+        context.Registers.Add(new Register { Name = "Front till", LocationId = location.Id });
+        context.Users.Add(new User { Id = "owner-1", UserName = "owner", TenantId = _tenantId, IsOwner = true });
+        await context.SaveChangesAsync();
+
+        var subscription = await new GetCurrentBillingSubscriptionQueryHandler(context)
+            .Handle(new GetCurrentBillingSubscriptionQuery(), CancellationToken.None);
+
+        subscription.Usage.Should().ContainSingle(item => item.Metric == "locations" && item.Current == 1);
+        subscription.Usage.Should().ContainSingle(item => item.Metric == "users" && item.Current == 1);
+        subscription.Usage.Should().ContainSingle(item => item.Metric == "products" && item.Current == 2);
+        subscription.Usage.Should().ContainSingle(item => item.Metric == "registers" && item.Current == 1);
     }
 
     public void Dispose() => _db.Dispose();

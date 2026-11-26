@@ -1,4 +1,5 @@
 using InventoryX.Application.Exceptions;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
@@ -75,11 +76,7 @@ namespace InventoryX.Infrastructure.Services
             };
             if (limit is null) return;
 
-            var periodKey = PeriodKeyFor(metric);
-            var current = await context.UsageCounters
-                .Where(c => c.Metric == metric && c.PeriodKey == periodKey)
-                .Select(c => (int?)c.Count)
-                .FirstOrDefaultAsync(cancellationToken) ?? 0;
+            var current = await BillingUsageReader.CurrentAsync(context, metric, subscription!.TenantId, cancellationToken);
 
             if (current + increment > limit)
                 throw new PlanLimitException(

@@ -2,6 +2,7 @@ using FluentAssertions;
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Common.Tests;
+using InventoryX.Domain.Models.Inventory;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Services;
 
@@ -36,6 +37,26 @@ public sealed class PlanEnforcementTests : IDisposable
             .EnsureWithinLimitAsync(UsageMetric.SalesThisMonth);
         var exception = await act.Should().ThrowAsync<PlanLimitException>();
         exception.Which.UpgradeHint.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public async Task Free_plan_rejects_second_location_without_a_usage_counter()
+    {
+        await using var context = _db.CreateContext();
+        var plan = new PlanDefinition { Name = "Free", Tier = PlanTier.Free, MaxLocations = 1 };
+        context.PlanDefinitions.Add(plan);
+        context.Subscriptions.Add(new Subscription
+        {
+            PlanDefinitionId = plan.Id, Status = SubscriptionStatus.Active,
+            CurrentPeriodStart = DateTime.UtcNow, CurrentPeriodEnd = DateTime.UtcNow.AddMonths(1),
+        });
+        context.Locations.Add(new Location { Name = "Main Shop" });
+        await context.SaveChangesAsync();
+
+        var act = () => new PlanEnforcer(context, _db.TenantContext)
+            .EnsureWithinLimitAsync(UsageMetric.Locations);
+
+        await act.Should().ThrowAsync<PlanLimitException>();
     }
 
     [Fact]

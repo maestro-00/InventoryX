@@ -31,15 +31,16 @@ public sealed class UpgradeSubscriptionCommandHandler(IAppDbContext context, IPa
         var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
         var target = await context.PlanDefinitions.SingleOrDefaultAsync(plan => plan.Id == request.PlanDefinitionId && plan.IsActive, cancellationToken)
             ?? throw new NotFoundException("Target plan not found.");
-        if (subscription.PaymentMethodRef is null || string.IsNullOrWhiteSpace(request.Email))
-            throw new FluentValidation.ValidationException("A payment method and billing email are required to upgrade.");
+        var tenant = await context.Tenants.SingleAsync(item => item.Id == subscription.TenantId, cancellationToken);
+        if (subscription.PaymentMethodRef is null || string.IsNullOrWhiteSpace(tenant.BillingEmail))
+            throw new FluentValidation.ValidationException("Add a billing email and payment method before switching to a paid plan.");
         var currentPrice = subscription.BillingCycle == BillingCycle.Annual ? subscription.Plan!.AnnualPrice : subscription.Plan!.MonthlyPrice;
         var targetPrice = request.BillingCycle == BillingCycle.Annual ? target.AnnualPrice : target.MonthlyPrice;
         var remaining = Math.Clamp((subscription.CurrentPeriodEnd - DateTime.UtcNow).TotalDays / Math.Max(1, (subscription.CurrentPeriodEnd - subscription.CurrentPeriodStart).TotalDays), 0, 1);
         var prorated = Math.Round(Math.Max(0, targetPrice - currentPrice) * (decimal)remaining, 2);
         if (prorated > 0)
         {
-            var charge = await paymentGateway.ChargeAsync(new PaymentChargeRequest(request.Email, prorated,
+            var charge = await paymentGateway.ChargeAsync(new PaymentChargeRequest(tenant.BillingEmail, prorated,
                 AuthorizationCode: subscription.PaymentMethodRef), cancellationToken);
             if (!string.Equals(charge.Status, "success", StringComparison.OrdinalIgnoreCase))
                 throw new ConflictException("The upgrade payment was not successful.");
@@ -59,11 +60,14 @@ public sealed class DowngradeSubscriptionCommandHandler(IAppDbContext context)
         var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
         var target = await context.PlanDefinitions.SingleOrDefaultAsync(plan => plan.Id == request.PlanDefinitionId && plan.IsActive, cancellationToken)
             ?? throw new NotFoundException("Target plan not found.");
-        var usage = await context.UsageCounters.ToListAsync(cancellationToken);
-        var exceeds = (target.MaxProducts is int products && usage.Any(counter => counter.Metric == UsageMetric.Products && counter.Count > products)) ||
-                      (target.MaxLocations is int locations && usage.Any(counter => counter.Metric == UsageMetric.Locations && counter.Count > locations)) ||
-                      (target.MaxUsers is int users && usage.Any(counter => counter.Metric == UsageMetric.Users && counter.Count > users)) ||
-                      (target.MaxRegisters is int registers && usage.Any(counter => counter.Metric == UsageMetric.Registers && counter.Count > registers));
+        var exceeds = (target.MaxProducts is int products &&
+                       await BillingUsageReader.CurrentAsync(context, UsageMetric.Products, subscription.TenantId, cancellationToken) > products) ||
+                      (target.MaxLocations is int locations &&
+                       await BillingUsageReader.CurrentAsync(context, UsageMetric.Locations, subscription.TenantId, cancellationToken) > locations) ||
+                      (target.MaxUsers is int users &&
+                       await BillingUsageReader.CurrentAsync(context, UsageMetric.Users, subscription.TenantId, cancellationToken) > users) ||
+                      (target.MaxRegisters is int registers &&
+                       await BillingUsageReader.CurrentAsync(context, UsageMetric.Registers, subscription.TenantId, cancellationToken) > registers);
         if (exceeds && !request.AcknowledgeOverLimit)
             throw new ConflictException("The tenant exceeds one or more limits of the selected plan; set acknowledgeOverLimit=true to schedule the downgrade.");
         subscription.PendingPlanDefinitionId = target.Id;

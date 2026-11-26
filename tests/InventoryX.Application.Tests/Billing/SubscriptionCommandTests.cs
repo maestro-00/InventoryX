@@ -2,6 +2,7 @@ using FluentAssertions;
 using InventoryX.Application.Commands.RequestHandlers.Billing;
 using InventoryX.Application.Commands.Requests.Billing;
 using InventoryX.Common.Tests;
+using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Tenancy;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public sealed class SubscriptionCommandTests : IDisposable
             PlanDefinitionId = source.Id, Status = SubscriptionStatus.Active,
             CurrentPeriodStart = DateTime.UtcNow.AddDays(-5), CurrentPeriodEnd = DateTime.UtcNow.AddDays(25),
         });
-        context.UsageCounters.Add(new UsageCounter { Metric = UsageMetric.Products, Count = 2 });
+        context.Products.AddRange(new Product { Name = "Soap" }, new Product { Name = "Milk" });
         await context.SaveChangesAsync();
 
         var downgrade = new DowngradeSubscriptionCommandHandler(context);

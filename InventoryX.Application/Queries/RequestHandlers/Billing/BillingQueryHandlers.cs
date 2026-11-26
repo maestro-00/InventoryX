@@ -1,6 +1,7 @@
 using InventoryX.Application.Exceptions;
 using InventoryX.Application.Queries.Requests.Billing;
 using InventoryX.Application.Repository;
+using InventoryX.Application.Services;
 using InventoryX.Domain.Models.Tenancy;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -34,20 +35,21 @@ public sealed class GetCurrentBillingSubscriptionQueryHandler(IAppDbContext cont
         var subscription = await context.Subscriptions.AsNoTracking().Include(item => item.Plan)
             .OrderByDescending(item => item.CreatedAt).FirstOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Subscription not found.");
-        var counters = await context.UsageCounters.AsNoTracking().ToListAsync(cancellationToken);
-        var periodKey = DateTime.UtcNow.ToString("yyyy-MM");
-        int Usage(UsageMetric metric) => counters.FirstOrDefault(counter => counter.Metric == metric &&
-            counter.PeriodKey == (metric == UsageMetric.SalesThisMonth ? periodKey : "*"))?.Count ?? 0;
+        var sales = await BillingUsageReader.CurrentAsync(context, UsageMetric.SalesThisMonth, subscription.TenantId, cancellationToken);
+        var locations = await BillingUsageReader.CurrentAsync(context, UsageMetric.Locations, subscription.TenantId, cancellationToken);
+        var users = await BillingUsageReader.CurrentAsync(context, UsageMetric.Users, subscription.TenantId, cancellationToken);
+        var products = await BillingUsageReader.CurrentAsync(context, UsageMetric.Products, subscription.TenantId, cancellationToken);
+        var registers = await BillingUsageReader.CurrentAsync(context, UsageMetric.Registers, subscription.TenantId, cancellationToken);
         var plan = subscription.Plan ?? throw new NotFoundException("Subscription plan not found.");
         return new BillingSubscriptionDto(subscription.Id, plan.Name, subscription.Status.ToString(), subscription.BillingCycle.ToString(),
             subscription.CurrentPeriodStart, subscription.CurrentPeriodEnd, subscription.TrialEndsAt, subscription.GraceExpiresAt,
             subscription.CancelledAt, subscription.PurgeAt,
             [
-                new UsageVsLimitDto("salesThisMonth", Usage(UsageMetric.SalesThisMonth), plan.MonthlySaleCap),
-                new UsageVsLimitDto("locations", Usage(UsageMetric.Locations), plan.MaxLocations),
-                new UsageVsLimitDto("users", Usage(UsageMetric.Users), plan.MaxUsers),
-                new UsageVsLimitDto("products", Usage(UsageMetric.Products), plan.MaxProducts),
-                new UsageVsLimitDto("registers", Usage(UsageMetric.Registers), plan.MaxRegisters),
+                new UsageVsLimitDto("salesThisMonth", sales, plan.MonthlySaleCap),
+                new UsageVsLimitDto("locations", locations, plan.MaxLocations),
+                new UsageVsLimitDto("users", users, plan.MaxUsers),
+                new UsageVsLimitDto("products", products, plan.MaxProducts),
+                new UsageVsLimitDto("registers", registers, plan.MaxRegisters),
             ]);
     }
 }
