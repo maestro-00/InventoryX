@@ -54,10 +54,21 @@ sections in `InventoryX.Presentation/appsettings.json` are:
 - `ConnectionStrings:DefaultConnection`
 - `Jwt:SigningKey`, `Jwt:Issuer`, and `Jwt:Audience`
 - `Paystack:SecretKey`
+- `Paystack:WebhookSigningSecret` (separate test/live secret, supplied through server secrets)
+- `Paystack:AcceptLegacyWebhookSignature` (temporary migration setting; disable after the new signature header is observed in both environments)
+- `Paystack:BaseUrl` and `Paystack:CallbackUrl`
+- `Billing:EnableCollection` and `Billing:EnableRenewals` (default `false` until the v2 ledger and provider smoke checks pass)
+- `Billing:EncryptionKey` (32 random bytes encoded as base64, shared securely across API instances; never rotate without re-encrypting stored authorizations)
 - `SendGrid:ApiKey`
 - `Frontend:AllowedOrigins`
 
 Never commit real credentials.
+
+Keep Paystack test and live keys in separate deployment environments. The billing
+rollout flags are configuration names for the forthcoming v2 collection path;
+the existing v1 billing routes are not controlled by them yet. Do not enable
+live collection until v1 mutations return the documented migration response,
+period-keyed reconciliation is deployed, and the provider smoke checks pass.
 
 ## Run Locally
 

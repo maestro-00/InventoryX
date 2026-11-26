@@ -31,6 +31,7 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<PaystackOptions>(configuration.GetSection(PaystackOptions.SectionName));
+        services.AddSingleton<IBillingSecretProtector, BillingSecretProtector>();
         services.AddHttpClient<IPaymentGateway, PaystackGateway>((provider, client) =>
         {
             var settings = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaystackOptions>>().Value;

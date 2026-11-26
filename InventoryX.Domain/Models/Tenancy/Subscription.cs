@@ -21,9 +21,12 @@ namespace InventoryX.Domain.Models.Tenancy
         public DateTime? TrialEndsAt { get; set; }
         public DateTime CurrentPeriodStart { get; set; }
         public DateTime CurrentPeriodEnd { get; set; }
+        public DateTime BillingAnchor { get; set; }
+        public Guid? CurrentPaymentMethodId { get; set; }
         public DateTime? GraceExpiresAt { get; set; }
         public DateTime? CancelledAt { get; set; }
         public DateTime? PurgeAt { get; set; }
+        public DateTime? RetentionWarningAcceptedAt { get; set; }
 
         /// <summary>Pending period-end downgrade target (null = none).</summary>
         public Guid? PendingPlanDefinitionId { get; set; }

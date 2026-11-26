@@ -2,11 +2,31 @@ using System.Text.Json;
 using FluentAssertions;
 using InventoryX.Application.DTOs.Common;
 using InventoryX.Presentation.Tests.Scenarios;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace InventoryX.Presentation.Tests.Swagger;
 
 public sealed class ContractSurfaceTests
 {
+    [Fact]
+    public void Existing_billing_authorization_and_webhook_boundary_are_recorded()
+    {
+        var billing = typeof(InventoryX.Presentation.Controllers.v1.BillingController);
+        billing.GetCustomAttributes(typeof(AuthorizeAttribute), true).Should().NotBeEmpty();
+        billing.GetMethod("Plans")!.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Should().NotBeEmpty();
+        foreach (var action in new[] { "Subscription", "Upgrade", "Downgrade", "Cancel", "Reactivate", "PaymentMethod", "Invoices", "InvoicePdf", "Contact" })
+        {
+            var authorization = billing.GetMethod(action)!.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+                .Cast<AuthorizeAttribute>().Single();
+            authorization.Roles.Should().Be("Owner");
+        }
+
+        var webhook = typeof(InventoryX.Presentation.Controllers.v1.PaystackWebhookController);
+        webhook.GetCustomAttributes(typeof(AllowAnonymousAttribute), true).Should().NotBeEmpty();
+        webhook.GetCustomAttributes(typeof(EnableRateLimitingAttribute), true).Should().NotBeEmpty();
+    }
+
     [Fact]
     public async Task Swagger_matches_cycle_one_contract_surface_and_openapi_conventions()
     {
@@ -38,6 +58,32 @@ public sealed class ContractSurfaceTests
         AssertPagedList(paths, "/api/v1/users");
         AssertPagedList(paths, "/api/v1/suppliers");
         AssertPagedList(paths, "/api/v1/billing/invoices");
+        foreach (var (method, path) in new (string Method, string Path)[]
+        {
+            ("get", "/api/v1/billing/plans"),
+            ("get", "/api/v1/billing/subscription"),
+            ("post", "/api/v1/billing/subscription/upgrade"),
+            ("post", "/api/v1/billing/subscription/downgrade"),
+            ("post", "/api/v1/billing/subscription/cancel"),
+            ("post", "/api/v1/billing/subscription/reactivate"),
+            ("post", "/api/v1/billing/payment-method"),
+            ("get", "/api/v1/billing/invoices"),
+            ("get", "/api/v1/billing/invoices/{id}/pdf"),
+            ("patch", "/api/v1/billing/contact"),
+            ("post", "/api/v1/billing/webhooks/paystack"),
+        })
+        {
+            Assert.True(paths.TryGetProperty(path, out var billingPath), $"Missing billing route {path}");
+            Assert.True(billingPath.TryGetProperty(method, out _), $"Missing {method.ToUpperInvariant()} {path}");
+        }
+        var planResponse = paths.GetProperty("/api/v1/billing/plans").GetProperty("get")
+            .GetProperty("responses").GetProperty("200").GetProperty("content")
+            .EnumerateObject().First().Value.GetProperty("schema").ToString();
+        planResponse.Should().Contain("BillingPlanDto");
+        var subscriptionResponse = paths.GetProperty("/api/v1/billing/subscription").GetProperty("get")
+            .GetProperty("responses").GetProperty("200").GetProperty("content")
+            .EnumerateObject().First().Value.GetProperty("schema").ToString();
+        subscriptionResponse.Should().Contain("BillingSubscriptionDto");
         AssertPagedList(paths, "/api/v1/transfers");
 
         var listSchedules = paths.GetProperty("/api/v1/reports/schedules").GetProperty("get");
