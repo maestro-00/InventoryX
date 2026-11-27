@@ -225,14 +225,17 @@ namespace InventoryX.Application.Commands.RequestHandlers.Selling
             if (!isHeld)
             {
                 var tendered = 0m;
-                foreach (var payment in request.Payments)
+                for (var paymentIndex = 0; paymentIndex < request.Payments.Count; paymentIndex++)
                 {
+                    var payment = request.Payments[paymentIndex];
                     if (!Enum.TryParse<TenderType>(payment.Tender, true, out var tender))
                         throw new FluentValidation.ValidationException($"Unknown tender type '{payment.Tender}'.");
                     if (tender is TenderType.StoreCredit or TenderType.GiftCard or TenderType.LoyaltyPoints or TenderType.OnAccount)
                         throw new FluentValidation.ValidationException($"Tender '{tender}' is not available in this cycle.");
                     if (payment.Amount <= 0)
-                        throw new FluentValidation.ValidationException("Tender amounts must be greater than zero.");
+                        throw new FluentValidation.ValidationException([
+                            new FluentValidation.Results.ValidationFailure($"Payments[{paymentIndex}].Amount", "Enter an amount greater than zero.")
+                        ]);
                     sale.Payments.Add(new SalePayment { Tender = tender, Amount = payment.Amount, Reference = payment.Reference });
                     tendered += payment.Amount;
                 }

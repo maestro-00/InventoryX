@@ -4,6 +4,7 @@ using InventoryX.Application.Commands.RequestHandlers.Selling;
 using InventoryX.Application.Commands.Requests.Selling;
 using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
+using InventoryX.Application.Validators.Selling;
 using InventoryX.Common.Tests;
 using InventoryX.Domain.Models.Catalog;
 using InventoryX.Domain.Models.Inventory;
@@ -19,6 +20,15 @@ namespace InventoryX.Application.Tests.Selling;
 /// <summary>T047 - role discount caps, escalation attribution, and audit coverage.</summary>
 public sealed class DiscountPolicyTests : IDisposable
 {
+    [Fact]
+    public void Owner_without_a_discount_cap_does_not_need_manager_authorization()
+    {
+        var owner = new Role { Name = "Owner", Permissions = Permission.Discount, MaxDiscountPercent = null };
+
+        DiscountPolicyValidator.ResolveAuthorizer(10m, 5m, owner, "owner-1", null)
+            .Should().Be("owner-1");
+    }
+
     private readonly TestDb _db = new(Guid.NewGuid(), "cashier-1");
     private readonly Mock<IPlanEnforcer> _planEnforcer = new();
 

@@ -36,7 +36,10 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
         List<CreateSalePaymentRequest>? Payments = null,
         DateTime? OccurredAt = null);
 
-    public sealed record CompleteHeldSaleRequest(List<CreateSalePaymentDto> Payments);
+    /// <summary>Completes a held sale, optionally replacing quantities and discounts on its saved lines.</summary>
+    public sealed record CompleteHeldSaleRequest(
+        List<CreateSalePaymentDto> Payments,
+        List<CompleteHeldSaleLineDto>? Lines = null);
     public sealed record DeliverReceiptRequest(string Channel, string Destination);
 
     [HttpPost]
@@ -113,7 +116,12 @@ public sealed class SalesController(ISender sender) : ApiControllerBase
         Guid id,
         CompleteHeldSaleRequest request,
         CancellationToken cancellationToken) =>
-        Ok(await sender.Send(new CompleteHeldSaleCommand { SaleId = id, Payments = request.Payments }, cancellationToken));
+        Ok(await sender.Send(new CompleteHeldSaleCommand
+        {
+            SaleId = id,
+            Payments = request.Payments,
+            Lines = request.Lines,
+        }, cancellationToken));
 
     [HttpGet("lookup")]
     public async Task<ActionResult<List<SaleDto>>> Lookup(
