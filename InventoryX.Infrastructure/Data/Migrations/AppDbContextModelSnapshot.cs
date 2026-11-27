@@ -2567,6 +2567,57 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.ToTable("RejectedOfflineSales");
                 });
 
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingIdempotencyRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Key")
+                        .IsUnique();
+
+                    b.ToTable("BillingIdempotencyRecords");
+                });
+
             modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingInvoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2575,6 +2626,12 @@ namespace InventoryX.Infrastructure.Data.Migrations
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("BillingContactSnapshot")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("BillingPeriodId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2586,21 +2643,36 @@ namespace InventoryX.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime?>("EmailedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("EmailedTo")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("IssuedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("PaymentIntentId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("PaymentReference")
                         .HasColumnType("text");
 
                     b.Property<string>("PdfContent")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PeriodStart")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -2616,6 +2688,9 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<string>("TaxDetailsSnapshot")
+                        .HasColumnType("text");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -2627,14 +2702,197 @@ namespace InventoryX.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PaymentIntentId")
+                        .IsUnique()
+                        .HasFilter("\"PaymentIntentId\" IS NOT NULL");
+
                     b.HasIndex("PaymentReference")
                         .IsUnique()
                         .HasFilter("\"PaymentReference\" IS NOT NULL");
 
+                    b.HasIndex("TenantId", "BillingPeriodId");
+
                     b.HasIndex("TenantId", "Number")
                         .IsUnique();
 
+                    b.HasIndex("TenantId", "PaymentIntentId");
+
                     b.ToTable("BillingInvoices");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("BaseAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("EndAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PlanDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PriceVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime>("StartAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("WaivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("WaiverReason")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SubscriptionId");
+
+                    b.HasIndex("SubscriptionId", "StartAt", "Cycle")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "Status", "EndAt");
+
+                    b.ToTable("BillingPeriods");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingQuote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("BaseAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EffectiveAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExceededLimits")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("NextRenewalAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("NextRenewalTotal")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("PriceVersion")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ProrationCredit")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("RequiresAcknowledgement")
+                        .HasColumnType("boolean");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TargetCycle")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TargetPlanDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ExpiresAt");
+
+                    b.HasIndex("TenantId", "SubscriptionId");
+
+                    b.ToTable("BillingQuotes");
                 });
 
             modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.OutboxMessage", b =>
@@ -2705,6 +2963,328 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.HasIndex("ProcessedAt", "AvailableAt", "ClaimExpiresAt");
 
                     b.ToTable("OutboxMessages");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaymentAttempt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("ApprovalMessage")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorizationUrl")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("InitiatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PaymentIntentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("PaymentMethodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProviderTransactionId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SafeFailureCode")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("SettledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("PaymentIntentId", "Status");
+
+                    b.HasIndex("TenantId", "PaymentIntentId");
+
+                    b.HasIndex("TenantId", "PaymentMethodId");
+
+                    b.ToTable("PaymentAttempts");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaymentIntent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("BaseAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<Guid?>("BillingPeriodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ExpectedPeriodEnd")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ExpectedPeriodStart")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Purpose")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("QuoteExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<DateTime?>("SettledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("TargetCycle")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TargetPlanDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BillingPeriodId", "Purpose")
+                        .IsUnique()
+                        .HasFilter("\"BillingPeriodId\" IS NOT NULL AND \"Purpose\" = 1");
+
+                    b.HasIndex("TenantId", "BillingPeriodId");
+
+                    b.HasIndex("TenantId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "SubscriptionId");
+
+                    b.ToTable("PaymentIntents");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaymentMethod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Brand")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedAuthorizationCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EncryptedPhoneNumber")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ExpiryMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ExpiryYear")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MaskedIdentifier")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RenewalMode")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReplacedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Status")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 1");
+
+                    b.ToTable("PaymentMethods");
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaystackEventInbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ProviderEventId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SafeErrorSummary")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SignatureMode")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProviderEventId")
+                        .IsUnique()
+                        .HasFilter("\"ProviderEventId\" IS NOT NULL");
+
+                    b.HasIndex("PayloadHash", "Reference", "EventType")
+                        .IsUnique();
+
+                    b.ToTable("PaystackEventInbox");
                 });
 
             modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PlanDefinition", b =>
@@ -2936,11 +3516,80 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.ToTable("AppRoles");
                 });
 
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.ScheduledSubscriptionChange", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("AcknowledgedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("EffectiveAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ExceededLimitsJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal?>("QuotedNextPeriodAmount")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("TargetCycle")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid?>("TargetPlanDefinitionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SubscriptionId", "Status")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 0");
+
+                    b.HasIndex("TenantId", "SubscriptionId");
+
+                    b.ToTable("ScheduledSubscriptionChanges");
+                });
+
             modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.Subscription", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime>("BillingAnchor")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("BillingCycle")
                         .HasColumnType("integer");
@@ -2953,6 +3602,9 @@ namespace InventoryX.Infrastructure.Data.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<Guid?>("CurrentPaymentMethodId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime>("CurrentPeriodEnd")
                         .HasColumnType("timestamp with time zone");
@@ -2987,6 +3639,9 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("PurgeAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime?>("RetentionWarningAcceptedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -3010,6 +3665,11 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("PlanDefinitionId");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "CurrentPaymentMethodId");
 
                     b.HasIndex("TenantId", "Status");
 
@@ -3578,6 +4238,83 @@ namespace InventoryX.Infrastructure.Data.Migrations
                     b.Navigation("Register");
                 });
 
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingInvoice", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.BillingPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "BillingPeriodId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.PaymentIntent", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PaymentIntentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingPeriod", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.Subscription", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SubscriptionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.BillingQuote", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.Subscription", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SubscriptionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaymentAttempt", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.PaymentIntent", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PaymentIntentId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.PaymentMethod", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PaymentMethodId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.PaymentIntent", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.BillingPeriod", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "BillingPeriodId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.Subscription", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SubscriptionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.ScheduledSubscriptionChange", b =>
+                {
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.Subscription", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "SubscriptionId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("InventoryX.Domain.Models.Tenancy.Subscription", b =>
                 {
                     b.HasOne("InventoryX.Domain.Models.Tenancy.PlanDefinition", "Plan")
@@ -3585,6 +4322,12 @@ namespace InventoryX.Infrastructure.Data.Migrations
                         .HasForeignKey("PlanDefinitionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("InventoryX.Domain.Models.Tenancy.PaymentMethod", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "CurrentPaymentMethodId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Plan");
                 });

@@ -8,12 +8,20 @@ public enum BillingInvoiceStatus { Paid, Pending, Failed, Voided }
 public sealed class BillingInvoice : BaseModel
 {
     public Guid SubscriptionId { get; set; }
+    public Guid? BillingPeriodId { get; set; }
+    public Guid? PaymentIntentId { get; set; }
     public string Number { get; set; } = string.Empty;
     [Column(TypeName = "decimal(18,4)")] public decimal Amount { get; set; }
     [Column(TypeName = "decimal(18,4)")] public decimal TaxAmount { get; set; }
     public string Currency { get; set; } = "GHS";
     public BillingInvoiceStatus Status { get; set; } = BillingInvoiceStatus.Paid;
     public string? PaymentReference { get; set; }
+    public DateTime? IssuedAt { get; set; }
+    public DateTime? DueAt { get; set; }
+    public DateTime? PeriodStart { get; set; }
+    public DateTime? PeriodEnd { get; set; }
+    public string? BillingContactSnapshot { get; set; }
+    public string? TaxDetailsSnapshot { get; set; }
     public string? PdfContent { get; set; }
     public string? EmailedTo { get; set; }
     public DateTime? EmailedAt { get; set; }

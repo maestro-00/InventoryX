@@ -118,6 +118,7 @@ public sealed class EmailOutboxProcessor(
             message.ClaimedBy = null;
             message.ClaimExpiresAt = null;
             message.LastError = null;
+            await RecordBillingDeliveryAcceptanceAsync(message, utcNow, cancellationToken);
         }
         catch (Exception error)
         {
@@ -131,6 +132,17 @@ public sealed class EmailOutboxProcessor(
         }
 
         await context.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task RecordBillingDeliveryAcceptanceAsync(OutboxMessage message, DateTime utcNow,
+        CancellationToken cancellationToken)
+    {
+        if (message.IdempotencyKey?.StartsWith("billing:retention-warning:", StringComparison.Ordinal) != true)
+            return;
+        var subscription = await context.Subscriptions.IgnoreQueryFilters()
+            .SingleOrDefaultAsync(item => item.TenantId == message.TenantId, cancellationToken);
+        if (subscription is not null && subscription.RetentionWarningAcceptedAt is null)
+            subscription.RetentionWarningAcceptedAt = utcNow;
     }
 
     internal static TimeSpan Backoff(int attemptCount) =>

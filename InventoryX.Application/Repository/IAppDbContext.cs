@@ -6,6 +6,7 @@ using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Domain.Models;
 using InventoryX.Domain.Models.Purchasing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace InventoryX.Application.Repository
 {
@@ -20,6 +21,14 @@ namespace InventoryX.Application.Repository
         DbSet<User> Users { get; }
         DbSet<PlanDefinition> PlanDefinitions { get; }
         DbSet<Subscription> Subscriptions { get; }
+        DbSet<BillingPeriod> BillingPeriods { get; }
+        DbSet<BillingQuote> BillingQuotes { get; }
+        DbSet<PaymentIntent> PaymentIntents { get; }
+        DbSet<BillingIdempotencyRecord> BillingIdempotencyRecords { get; }
+        DbSet<PaymentAttempt> PaymentAttempts { get; }
+        DbSet<PaymentMethod> PaymentMethods { get; }
+        DbSet<ScheduledSubscriptionChange> ScheduledSubscriptionChanges { get; }
+        DbSet<PaystackEventInbox> PaystackEventInbox { get; }
         DbSet<BillingInvoice> BillingInvoices { get; }
         DbSet<OutboxMessage> OutboxMessages { get; }
         DbSet<UsageCounter> UsageCounters { get; }
@@ -71,5 +80,6 @@ namespace InventoryX.Application.Repository
         DbSet<InventoryX.Domain.Models.Sync.RejectedOfflineSale> RejectedOfflineSales { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+        DatabaseFacade Database { get; }
     }
 }

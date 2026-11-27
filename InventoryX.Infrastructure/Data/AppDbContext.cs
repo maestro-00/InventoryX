@@ -26,6 +26,14 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<PlanDefinition> PlanDefinitions => Set<PlanDefinition>();
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
+        public DbSet<BillingPeriod> BillingPeriods => Set<BillingPeriod>();
+        public DbSet<BillingQuote> BillingQuotes => Set<BillingQuote>();
+        public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
+        public DbSet<BillingIdempotencyRecord> BillingIdempotencyRecords => Set<BillingIdempotencyRecord>();
+        public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
+        public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+        public DbSet<ScheduledSubscriptionChange> ScheduledSubscriptionChanges => Set<ScheduledSubscriptionChange>();
+        public DbSet<PaystackEventInbox> PaystackEventInbox => Set<PaystackEventInbox>();
         public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
         public DbSet<BillingInvoice> BillingInvoices => Set<BillingInvoice>();
         public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
@@ -88,6 +96,69 @@ namespace InventoryX.Infrastructure.Data
             builder.Entity<Subscription>()
                 .HasOne(s => s.Plan).WithMany().HasForeignKey(s => s.PlanDefinitionId).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<Subscription>().HasIndex(s => new { s.TenantId, s.Status });
+            builder.Entity<Subscription>().HasIndex(s => s.TenantId).IsUnique();
+            builder.Entity<BillingPeriod>().HasOne<Subscription>().WithMany()
+                .HasForeignKey(p => new { p.TenantId, p.SubscriptionId })
+                .HasPrincipalKey(s => new { s.TenantId, s.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<PaymentIntent>().HasOne<Subscription>().WithMany()
+                .HasForeignKey(i => new { i.TenantId, i.SubscriptionId })
+                .HasPrincipalKey(s => new { s.TenantId, s.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<PaymentIntent>().HasOne<BillingPeriod>().WithMany()
+                .HasForeignKey(i => new { i.TenantId, i.BillingPeriodId })
+                .HasPrincipalKey(p => new { p.TenantId, p.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<PaymentAttempt>().HasOne<PaymentIntent>().WithMany()
+                .HasForeignKey(a => new { a.TenantId, a.PaymentIntentId })
+                .HasPrincipalKey(i => new { i.TenantId, i.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<PaymentAttempt>().HasOne<PaymentMethod>().WithMany()
+                .HasForeignKey(a => new { a.TenantId, a.PaymentMethodId })
+                .HasPrincipalKey(m => new { m.TenantId, m.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<ScheduledSubscriptionChange>().HasOne<Subscription>().WithMany()
+                .HasForeignKey(c => new { c.TenantId, c.SubscriptionId })
+                .HasPrincipalKey(s => new { s.TenantId, s.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<Subscription>().HasOne<PaymentMethod>().WithMany()
+                .HasForeignKey(s => new { s.TenantId, s.CurrentPaymentMethodId })
+                .HasPrincipalKey(m => new { m.TenantId, m.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<BillingPeriod>().HasIndex(p => new { p.SubscriptionId, p.StartAt, p.Cycle }).IsUnique();
+            builder.Entity<BillingQuote>().HasIndex(q => new { q.TenantId, q.ExpiresAt });
+            builder.Entity<BillingQuote>().HasOne<Subscription>().WithMany()
+                .HasForeignKey(q => new { q.TenantId, q.SubscriptionId })
+                .HasPrincipalKey(s => new { s.TenantId, s.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<BillingQuote>().Property(q => q.BaseAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.TaxAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.TotalAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.NextRenewalTotal).HasPrecision(18, 4);
+            builder.Entity<BillingPeriod>().HasIndex(p => new { p.TenantId, p.Status, p.EndAt });
+            builder.Entity<BillingPeriod>().Property(p => p.BaseAmount).HasPrecision(18, 4);
+            builder.Entity<BillingPeriod>().Property(p => p.TaxAmount).HasPrecision(18, 4);
+            builder.Entity<BillingPeriod>().Property(p => p.TotalAmount).HasPrecision(18, 4);
+            builder.Entity<PaymentIntent>().HasIndex(i => new { i.TenantId, i.IdempotencyKey }).IsUnique();
+            builder.Entity<BillingIdempotencyRecord>().HasIndex(i => new { i.TenantId, i.Key }).IsUnique();
+            builder.Entity<BillingIdempotencyRecord>().Property(i => i.Key).HasMaxLength(200);
+            builder.Entity<BillingIdempotencyRecord>().Property(i => i.RequestHash).HasMaxLength(64);
+            builder.Entity<PaymentIntent>().HasIndex(i => new { i.BillingPeriodId, i.Purpose })
+                .IsUnique().HasFilter("\"BillingPeriodId\" IS NOT NULL AND \"Purpose\" = 1");
+            builder.Entity<PaymentIntent>().Property(i => i.BaseAmount).HasPrecision(18, 4);
+            builder.Entity<PaymentIntent>().Property(i => i.TaxAmount).HasPrecision(18, 4);
+            builder.Entity<PaymentIntent>().Property(i => i.TotalAmount).HasPrecision(18, 4);
+            builder.Entity<PaymentAttempt>().HasIndex(a => a.Reference).IsUnique();
+            builder.Entity<PaymentAttempt>().HasIndex(a => new { a.PaymentIntentId, a.Status });
+            builder.Entity<PaymentAttempt>().Property(a => a.Amount).HasPrecision(18, 4);
+            builder.Entity<PaymentMethod>().HasIndex(m => new { m.TenantId, m.Status })
+                .IsUnique().HasFilter("\"Status\" = 1");
+            builder.Entity<ScheduledSubscriptionChange>().HasIndex(c => new { c.SubscriptionId, c.Status })
+                .IsUnique().HasFilter("\"Status\" = 0");
+            builder.Entity<ScheduledSubscriptionChange>().Property(c => c.QuotedNextPeriodAmount).HasPrecision(18, 4);
+            builder.Entity<PaystackEventInbox>().HasIndex(e => e.ProviderEventId)
+                .IsUnique().HasFilter("\"ProviderEventId\" IS NOT NULL");
+            builder.Entity<PaystackEventInbox>().HasIndex(e => new { e.PayloadHash, e.Reference, e.EventType }).IsUnique();
+            builder.Entity<BillingInvoice>().HasIndex(i => i.PaymentIntentId)
+                .IsUnique().HasFilter("\"PaymentIntentId\" IS NOT NULL");
+            builder.Entity<BillingInvoice>().HasOne<BillingPeriod>().WithMany()
+                .HasForeignKey(i => new { i.TenantId, i.BillingPeriodId })
+                .HasPrincipalKey(p => new { p.TenantId, p.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<BillingInvoice>().HasOne<PaymentIntent>().WithMany()
+                .HasForeignKey(i => new { i.TenantId, i.PaymentIntentId })
+                .HasPrincipalKey(p => new { p.TenantId, p.Id }).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<ProcessedWebhookEvent>().HasIndex(item => item.EventId).IsUnique();
             builder.Entity<BillingInvoice>().HasIndex(item => new { item.TenantId, item.Number }).IsUnique();
             builder.Entity<BillingInvoice>().HasIndex(item => item.PaymentReference).IsUnique().HasFilter("\"PaymentReference\" IS NOT NULL");

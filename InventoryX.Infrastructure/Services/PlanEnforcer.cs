@@ -1,4 +1,5 @@
 using InventoryX.Application.Exceptions;
+using InventoryX.Application.Services;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
@@ -28,6 +29,8 @@ namespace InventoryX.Infrastructure.Services
         public async Task EnsureWritableAsync(CancellationToken cancellationToken = default)
         {
             var subscription = await GetSubscriptionAsync(cancellationToken);
+            if (subscription?.Status == SubscriptionStatus.PastDue && subscription.GraceExpiresAt is not null && subscription.GraceExpiresAt <= DateTime.UtcNow)
+                subscription.Status = SubscriptionStatus.ReadOnly;
             if (subscription?.Status == SubscriptionStatus.ReadOnly)
                 throw new PlanLimitException(
                     "Your subscription is in read-only mode. Renew your plan to resume making changes.",
@@ -75,11 +78,7 @@ namespace InventoryX.Infrastructure.Services
             };
             if (limit is null) return;
 
-            var periodKey = PeriodKeyFor(metric);
-            var current = await context.UsageCounters
-                .Where(c => c.Metric == metric && c.PeriodKey == periodKey)
-                .Select(c => (int?)c.Count)
-                .FirstOrDefaultAsync(cancellationToken) ?? 0;
+            var current = await BillingUsageReader.CurrentAsync(context, metric, subscription!.TenantId, cancellationToken);
 
             if (current + increment > limit)
                 throw new PlanLimitException(

@@ -9,7 +9,8 @@ public record PaymentChargeRequest(string Email, decimal Amount, string Currency
     string? Reference = null);
 public record PaymentChargeResult(string Reference, string Status, string? DisplayText = null);
 public record PaymentVerificationResult(string Reference, string Status, decimal Amount, string Currency,
-    string? AuthorizationCode, DateTime? PaidAt);
+    string? AuthorizationCode, DateTime? PaidAt, string? CardBrand = null,
+    string? CardLast4 = null, int? CardExpiryMonth = null, int? CardExpiryYear = null);
 
 public interface IPaymentGateway
 {

@@ -1,4 +1,5 @@
 using System.Text;
+using System.Globalization;
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Tenancy;
 using InventoryX.Infrastructure.Data;
@@ -25,8 +26,10 @@ public sealed class InvoicePdfService(AppDbContext context, IEmailSender emailSe
             Amount = amount,
             Currency = tenant.Currency,
             PaymentReference = paymentReference,
-            PdfContent = CreatePdf($"Invoice for {tenant.Name} | {amount:0.00} {tenant.Currency}"),
+            BillingContactSnapshot = tenant.BillingEmail,
+            TaxDetailsSnapshot = tenant.BillingTaxNumber,
         };
+        invoice.PdfContent = Convert.ToBase64String(RenderInvoice(invoice, tenant.Name, plan.Name));
         if (!string.IsNullOrWhiteSpace(tenant.BillingEmail))
         {
             await emailSender.SendEmailAsync(tenant.BillingEmail, $"Invoice {invoice.Number}",
@@ -39,9 +42,51 @@ public sealed class InvoicePdfService(AppDbContext context, IEmailSender emailSe
         return invoice;
     }
 
-    private static string CreatePdf(string text)
+    public static byte[] RenderInvoice(BillingInvoice invoice, string businessName, string planName)
     {
-        var escaped = text.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
-        return $"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj\n4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj\n5 0 obj<</Length {escaped.Length + 35}>>stream\nBT /F1 14 Tf 72 720 Td ({escaped}) Tj ET\nendstream\nendobj\ntrailer<</Root 1 0 R>>\n%%EOF";
+        var lines = new[]
+        {
+            "InventoryX paid invoice / receipt",
+            $"Invoice: {invoice.Number}",
+            $"Business: {businessName}",
+            $"Plan: {planName}",
+            $"Billing contact: {invoice.BillingContactSnapshot ?? "Not provided"}",
+            $"Tax number: {invoice.TaxDetailsSnapshot ?? "Not provided"}",
+            $"Period: {invoice.PeriodStart:yyyy-MM-dd} to {invoice.PeriodEnd:yyyy-MM-dd} UTC",
+            $"Base: {(invoice.Amount - invoice.TaxAmount).ToString("0.00", CultureInfo.InvariantCulture)} {invoice.Currency}",
+            $"Tax: {invoice.TaxAmount.ToString("0.00", CultureInfo.InvariantCulture)} {invoice.Currency}",
+            $"Paid total: {invoice.Amount.ToString("0.00", CultureInfo.InvariantCulture)} {invoice.Currency}",
+            $"Payment reference: {invoice.PaymentReference ?? "Not available"}",
+        };
+        static string Escape(string value) => new string(value.Select(character =>
+                character is >= ' ' and <= '~' ? character : '?').ToArray())
+            .Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+        var content = "BT /F1 12 Tf 48 760 Td 18 TL\n" +
+            string.Join("\n", lines.Select(line => $"({Escape(line)}) Tj T*")) + "\nET\n";
+        var streamBytes = Encoding.ASCII.GetBytes(content);
+        using var output = new MemoryStream();
+        static void Write(MemoryStream stream, string value) =>
+            stream.Write(Encoding.ASCII.GetBytes(value));
+        Write(output, "%PDF-1.4\n");
+        var offsets = new List<long>();
+        void AddObject(int number, string value)
+        {
+            offsets.Add(output.Position);
+            Write(output, $"{number} 0 obj\n{value}\nendobj\n");
+        }
+        AddObject(1, "<</Type/Catalog/Pages 2 0 R>>");
+        AddObject(2, "<</Type/Pages/Count 1/Kids[3 0 R]>>");
+        AddObject(3, "<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>");
+        AddObject(4, "<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>");
+        offsets.Add(output.Position);
+        Write(output, $"5 0 obj\n<</Length {streamBytes.Length}>>\nstream\n");
+        output.Write(streamBytes);
+        Write(output, "endstream\nendobj\n");
+        var xref = output.Position;
+        Write(output, "xref\n0 6\n0000000000 65535 f \n");
+        foreach (var offset in offsets)
+            Write(output, $"{offset:0000000000} 00000 n \n");
+        Write(output, $"trailer\n<</Size 6/Root 1 0 R>>\nstartxref\n{xref}\n%%EOF\n");
+        return output.ToArray();
     }
 }

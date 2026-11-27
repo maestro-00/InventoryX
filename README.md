@@ -54,10 +54,28 @@ sections in `InventoryX.Presentation/appsettings.json` are:
 - `ConnectionStrings:DefaultConnection`
 - `Jwt:SigningKey`, `Jwt:Issuer`, and `Jwt:Audience`
 - `Paystack:SecretKey`
+- `Paystack:WebhookSigningSecret` (separate test/live secret, supplied through server secrets)
+- `Paystack:AcceptLegacyWebhookSignature` (temporary migration setting; disable after the new signature header is observed in both environments)
+- `Paystack:BaseUrl` and `Paystack:CallbackUrl` (`Paystack__CallbackUrl` in the deployment environment): set the latter to the InventoryMS origin plus `/settings/billing`, for example `https://billing.example/settings/billing`. The local default is `http://localhost:5173/settings/billing`; replace it for every deployment. Card checkout rejects a missing or invalid return URL before contacting Paystack.
+- `Billing:EnableCollection` and `Billing:EnableRenewals` (default `false` until the v2 ledger and provider smoke checks pass)
+- `Billing:EncryptionKey` (32 random bytes encoded as base64, shared securely across API instances; never rotate without re-encrypting stored authorizations)
 - `SendGrid:ApiKey`
 - `Frontend:AllowedOrigins`
 
 Never commit real credentials.
+
+Keep Paystack test and live keys in separate deployment environments. The billing
+rollout flags are configuration names for the forthcoming v2 collection path;
+the existing v1 billing routes are not controlled by them yet. Do not enable
+live collection until v1 mutations return the documented migration response,
+period-keyed reconciliation is deployed, and the provider smoke checks pass.
+
+The v1 subscription upgrade, downgrade, cancellation, reactivation, and
+payment-method write routes now return `410 Gone` with
+`code=billing_api_upgrade_required` and `migrationUrl=/api/v2/billing`.
+V1 plan/subscription/invoice reads and billing-contact updates remain available.
+The v2 payment journey is being implemented on this feature branch; keep new
+collection disabled until that journey and its client have passed release checks.
 
 ## Run Locally
 
@@ -81,6 +99,16 @@ dotnet run --project InventoryX.Presentation/InventoryX.Presentation.csproj
 
 Swagger is available at `/swagger`; liveness and readiness probes are available at
 `/health/live` and `/health/ready`.
+
+### Subscription billing rollout
+
+The owner-only billing API is published under `/api/v2/billing`. New collection is
+guarded by `Billing:EnableCollection` and `Billing:EnableRenewals`, which remain
+disabled until Paystack test-mode card/mobile-money smoke, webhook verification,
+email delivery, and duplicate-charge monitoring pass. Legacy v1 billing writes are
+rejected with the documented migration response; v1 reads remain available during
+client migration. Roll back by disabling both flags and preserving the durable
+payment-attempt/inbox ledger for reconciliation.
 
 ## Validate
 

@@ -1,6 +1,7 @@
 using InventoryX.Application.Services.IServices;
 using InventoryX.Domain.Models.Auditing;
 using InventoryX.Domain.Models.Common;
+using InventoryX.Domain.Models.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -35,6 +36,13 @@ namespace InventoryX.Infrastructure.Data
 
             foreach (var entry in context.ChangeTracker.Entries())
             {
+                if (entry.Entity is PaymentMethod method && entry.State is EntityState.Added or EntityState.Modified)
+                {
+                    if (method.EncryptedAuthorizationCode is { } authorization && !authorization.StartsWith("v1:", StringComparison.Ordinal))
+                        throw new InvalidOperationException("Billing authorization must be encrypted before persistence.");
+                    if (method.EncryptedPhoneNumber is { } phone && !phone.StartsWith("v1:", StringComparison.Ordinal))
+                        throw new InvalidOperationException("Billing phone must be encrypted before persistence.");
+                }
                 if (entry.Entity is AuditLogEntry && entry.State is EntityState.Modified or EntityState.Deleted)
                     throw new InvalidOperationException("AuditLogEntry is append-only; entries cannot be modified or deleted.");
 

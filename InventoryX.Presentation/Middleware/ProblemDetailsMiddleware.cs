@@ -101,6 +101,8 @@ namespace InventoryX.Presentation.Middleware
 
             problem.Instance = context.Request.Path;
             problem.Extensions["traceId"] = context.TraceIdentifier;
+            if (exception is BillingIdempotencyConflictException)
+                problem.Extensions["code"] = "billing_idempotency_conflict";
 
             context.Response.Clear();
             context.Response.StatusCode = problem.Status!.Value;

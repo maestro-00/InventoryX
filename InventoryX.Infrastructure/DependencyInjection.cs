@@ -31,17 +31,20 @@ public static class DependencyInjection
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         services.Configure<PaystackOptions>(configuration.GetSection(PaystackOptions.SectionName));
+        services.AddSingleton<IBillingSecretProtector, BillingSecretProtector>();
         services.AddHttpClient<IPaymentGateway, PaystackGateway>((provider, client) =>
         {
             var settings = provider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PaystackOptions>>().Value;
             client.BaseAddress = new Uri(settings.BaseUrl);
         });
         services.AddScoped<PaystackWebhookProcessor>();
+        services.AddScoped<IBillingSettlementService, BillingSettlementService>();
         services.AddScoped<IBillingInvoiceService, InvoicePdfService>();
         services.AddScoped<IPurchaseOrderPdfService, PurchaseOrderPdfService>();
         services.AddScoped<IReportExportService, ReportExportService>();
         services.AddScoped<ITenantExportService, TenantExportService>();
         services.AddHostedService<BillingWorker>();
+        services.AddHostedService<PaystackInboxWorker>();
         services.AddScoped<EmailOutboxProcessor>();
         services.AddHostedService<EmailOutboxWorker>();
         services.AddHostedService<ReportScheduleWorker>();

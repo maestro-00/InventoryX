@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Complete owner-only v2 subscription billing flows with durable payment intents,
+  Paystack webhook reconciliation, grace/recovery state, invoices, and retention gates.
 - `GET /api/v1/shifts` and `GET /api/v1/registers/{id}/shifts` so a POS can list and resume an open shift.
 - `GET /api/v1/transfers` (paged), `PATCH /api/v1/registers/{id}`, and `PATCH /api/v1/suppliers/{id}` to match Cycle 1 contracts.
 - Paged list envelopes for `GET /users`, `GET /suppliers`, and `GET /billing/invoices`.
@@ -40,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+
+- Fixed startup dependency validation for the billing recovery handler by using the payment-intent handler's registered MediatR interface.
+- Stop API startup when database migration or seeding fails, so billing workers cannot query tables that have not been created.
+- Load the API's app settings and user secrets in the EF design-time context factory so database commands target the configured database.
+- Add the missing billing quote proration column migration and remove duplicate quote metadata operations from the following migration.
 
 ### Security
 - Enforced tenant query/write isolation, account lockout, auth/webhook rate limits, security headers, and webhook replay protection.
