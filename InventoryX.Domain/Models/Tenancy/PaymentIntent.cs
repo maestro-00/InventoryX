@@ -2,7 +2,7 @@ using InventoryX.Domain.Models.Common;
 
 namespace InventoryX.Domain.Models.Tenancy;
 
-public enum PaymentIntentPurpose { Initial, Renewal, Upgrade, Recovery, MethodVerification }
+public enum PaymentIntentPurpose { Initial, Renewal, Upgrade, Recovery, MethodVerification, Downgrade, CycleSwitch }
 public enum PaymentIntentStatus { Pending, Succeeded, Failed, Cancelled, Superseded }
 
 /// <summary>One owner action or payable period, independent of provider retries.</summary>

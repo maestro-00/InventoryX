@@ -106,6 +106,31 @@ public sealed class EmailOutboxProcessorTests : IDisposable
         await action.Should().ThrowAsync<DbUpdateException>();
     }
 
+    [Fact]
+    public async Task Successful_retention_warning_delivery_records_acceptance_time()
+    {
+        var now = new DateTime(2026, 8, 9, 8, 0, 0, DateTimeKind.Utc);
+        await using var context = _db.CreateContext();
+        var plan = new InventoryX.Domain.Models.Tenancy.PlanDefinition { Name = "Standard" };
+        var subscription = new InventoryX.Domain.Models.Tenancy.Subscription
+        {
+            TenantId = _tenantId, PlanDefinitionId = plan.Id,
+            Status = InventoryX.Domain.Models.Tenancy.SubscriptionStatus.PurgePending,
+            PurgeAt = now.AddDays(2),
+        };
+        context.PlanDefinitions.Add(plan);
+        context.Subscriptions.Add(subscription);
+        context.OutboxMessages.Add(EmailOutbox.Html(_tenantId,
+            $"billing:retention-warning:{subscription.Id:N}:{subscription.PurgeAt:O}",
+            "owner@example.com", "Retention", "export", now));
+        await context.SaveChangesAsync();
+
+        await Processor(context, new RecordingEmailSender()).ProcessBatchAsync("instance", now,
+            CancellationToken.None);
+
+        (await context.Subscriptions.SingleAsync()).RetentionWarningAcceptedAt.Should().Be(now);
+    }
+
     private static EmailOutboxProcessor Processor(
         InventoryX.Infrastructure.Data.AppDbContext context,
         IEmailSender emailSender) => new(

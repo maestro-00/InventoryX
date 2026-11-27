@@ -56,7 +56,7 @@ sections in `InventoryX.Presentation/appsettings.json` are:
 - `Paystack:SecretKey`
 - `Paystack:WebhookSigningSecret` (separate test/live secret, supplied through server secrets)
 - `Paystack:AcceptLegacyWebhookSignature` (temporary migration setting; disable after the new signature header is observed in both environments)
-- `Paystack:BaseUrl` and `Paystack:CallbackUrl`
+- `Paystack:BaseUrl` and `Paystack:CallbackUrl` (`Paystack__CallbackUrl` in the deployment environment): set the latter to the InventoryMS origin plus `/settings/billing`, for example `https://billing.example/settings/billing`. The local default is `http://localhost:5173/settings/billing`; replace it for every deployment. Card checkout rejects a missing or invalid return URL before contacting Paystack.
 - `Billing:EnableCollection` and `Billing:EnableRenewals` (default `false` until the v2 ledger and provider smoke checks pass)
 - `Billing:EncryptionKey` (32 random bytes encoded as base64, shared securely across API instances; never rotate without re-encrypting stored authorizations)
 - `SendGrid:ApiKey`
@@ -99,6 +99,16 @@ dotnet run --project InventoryX.Presentation/InventoryX.Presentation.csproj
 
 Swagger is available at `/swagger`; liveness and readiness probes are available at
 `/health/live` and `/health/ready`.
+
+### Subscription billing rollout
+
+The owner-only billing API is published under `/api/v2/billing`. New collection is
+guarded by `Billing:EnableCollection` and `Billing:EnableRenewals`, which remain
+disabled until Paystack test-mode card/mobile-money smoke, webhook verification,
+email delivery, and duplicate-charge monitoring pass. Legacy v1 billing writes are
+rejected with the documented migration response; v1 reads remain available during
+client migration. Roll back by disabling both flags and preserving the durable
+payment-attempt/inbox ledger for reconciliation.
 
 ## Validate
 

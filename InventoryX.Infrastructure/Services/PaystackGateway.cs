@@ -66,6 +66,10 @@ public sealed class PaystackGateway(HttpClient httpClient, IOptions<PaystackOpti
         var response = await SendAsync(HttpMethod.Get, $"transaction/verify/{Uri.EscapeDataString(reference)}", null, cancellationToken);
         var data = response.GetProperty("data");
         string? authorizationCode = null;
+        string? cardBrand = null;
+        string? cardLast4 = null;
+        int? expiryMonth = null;
+        int? expiryYear = null;
         if (string.Equals(data.GetProperty("status").GetString(), "success", StringComparison.OrdinalIgnoreCase) &&
             data.TryGetProperty("authorization", out var authorization) &&
             authorization.ValueKind == JsonValueKind.Object &&
@@ -73,13 +77,30 @@ public sealed class PaystackGateway(HttpClient httpClient, IOptions<PaystackOpti
             string.Equals(verifiedChannel.GetString(), "card", StringComparison.OrdinalIgnoreCase) &&
             authorization.TryGetProperty("reusable", out var reusable) && reusable.ValueKind == JsonValueKind.True &&
             authorization.TryGetProperty("authorization_code", out var code))
+        {
             authorizationCode = code.GetString();
+            cardBrand = authorization.TryGetProperty("brand", out var brand) ? brand.GetString() : null;
+            cardLast4 = authorization.TryGetProperty("last4", out var last4) ? last4.GetString() : null;
+            expiryMonth = OptionalInteger(authorization, "exp_month");
+            expiryYear = OptionalInteger(authorization, "exp_year");
+        }
         DateTime? paidAt = data.TryGetProperty("paid_at", out var paid) && paid.ValueKind == JsonValueKind.String
             ? paid.GetDateTime() : null;
         return new PaymentVerificationResult(
             data.GetProperty("reference").GetString()!, data.GetProperty("status").GetString()!,
             data.GetProperty("amount").GetInt64() / 100m, data.GetProperty("currency").GetString()!,
-            authorizationCode, paidAt);
+            authorizationCode, paidAt, cardBrand, cardLast4, expiryMonth, expiryYear);
+    }
+
+    private static int? OptionalInteger(JsonElement element, string property)
+    {
+        if (!element.TryGetProperty(property, out var value)) return null;
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt32(out var number) => number,
+            JsonValueKind.String when int.TryParse(value.GetString(), out var number) => number,
+            _ => null,
+        };
     }
 
     private async Task<JsonElement> SendAsync(HttpMethod method, string path, object? body, CancellationToken cancellationToken)

@@ -164,4 +164,39 @@ public sealed class BillingLedgerTests
         subscription.CurrentPeriodEnd.Should().Be(end);
         period.PaidAt.Should().Be(start);
     }
+
+    [Fact]
+    public void Recovery_settlement_only_advances_the_period_in_its_payment_intent()
+    {
+        var tenantId = Guid.NewGuid();
+        var currentStart = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+        var currentEnd = currentStart.AddMonths(1);
+        var subscription = new Subscription
+        {
+            TenantId = tenantId, Status = SubscriptionStatus.ReadOnly,
+            CurrentPeriodStart = currentStart.AddMonths(-1), CurrentPeriodEnd = currentStart,
+        };
+        var current = new BillingPeriod
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id,
+            StartAt = currentStart, EndAt = currentEnd, TotalAmount = 50m, Currency = "GHS",
+        };
+        var intent = new PaymentIntent
+        {
+            TenantId = tenantId, SubscriptionId = subscription.Id, BillingPeriodId = current.Id,
+            Purpose = PaymentIntentPurpose.Recovery, TotalAmount = 50m, Currency = "GHS",
+        };
+        var attempt = new PaymentAttempt
+        {
+            TenantId = tenantId, PaymentIntentId = intent.Id, Reference = "recovery-reference",
+            Amount = 50m, Currency = "GHS",
+        };
+
+        SubscriptionStateMachine.SettleVerifiedPayment(subscription, current, intent, attempt,
+            50m, "GHS", currentStart.AddDays(1)).Should().BeTrue();
+
+        subscription.CurrentPeriodStart.Should().Be(currentStart);
+        subscription.CurrentPeriodEnd.Should().Be(currentEnd);
+        subscription.Status.Should().Be(SubscriptionStatus.Active);
+    }
 }

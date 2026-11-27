@@ -22,6 +22,7 @@ namespace InventoryX.Application.Repository
         DbSet<PlanDefinition> PlanDefinitions { get; }
         DbSet<Subscription> Subscriptions { get; }
         DbSet<BillingPeriod> BillingPeriods { get; }
+        DbSet<BillingQuote> BillingQuotes { get; }
         DbSet<PaymentIntent> PaymentIntents { get; }
         DbSet<BillingIdempotencyRecord> BillingIdempotencyRecords { get; }
         DbSet<PaymentAttempt> PaymentAttempts { get; }

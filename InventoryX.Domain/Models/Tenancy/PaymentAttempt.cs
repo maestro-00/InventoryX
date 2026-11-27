@@ -11,6 +11,8 @@ public sealed class PaymentAttempt : BaseModel
     public Guid? PaymentMethodId { get; set; }
     public string Reference { get; set; } = string.Empty;
     public string? ProviderTransactionId { get; set; }
+    public string? AuthorizationUrl { get; set; }
+    public string? ApprovalMessage { get; set; }
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "GHS";
     public PaymentAttemptStatus Status { get; set; } = PaymentAttemptStatus.Created;

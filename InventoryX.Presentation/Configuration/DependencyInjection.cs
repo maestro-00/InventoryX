@@ -242,8 +242,8 @@ namespace InventoryX.Presentation.Configuration
                 catch (Exception ex)
                 {
                     app.Logger.LogError(ex, "An error occurred while migrating the database");
-                    if (app.Environment.IsProduction())
-                        DatabaseStartupHealth.IsHealthy = false;
+                    DatabaseStartupHealth.IsHealthy = false;
+                    throw;
                 }
             }
 

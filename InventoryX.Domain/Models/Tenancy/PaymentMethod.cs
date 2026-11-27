@@ -44,4 +44,9 @@ public sealed class PaymentMethod : BaseModel
         Status = PaymentMethodStatus.Retired;
         ReplacedAt = replacedAt;
     }
+
+    public void Invalidate()
+    {
+        if (Status == PaymentMethodStatus.Pending) Status = PaymentMethodStatus.Invalid;
+    }
 }

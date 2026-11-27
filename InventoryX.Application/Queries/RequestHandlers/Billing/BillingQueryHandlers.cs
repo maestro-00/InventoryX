@@ -24,7 +24,8 @@ public sealed class GetBillingPlansQueryHandler(IAppDbContext context)
             ["serials"] = plan.Serials, ["multiCurrency"] = plan.MultiCurrency,
             ["customRoles"] = plan.CustomRoles, ["advancedReports"] = plan.AdvancedReports,
             ["integrations"] = plan.Integrations,
-        });
+        }, "GHS", Math.Max(0m, plan.MonthlyPrice * 12m - plan.AnnualPrice),
+        plan.Tier == PlanTier.Enterprise);
 }
 
 public sealed class GetCurrentBillingSubscriptionQueryHandler(IAppDbContext context)
@@ -41,6 +42,17 @@ public sealed class GetCurrentBillingSubscriptionQueryHandler(IAppDbContext cont
         var products = await BillingUsageReader.CurrentAsync(context, UsageMetric.Products, subscription.TenantId, cancellationToken);
         var registers = await BillingUsageReader.CurrentAsync(context, UsageMetric.Registers, subscription.TenantId, cancellationToken);
         var plan = subscription.Plan ?? throw new NotFoundException("Subscription plan not found.");
+        var activeMethod = subscription.CurrentPaymentMethodId is { } methodId
+            ? await context.PaymentMethods.AsNoTracking().SingleOrDefaultAsync(method =>
+                method.Id == methodId && method.Status == PaymentMethodStatus.Active, cancellationToken)
+            : null;
+        var scheduled = await context.ScheduledSubscriptionChanges.AsNoTracking()
+            .Where(change => change.SubscriptionId == subscription.Id && change.Status == ScheduledChangeStatus.Scheduled)
+            .OrderByDescending(change => change.CreatedAt).FirstOrDefaultAsync(cancellationToken);
+        var nextRenewalAt = subscription.Status is SubscriptionStatus.Active or SubscriptionStatus.PastDue
+            ? subscription.CurrentPeriodEnd : (DateTime?)null;
+        decimal? nextRenewalAmount = nextRenewalAt is null ? null :
+            subscription.BillingCycle == BillingCycle.Annual ? plan.AnnualPrice : plan.MonthlyPrice;
         return new BillingSubscriptionDto(subscription.Id, plan.Name, subscription.Status.ToString(), subscription.BillingCycle.ToString(),
             subscription.CurrentPeriodStart, subscription.CurrentPeriodEnd, subscription.TrialEndsAt, subscription.GraceExpiresAt,
             subscription.CancelledAt, subscription.PurgeAt,
@@ -50,6 +62,35 @@ public sealed class GetCurrentBillingSubscriptionQueryHandler(IAppDbContext cont
                 new UsageVsLimitDto("users", users, plan.MaxUsers),
                 new UsageVsLimitDto("products", products, plan.MaxProducts),
                 new UsageVsLimitDto("registers", registers, plan.MaxRegisters),
-            ]);
+            ], nextRenewalAt, nextRenewalAmount,
+            activeMethod is null ? null : new BillingMethodSummaryDto(activeMethod.Id,
+                activeMethod.Kind == PaymentMethodKind.Card ? "card" : "mobile_money",
+                activeMethod.Provider, activeMethod.MaskedIdentifier, activeMethod.Brand,
+                activeMethod.ExpiryMonth, activeMethod.ExpiryYear, activeMethod.RenewalMode.ToString()),
+            subscription.Status is not (SubscriptionStatus.ReadOnly or SubscriptionStatus.Cancelled or SubscriptionStatus.PurgePending),
+            subscription.Status == SubscriptionStatus.ReadOnly
+                ? "Your paid mutations are locked until the outstanding billing period is recovered."
+                : null,
+            scheduled?.Id, scheduled?.Kind.ToString(), scheduled?.EffectiveAt,
+            subscription.Status == SubscriptionStatus.PastDue ? nextRenewalAmount : null,
+            subscription.LastChargeAttemptAt, subscription.FailedChargeAttempts,
+            subscription.Status == SubscriptionStatus.PastDue ? "retrying" : null);
     }
+}
+
+public sealed class GetBillingPaymentMethodsQueryHandler(IAppDbContext context)
+    : IRequestHandler<GetBillingPaymentMethodsQuery, List<BillingPaymentMethodDto>>
+{
+    public async Task<List<BillingPaymentMethodDto>> Handle(GetBillingPaymentMethodsQuery request,
+        CancellationToken cancellationToken) =>
+        await context.PaymentMethods.AsNoTracking()
+            .Where(method => method.Status == PaymentMethodStatus.Active ||
+                method.Status == PaymentMethodStatus.Pending)
+            .OrderByDescending(method => method.CreatedAt)
+            .Select(method => new BillingPaymentMethodDto(method.Id,
+                method.Kind == PaymentMethodKind.Card ? "card" : "mobile_money",
+                method.Status.ToString(), method.Provider, method.MaskedIdentifier,
+                method.Brand, method.ExpiryMonth, method.ExpiryYear,
+                method.RenewalMode.ToString()))
+            .ToListAsync(cancellationToken);
 }

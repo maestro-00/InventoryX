@@ -29,6 +29,8 @@ namespace InventoryX.Infrastructure.Services
         public async Task EnsureWritableAsync(CancellationToken cancellationToken = default)
         {
             var subscription = await GetSubscriptionAsync(cancellationToken);
+            if (subscription?.Status == SubscriptionStatus.PastDue && subscription.GraceExpiresAt is not null && subscription.GraceExpiresAt <= DateTime.UtcNow)
+                subscription.Status = SubscriptionStatus.ReadOnly;
             if (subscription?.Status == SubscriptionStatus.ReadOnly)
                 throw new PlanLimitException(
                     "Your subscription is in read-only mode. Renew your plan to resume making changes.",

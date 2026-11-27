@@ -61,7 +61,9 @@ public sealed class BillingController(ISender sender) : ApiControllerBase
     public async Task<IActionResult> InvoicePdf(Guid id, CancellationToken cancellationToken)
     {
         var invoice = await sender.Send(new GetBillingInvoicePdfQuery(id), cancellationToken);
-        return File(Encoding.UTF8.GetBytes(invoice.Content), "application/pdf", $"{invoice.Number}.pdf");
+        return File(invoice.Content.StartsWith("%PDF", StringComparison.Ordinal)
+            ? Encoding.UTF8.GetBytes(invoice.Content)
+            : Convert.FromBase64String(invoice.Content), "application/pdf", $"{invoice.Number}.pdf");
     }
 
     [HttpPatch("contact")]

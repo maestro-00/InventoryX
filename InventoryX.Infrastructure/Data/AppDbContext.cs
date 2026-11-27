@@ -27,6 +27,7 @@ namespace InventoryX.Infrastructure.Data
         public DbSet<PlanDefinition> PlanDefinitions => Set<PlanDefinition>();
         public DbSet<Subscription> Subscriptions => Set<Subscription>();
         public DbSet<BillingPeriod> BillingPeriods => Set<BillingPeriod>();
+        public DbSet<BillingQuote> BillingQuotes => Set<BillingQuote>();
         public DbSet<PaymentIntent> PaymentIntents => Set<PaymentIntent>();
         public DbSet<BillingIdempotencyRecord> BillingIdempotencyRecords => Set<BillingIdempotencyRecord>();
         public DbSet<PaymentAttempt> PaymentAttempts => Set<PaymentAttempt>();
@@ -118,6 +119,14 @@ namespace InventoryX.Infrastructure.Data
                 .HasForeignKey(s => new { s.TenantId, s.CurrentPaymentMethodId })
                 .HasPrincipalKey(m => new { m.TenantId, m.Id }).OnDelete(DeleteBehavior.Restrict);
             builder.Entity<BillingPeriod>().HasIndex(p => new { p.SubscriptionId, p.StartAt, p.Cycle }).IsUnique();
+            builder.Entity<BillingQuote>().HasIndex(q => new { q.TenantId, q.ExpiresAt });
+            builder.Entity<BillingQuote>().HasOne<Subscription>().WithMany()
+                .HasForeignKey(q => new { q.TenantId, q.SubscriptionId })
+                .HasPrincipalKey(s => new { s.TenantId, s.Id }).OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<BillingQuote>().Property(q => q.BaseAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.TaxAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.TotalAmount).HasPrecision(18, 4);
+            builder.Entity<BillingQuote>().Property(q => q.NextRenewalTotal).HasPrecision(18, 4);
             builder.Entity<BillingPeriod>().HasIndex(p => new { p.TenantId, p.Status, p.EndAt });
             builder.Entity<BillingPeriod>().Property(p => p.BaseAmount).HasPrecision(18, 4);
             builder.Entity<BillingPeriod>().Property(p => p.TaxAmount).HasPrecision(18, 4);

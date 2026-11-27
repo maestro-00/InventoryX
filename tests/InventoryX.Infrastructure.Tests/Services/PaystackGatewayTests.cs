@@ -29,13 +29,15 @@ public sealed class PaystackGatewayTests
         var gateway = new PaystackGateway(client, Options.Create(new PaystackOptions { SecretKey = "sk_test" }));
 
         var initialized = await gateway.InitializeAuthorizationAsync(
-            new PaymentInitializationRequest("owner@example.com", 12.34m, Channel: "card"));
+            new PaymentInitializationRequest("owner@example.com", 12.34m, Channel: "card",
+                CallbackUrl: "https://billing.example/settings/billing"));
         var charged = await gateway.ChargeAsync(new PaymentChargeRequest(
             "owner@example.com", 10m, MobileMoneyProvider: "at", Msisdn: "0551234567"));
 
         initialized.Reference.Should().Be("ref-1");
         charged.Status.Should().Be("pay_offline");
-        requests[0].Body.Should().Contain("1234").And.Contain("card");
+        requests[0].Body.Should().Contain("1234").And.Contain("card")
+            .And.Contain("\"callback_url\":\"https://billing.example/settings/billing\"");
         requests[1].Body.Should().Contain("\"provider\":\"atl\"");
         requests.Should().OnlyContain(request => request.Authorization == "Bearer sk_test");
     }
@@ -80,7 +82,8 @@ public sealed class PaystackGatewayTests
                 data = new
                 {
                     reference = "verify-1", status = "success", amount = 1234, currency = "GHS",
-                    authorization = new { channel, reusable, authorization_code = "AUTH-1" },
+                    authorization = new { channel, reusable, authorization_code = "AUTH-1",
+                        brand = "Visa", last4 = "4242", exp_month = "12", exp_year = "2028" },
                 },
             })),
         }));
@@ -91,6 +94,8 @@ public sealed class PaystackGatewayTests
 
         result.Amount.Should().Be(12.34m);
         result.AuthorizationCode.Should().Be(shouldReturnCode ? "AUTH-1" : null);
+        result.CardLast4.Should().Be(shouldReturnCode ? "4242" : null);
+        result.CardExpiryYear.Should().Be(shouldReturnCode ? 2028 : null);
     }
 
     private sealed class StubHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> responder) : HttpMessageHandler

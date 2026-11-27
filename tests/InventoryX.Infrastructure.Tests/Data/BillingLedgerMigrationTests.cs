@@ -16,6 +16,7 @@ public sealed class BillingLedgerMigrationTests
         using var context = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql("Host=localhost;Database=billing_script_only;Username=unused;Password=unused").Options);
         var script = context.GetService<IMigrator>().GenerateScript();
+        script.Should().Contain("CREATE TABLE \"PaystackEventInbox\"");
         script.Should().Contain("legacy-migration-no-charge");
         script.Should().Contain("INSERT INTO \"BillingPeriods\"");
         script.Should().Contain("UPDATE \"Subscriptions\"");

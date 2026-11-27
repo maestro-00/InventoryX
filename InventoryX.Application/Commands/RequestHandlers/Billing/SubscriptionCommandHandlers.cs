@@ -20,7 +20,8 @@ internal static class SubscriptionCommands
     public static BillingSubscriptionDto ToDto(Subscription subscription) => new(
         subscription.Id, subscription.Plan?.Name ?? string.Empty, subscription.Status.ToString(), subscription.BillingCycle.ToString(),
         subscription.CurrentPeriodStart, subscription.CurrentPeriodEnd, subscription.TrialEndsAt, subscription.GraceExpiresAt,
-        subscription.CancelledAt, subscription.PurgeAt, []);
+        subscription.CancelledAt, subscription.PurgeAt, [], null, null, null, subscription.Status is not (SubscriptionStatus.ReadOnly or SubscriptionStatus.Cancelled or SubscriptionStatus.PurgePending),
+        subscription.Status == SubscriptionStatus.ReadOnly ? "Your paid mutations are locked until the outstanding billing period is recovered." : null);
 }
 
 public sealed class UpgradeSubscriptionCommandHandler(IAppDbContext context, IPaymentGateway paymentGateway)
@@ -70,6 +71,22 @@ public sealed class DowngradeSubscriptionCommandHandler(IAppDbContext context)
                        await BillingUsageReader.CurrentAsync(context, UsageMetric.Registers, subscription.TenantId, cancellationToken) > registers);
         if (exceeds && !request.AcknowledgeOverLimit)
             throw new ConflictException("The tenant exceeds one or more limits of the selected plan; set acknowledgeOverLimit=true to schedule the downgrade.");
+        var currentChange = await context.ScheduledSubscriptionChanges.SingleOrDefaultAsync(change =>
+            change.SubscriptionId == subscription.Id && change.Status == ScheduledChangeStatus.Scheduled,
+            cancellationToken);
+        currentChange?.Reverse();
+        context.ScheduledSubscriptionChanges.Add(new ScheduledSubscriptionChange
+        {
+            TenantId = subscription.TenantId,
+            SubscriptionId = subscription.Id,
+            Kind = ScheduledChangeKind.Downgrade,
+            TargetPlanDefinitionId = target.Id,
+            TargetCycle = subscription.BillingCycle,
+            QuotedNextPeriodAmount = subscription.BillingCycle == BillingCycle.Annual
+                ? target.AnnualPrice : target.MonthlyPrice,
+            EffectiveAt = subscription.CurrentPeriodEnd,
+            AcknowledgedAt = exceeds ? DateTime.UtcNow : null,
+        });
         subscription.PendingPlanDefinitionId = target.Id;
         await context.SaveChangesAsync(cancellationToken);
         return SubscriptionCommands.ToDto(subscription);
@@ -81,6 +98,18 @@ public sealed class CancelSubscriptionCommandHandler(IAppDbContext context) : IR
     public async Task<BillingSubscriptionDto> Handle(CancelSubscriptionCommand request, CancellationToken cancellationToken)
     {
         var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
+        var currentChange = await context.ScheduledSubscriptionChanges.SingleOrDefaultAsync(change =>
+            change.SubscriptionId == subscription.Id && change.Status == ScheduledChangeStatus.Scheduled,
+            cancellationToken);
+        currentChange?.Reverse();
+        context.ScheduledSubscriptionChanges.Add(new ScheduledSubscriptionChange
+        {
+            TenantId = subscription.TenantId,
+            SubscriptionId = subscription.Id,
+            Kind = ScheduledChangeKind.Cancel,
+            EffectiveAt = subscription.CurrentPeriodEnd,
+        });
+        subscription.PendingPlanDefinitionId = null;
         SubscriptionStateMachine.CancelAtPeriodEnd(subscription, DateTime.UtcNow);
         await context.SaveChangesAsync(cancellationToken);
         return SubscriptionCommands.ToDto(subscription);
@@ -92,8 +121,58 @@ public sealed class ReactivateSubscriptionCommandHandler(IAppDbContext context) 
     public async Task<BillingSubscriptionDto> Handle(ReactivateSubscriptionCommand request, CancellationToken cancellationToken)
     {
         var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
+        var cancellation = await context.ScheduledSubscriptionChanges.SingleOrDefaultAsync(change =>
+            change.SubscriptionId == subscription.Id && change.Status == ScheduledChangeStatus.Scheduled &&
+            change.Kind == ScheduledChangeKind.Cancel, cancellationToken);
+        cancellation?.Reverse();
         try { SubscriptionStateMachine.Reactivate(subscription, DateTime.UtcNow); }
         catch (InvalidOperationException exception) { throw new ConflictException(exception.Message); }
+        await context.SaveChangesAsync(cancellationToken);
+        return SubscriptionCommands.ToDto(subscription);
+    }
+}
+
+public sealed class ScheduleSubscriptionChangeCommandHandler(IAppDbContext context)
+    : IRequestHandler<ScheduleSubscriptionChangeCommand, BillingSubscriptionDto>
+{
+    public async Task<BillingSubscriptionDto> Handle(ScheduleSubscriptionChangeCommand request, CancellationToken cancellationToken)
+    {
+        var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
+        var quote = await context.BillingQuotes.SingleOrDefaultAsync(q => q.Id == request.QuoteId, cancellationToken)
+            ?? throw new NotFoundException("Change quote not found.");
+        if (quote.ExpiresAt <= DateTime.UtcNow || quote.Purpose is not (PaymentIntentPurpose.Downgrade or PaymentIntentPurpose.CycleSwitch))
+            throw new ConflictException("The change quote has expired or is not schedulable.");
+        if (quote.SubscriptionId != subscription.Id) throw new UnauthorizedAccessException("The quote belongs to another subscription.");
+        if (quote.RequiresAcknowledgement && !request.AcknowledgeExceededLimits)
+            throw new ConflictException("The selected plan exceeds current usage; acknowledge the listed limits before scheduling.");
+        var pending = await context.ScheduledSubscriptionChanges.SingleOrDefaultAsync(c => c.SubscriptionId == subscription.Id && c.Status == ScheduledChangeStatus.Scheduled, cancellationToken);
+        pending?.Reverse();
+        context.ScheduledSubscriptionChanges.Add(new ScheduledSubscriptionChange
+        {
+            TenantId = subscription.TenantId, SubscriptionId = subscription.Id,
+            Kind = quote.Purpose == PaymentIntentPurpose.Downgrade ? ScheduledChangeKind.Downgrade : ScheduledChangeKind.CycleSwitch,
+            TargetPlanDefinitionId = quote.TargetPlanDefinitionId, TargetCycle = quote.TargetCycle,
+            QuotedNextPeriodAmount = quote.NextRenewalTotal, EffectiveAt = subscription.CurrentPeriodEnd,
+            ExceededLimitsJson = quote.ExceededLimits, AcknowledgedAt = quote.RequiresAcknowledgement ? DateTime.UtcNow : null,
+        });
+        if (quote.Purpose == PaymentIntentPurpose.Downgrade) subscription.PendingPlanDefinitionId = quote.TargetPlanDefinitionId;
+        await context.SaveChangesAsync(cancellationToken);
+        return SubscriptionCommands.ToDto(subscription);
+    }
+}
+
+public sealed class ReverseSubscriptionChangeCommandHandler(IAppDbContext context)
+    : IRequestHandler<ReverseSubscriptionChangeCommand, BillingSubscriptionDto>
+{
+    public async Task<BillingSubscriptionDto> Handle(ReverseSubscriptionChangeCommand request, CancellationToken cancellationToken)
+    {
+        var subscription = await SubscriptionCommands.CurrentAsync(context, cancellationToken);
+        var change = await context.ScheduledSubscriptionChanges.SingleOrDefaultAsync(c => c.SubscriptionId == subscription.Id && c.Status == ScheduledChangeStatus.Scheduled && (request.ChangeId == null || c.Id == request.ChangeId), cancellationToken)
+            ?? throw new NotFoundException("No pending subscription change found.");
+        if (change.EffectiveAt <= DateTime.UtcNow) throw new ConflictException("The subscription change is already effective.");
+        change.Reverse();
+        if (change.Kind == ScheduledChangeKind.Cancel) subscription.CancelledAt = null;
+        if (change.Kind == ScheduledChangeKind.Downgrade) subscription.PendingPlanDefinitionId = null;
         await context.SaveChangesAsync(cancellationToken);
         return SubscriptionCommands.ToDto(subscription);
     }
